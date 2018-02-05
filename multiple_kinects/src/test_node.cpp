@@ -15,10 +15,18 @@ using namespace message_filters;
 ros::Publisher pub;
 const double subsize = 0.01;
 
-sensor_msgs::PointCloud2 subsample_pc(pcl::PCLPointCloud2ConstPtr cloudPtr)
+sensor_msgs::PointCloud2 subsample_pc(const sensor_msgs::PointCloud2ConstPtr& pc)
 {
     sensor_msgs::PointCloud2 output;
+
+    // Container for original & filtered data
+    pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2;
+    pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
     pcl::PCLPointCloud2 filtered;
+
+    // Convert to PCL data type
+    pcl_conversions::toPCL(*pc, *cloud);
+
     // Perform the actual filtering
     pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
     sor.setInputCloud (cloudPtr);
@@ -31,16 +39,15 @@ sensor_msgs::PointCloud2 subsample_pc(pcl::PCLPointCloud2ConstPtr cloudPtr)
     return output;
 }
 
-void pc_callback(const PointCloud2ConstPtr& pc1)//, const PointCloud2ConstPtr& pc2)
+void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 {
-    PointCloud2 filt_pc1;
-    //PointCloud2 filt_pc2;
-    pcl::PCLPointCloud2* cloud1 = new pcl::PCLPointCloud2;
-    pcl::PCLPointCloud2ConstPtr cloudPtr(cloud1);
-    pcl_conversions::toPCL(*pc1, *cloud1);
+    PointCloud2 filt_pc;
+    PointCloud2 merged_pc;
 
-    filt_pc1 = subsample_pc(cloudPtr);
-    pub.publish(filt_pc1);
+    //pcl::concatenatePointCloud(pc1, pc2, merged_pc);
+    filt_pc = subsample_pc(pc1);
+
+    pub.publish(filt_pc);
 }
 
 int
@@ -50,18 +57,12 @@ main(int argc, char** argv)
     ros::init(argc, argv, "test_node");
     ros::NodeHandle nh;
 
-    // Subscriber<PointCloud2> cam1(nh, "/cam1/qhd/points", 1);
-    // Subscriber<PointCloud2> cam2(nh, "/cam2/qhd/points", 1);
-    // TimeSynchronizer<PointCloud2, PointCloud2> sync(cam1, cam2, 10);
-    // sync.registerCallback(boost::bind(&pc_callback, _1, _2));
-    //typedef sync_policies::ApproximateTime<PointCloud2, PointCloud2> SyncPC;
-    //Synchronizer<SyncPC> sync(SyncPC(10), cam1, cam1);
-    //sync.registerCallback(boost::bind(&pc_callback, _1, _2));
-    //cam1.registerCallback(pc_callback);
+    message_filters::Subscriber<PointCloud2> cam1(nh, "/cam1/qhd/points", 1);
+    message_filters::Subscriber<PointCloud2> cam2(nh, "/cam2/qhd/points", 1);
+    typedef sync_policies::ApproximateTime<PointCloud2, PointCloud2> KinectSync;
+    Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam1);
+    sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
-    ros::Subscriber sub = nh.subscribe ("/cam1/qhd/points", 1, pc_callback);
-
-    // Create a ROS publisher for the output point cloud
     pub = nh.advertise<PointCloud2>("output", 1);
 
     // Spin
