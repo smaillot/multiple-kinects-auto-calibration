@@ -20,7 +20,7 @@ using namespace std;
 tf::TransformListener *listener;
 ros::Publisher pub;
 
-const double subsize = 0.01;
+double subsize;
 
 PointCloud2 subsample_pc(const PointCloud2 pc)
 {
@@ -96,7 +96,15 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     merged_pc = merge_pc(input1, input2);
 
     // subsampling
-    filtered_pc = subsample_pc(merged_pc);
+    if (subsize > 0 || subsize == true)
+    {
+        if (subsize == true) subsize = 0.01;
+        filtered_pc = subsample_pc(merged_pc);
+    }
+    else
+    {
+        filtered_pc = merged_pc;
+    }
 
     pub.publish(filtered_pc);
 }
@@ -107,6 +115,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "test_node");
     ros::NodeHandle nh;
     listener = new tf::TransformListener();
+    nh.getParam("subsample_size", subsize);
 
     // Synchronize both kinects messages
     message_filters::Subscriber<PointCloud2> cam1(nh, "/cam1/qhd/points", 1);
