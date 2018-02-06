@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ctime>
 // PCL specific includes
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -8,9 +9,11 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pcl/common/transforms.h>
+// synchronization
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+// tf
 #include <tf/transform_listener.h>
 
 using namespace sensor_msgs;
@@ -46,54 +49,30 @@ PointCloud2 subsample_pc(const PointCloud2 pc)
     return output;
 }
 
-PointCloud2 merge_pc(const PointCloud2 pc1, const PointCloud2 pc2)
-{
-    // PointCloud2 input1 = pc1;
-    // PointCloud2 input2 = pc2;
-    PointCloud2 merged_pc;
-    pcl::concatenatePointCloud(pc1, pc2, merged_pc);
-
-    return merged_pc;
-}
-
-// tf::StampedTransform get_transform(const string& cam_tf, const char* center_tf)
-// {
-//     tf::TransformListener listener;
-//     tf::StampedTransform transform;
-//     try{
-//       listener.lookupTransform(cam_tf, center_tf,
-//                             ros::Time(0), transform);
-//     }
-//     catch (tf::TransformException ex){
-//       ROS_ERROR("%s",ex.what());
-//       ros::Duration(1.0).sleep();
-//     }
-//
-//     return transform;
-// }
-
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 {
+// clock_t begin_time = clock();
+
     PointCloud2 merged_pc;
     PointCloud2 filtered_pc;
     PointCloud2 input1 = *pc1;
     PointCloud2 input2 = *pc2;
 
-    // rought pc transform
-    // tf::StampedTransform transform_cam1;
-    // tf::StampedTransform transform_cam2;
-    // transform_cam1 = get_transform("cam1_link","cam-center");
-    // transform_cam2 = get_transform("cam2_link","cam-center");
+// clock_t init_time = clock();
 
-    string target_tf = "cam1_link";
+    string target_tf = "cam_center";
     pcl_ros::transformPointCloud(target_tf, input1, input1, *listener);
     pcl_ros::transformPointCloud(target_tf, input2, input2, *listener);
+
+// clock_t transform_time = clock();
 
     // accurate calibration
     // TODO
 
     // merging
-    merged_pc = merge_pc(input1, input2);
+    pcl::concatenatePointCloud(input1, input2, merged_pc);
+
+// clock_t merge_time = clock();
 
     // subsampling
     if (subsize > 0 || subsize == true)
@@ -106,7 +85,19 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
         filtered_pc = merged_pc;
     }
 
+// clock_t filter_time = clock();
+
     pub.publish(filtered_pc);
+
+// clock_t end_time = clock();
+
+    // cout << "Total time: " << double(end_time - begin_time) / 1000 << endl;
+    // cout << "Init time: " << double(init_time - begin_time) / 1000 << endl;
+    // cout << "Transform time: " << double(transform_time - init_time) / 1000 << endl;
+    // cout << "Merge time: " << double(merge_time - transform_time) / 1000 << endl;
+    // cout << "Filtering time: " << double(filter_time - merge_time) / 1000 << endl;
+    // cout << "Publishing time: " << double(end_time - filter_time) / 1000 << endl;
+    // cout << "\n\n\n";
 }
 
 int main(int argc, char** argv)
