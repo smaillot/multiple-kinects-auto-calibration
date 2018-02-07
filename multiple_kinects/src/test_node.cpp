@@ -15,6 +15,9 @@
 #include <message_filters/sync_policies/approximate_time.h>
 // tf
 #include <tf/transform_listener.h>
+// dynamic reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <multiple_kinects/subsamplingConfig.h>
 
 using namespace sensor_msgs;
 using namespace message_filters;
@@ -100,6 +103,11 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     // cout << "\n\n\n";
 }
 
+void dynrec_callback(multiple_kinects::subsamplingConfig &config, uint32_t level)
+{
+    subsize = config.subsampling * config.size / 100;
+}
+
 int main(int argc, char** argv)
 {
     // Initialize ROS
@@ -108,6 +116,12 @@ int main(int argc, char** argv)
     listener = new tf::TransformListener();
     nh.getParam("subsample_size", subsize);
 
+    // dynamic reconfigure
+    dynamic_reconfigure::Server<multiple_kinects::subsamplingConfig> server;
+    dynamic_reconfigure::Server<multiple_kinects::subsamplingConfig>::CallbackType f;
+    f = boost::bind(&dynrec_callback, _1, _2);
+    server.setCallback(f);
+
     // Synchronize both kinects messages
     message_filters::Subscriber<PointCloud2> cam1(nh, "/cam1/qhd/points", 1);
     message_filters::Subscriber<PointCloud2> cam2(nh, "/cam2/qhd/points", 1);
@@ -115,7 +129,7 @@ int main(int argc, char** argv)
     Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
     sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
-    pub = nh.advertise<PointCloud2>("output", 1);
+    pub = nh.advertise<PointCloud2>("full_pc", 1);
 
     // Spin
     ros::spin();
