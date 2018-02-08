@@ -21,12 +21,13 @@ using namespace std;
 using namespace cv_bridge;
 using namespace cv;
 
-ros::Publisher pub;
+ros::Publisher pub1;
+ros::Publisher pub2;
 
-int cannyLowThreshold = 50;
-int cannyHighThreshold = 200;
+int cannyLowThreshold = 200;
+int cannyHighThreshold = 400;
 int cannyKernel = 3;
-int houghResolution = 180;
+int houghResolution = 50;
 int houghThreshold = 50;
 int minLinLength = 50;
 int maxLineGap = 10;
@@ -35,7 +36,6 @@ void dynrec_callback(multiple_kinects::line_detectionConfig &config, uint32_t le
 {
     cannyLowThreshold = config.cannyLowThreshold;
     cannyHighThreshold = config.cannyHighThreshold;
-    cannyKernel = config.cannyKernel;
     houghResolution = config.houghResolution;
     houghThreshold = config.houghThreshold;
     minLinLength = config.minLinLength;
@@ -79,7 +79,8 @@ void rgb_callback(const ImageConstPtr& rgb1, const ImageConstPtr& rgb2)
 {
     CvImagePtr cv_ptr1;
     CvImagePtr cv_ptr2;
-    CvImagePtr output;
+    CvImagePtr output1;
+    CvImagePtr output2;
 
     try
     {
@@ -92,10 +93,12 @@ void rgb_callback(const ImageConstPtr& rgb1, const ImageConstPtr& rgb2)
       return;
     }
 
-    output = line_detection(cv_ptr1);
+    output1 = line_detection(cv_ptr1);
+    output2 = line_detection(cv_ptr2);
 
     // Output modified video stream
-    pub.publish(output->toImageMsg());
+    pub1.publish(output1->toImageMsg());
+    pub2.publish(output2->toImageMsg());
 }
 
 int main(int argc, char** argv)
@@ -117,7 +120,8 @@ int main(int argc, char** argv)
     Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
     sync.registerCallback(boost::bind(&rgb_callback, _1, _2));
 
-    pub = nh.advertise<Image>("cv_output", 1);
+    pub1 = nh.advertise<Image>("line_detection1", 1);
+    pub2 = nh.advertise<Image>("line_detection2", 1);
 
     // Spin
     ros::spin();
