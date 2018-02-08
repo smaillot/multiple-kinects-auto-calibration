@@ -17,9 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-find_package(OpenCV REQUIRED)
-
-
+find_package(OpenCV 3.3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/subsampling.cfg

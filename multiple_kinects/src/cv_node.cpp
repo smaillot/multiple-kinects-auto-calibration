@@ -6,6 +6,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 // message
 #include <sensor_msgs/Image.h>
+#include <geometry_msgs/Vector3.h>
 // OpenCV
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -21,12 +22,13 @@ using namespace std;
 using namespace cv_bridge;
 using namespace cv;
 
-ros::Publisher pub;
+ros::Publisher pub_cam1;
+ros::Publisher pub_cam2;
 
-int cannyLowThreshold = 50;
-int cannyHighThreshold = 200;
+int cannyLowThreshold = 200;
+int cannyHighThreshold = 400;
 int cannyKernel = 3;
-int houghResolution = 180;
+int houghResolution = 50;
 int houghThreshold = 50;
 int minLinLength = 50;
 int maxLineGap = 10;
@@ -35,7 +37,6 @@ void dynrec_callback(multiple_kinects::line_detectionConfig &config, uint32_t le
 {
     cannyLowThreshold = config.cannyLowThreshold;
     cannyHighThreshold = config.cannyHighThreshold;
-    cannyKernel = config.cannyKernel;
     houghResolution = config.houghResolution;
     houghThreshold = config.houghThreshold;
     minLinLength = config.minLinLength;
@@ -50,7 +51,7 @@ CvImagePtr image_processing(const CvImagePtr ptr1, const CvImagePtr ptr2)
     return ptr1;
 }
 
-CvImagePtr line_detection(const CvImagePtr ptr)
+CvImagePtr line_detection(const CvImagePtr ptr)//, const ros::Publisher pub)
 {
     Mat img = ptr->image;
     CvImagePtr output;
@@ -68,6 +69,8 @@ CvImagePtr line_detection(const CvImagePtr ptr)
         line( cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
     }
 
+    //pub.publish(lines);
+
     //imshow("source", img);
     //imshow("detected lines", cdst);
 
@@ -79,7 +82,8 @@ void rgb_callback(const ImageConstPtr& rgb1, const ImageConstPtr& rgb2)
 {
     CvImagePtr cv_ptr1;
     CvImagePtr cv_ptr2;
-    CvImagePtr output;
+    CvImagePtr output1;
+    CvImagePtr output2;
 
     try
     {
@@ -92,10 +96,12 @@ void rgb_callback(const ImageConstPtr& rgb1, const ImageConstPtr& rgb2)
       return;
     }
 
-    output = line_detection(cv_ptr1);
+    output1 = line_detection(cv_ptr1);//, pub_lines1);
+    output2 = line_detection(cv_ptr2);//, pub_lines2);
 
     // Output modified video stream
-    pub.publish(output->toImageMsg());
+    pub_cam1.publish(output1->toImageMsg());
+    pub_cam2.publish(output2->toImageMsg());
 }
 
 int main(int argc, char** argv)
@@ -117,7 +123,8 @@ int main(int argc, char** argv)
     Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
     sync.registerCallback(boost::bind(&rgb_callback, _1, _2));
 
-    pub = nh.advertise<Image>("cv_output", 1);
+    pub_cam1 = nh.advertise<Image>("line_detection/cam1/image", 1);
+    pub_cam2 = nh.advertise<Image>("line_detection/cam2/image", 1);
 
     // Spin
     ros::spin();

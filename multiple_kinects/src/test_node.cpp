@@ -15,6 +15,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 // tf
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 // dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
 #include <multiple_kinects/subsamplingConfig.h>
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
     Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
     sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
-    pub = nh.advertise<PointCloud2>("full_pc", 1);
+    pub = nh.advertise<PointCloud2>("/kinects/qhd/points", 1);
 
     // Spin
     ros::spin();
