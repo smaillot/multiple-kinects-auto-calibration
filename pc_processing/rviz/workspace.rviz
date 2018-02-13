@@ -74,7 +74,7 @@ Visualization Manager:
       Size (Pixels): 4
       Size (m): 0.05
       Style: Points
-      Topic: /full_pc
+      Topic: /kinects/qhd/points
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true

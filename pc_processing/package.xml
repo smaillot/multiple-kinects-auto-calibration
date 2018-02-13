@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-    <name>multiple_kinects</name>
+    <name>pc_processing</name>
     <version>0.0.0</version>
-    <description>The multiple_kinects package</description>
+    <description>The pc_processing package</description>
 
     <maintainer email="smaillot@todo.todo">smaillot</maintainer>
     <license>TODO</license>

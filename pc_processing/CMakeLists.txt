@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(multiple_kinects)
+project(pc_processing)
 
 # add_definitions(-std=c++11)
 
@@ -26,18 +26,26 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES multiple_kinects
+#  LIBRARIES pc_processing
 #  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp rospy sensor_msgs
 #  DEPENDS system_lib
 )
 
+add_executable(test_node 
+  src/test_node.cpp
+)
+add_executable(pc_processing_nodelet 
+  src/pc_processing_nodelet.cpp
+)
+add_executable(cv_node 
+  src/cv_node.cpp
+)
+
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
-
-add_executable(test_node src/test_node.cpp)
-add_executable(cv_node src/cv_node.cpp)
 
 target_link_libraries(
     test_node
@@ -50,5 +58,20 @@ target_link_libraries(
         ${OpenCV_LIBRARIES}
 )
 
+add_library(pc_processing src/pc_processing.cpp)
+
+target_link_libraries(
+  pc_processing
+        ${catkin_LIBRARIES}
+)
+
+target_link_libraries(
+  pc_processing_nodelet
+        ${catkin_LIBRARIES}
+        pc_processing
+)
+
 add_dependencies(test_node ${PROJECT_NAME}_gencfg)
 add_dependencies(cv_node ${PROJECT_NAME}_gencfg)
+
+add_dependencies(pc_processing_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
