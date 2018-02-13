@@ -7,6 +7,7 @@ using namespace std;
 tf::TransformListener *listener;
 ros::Publisher pub;
 pc_processing PC_object;
+double subsize;
 
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 {
@@ -17,13 +18,25 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     pub.publish(*PC_object.get_subsampled_pc());
 }
 
+void dynrec_callback(multiple_kinects::subsamplingConfig &config, uint32_t level)
+{
+    subsize = config.subsampling * config.size / 100;
+}
+
 int main(int argc, char** argv)
 {
     // Initialize ROS
     ros::init(argc, argv, "test_node");
     ros::NodeHandle nh;
+    nh.getParam("pc_subsampling_size", subsize);
     listener = new tf::TransformListener();
     PC_object.set_listener(listener);
+
+    // dynamic reconfigure
+    dynamic_reconfigure::Server<multiple_kinects::subsamplingConfig> server;
+    dynamic_reconfigure::Server<multiple_kinects::subsamplingConfig>::CallbackType f;
+    f = boost::bind(&dynrec_callback, _1, _2);
+    server.setCallback(f);
 
     // Synchronize both kinects messages
     message_filters::Subscriber<PointCloud2> cam1(nh, "/cam1/qhd/points", 1);
