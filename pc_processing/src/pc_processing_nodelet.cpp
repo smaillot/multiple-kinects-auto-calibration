@@ -15,7 +15,9 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     PC_object.set_subsize(0.02);
     PC_object.subsample_pc();
 
-    pub.publish(*PC_object.get_subsampled_pc());
+
+    PointCloud2* ptr = PC_object.get_subsampled_pc() ;
+    pub.publish(*ptr);
 }
 
 void dynrec_callback(multiple_kinects::subsamplingConfig &config, uint32_t level)
