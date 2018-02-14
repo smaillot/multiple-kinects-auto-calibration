@@ -12,7 +12,7 @@ double subsize;
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 {
     PC_object.merge_pc(pc1, pc2);
-    PC_object.set_subsize(0.02);
+    PC_object.set_subsize(subsize);
     PC_object.subsample_pc();
 
 

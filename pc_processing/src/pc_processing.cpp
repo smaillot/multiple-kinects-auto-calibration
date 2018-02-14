@@ -30,25 +30,33 @@ void pc_processing::merge_pc(const sensor_msgs::PointCloud2ConstPtr& pc1, const 
 
 void pc_processing::subsample_pc()
 {
-    // Container for original & filtered data
-    pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2;
-    pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
-    pcl::PCLPointCloud2 filtered;
-    sensor_msgs::PointCloud2 subsampled;
+    if (subsize > 0 || subsize == true)
+    {
+        if (subsize == true) subsize = 0.01;
+        // Container for original & filtered data
+        pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2;
+        pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
+        pcl::PCLPointCloud2 filtered;
+        sensor_msgs::PointCloud2 subsampled;
 
-    // Convert to PCL data type
-    pcl_conversions::toPCL(*this->full_pc, *cloud);
+        // Convert to PCL data type
+        pcl_conversions::toPCL(*this->full_pc, *cloud);
 
-    // Perform the actual filtering
-    pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-    sor.setInputCloud (cloudPtr);
-    sor.setLeafSize (this->subsize, this->subsize, this->subsize);
-    sor.filter(filtered);
+        // Perform the actual filtering
+        pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+        sor.setInputCloud (cloudPtr);
+        sor.setLeafSize (this->subsize, this->subsize, this->subsize);
+        sor.filter(filtered);
 
-    // Convert to ROS data type
-    pcl_conversions::fromPCL(filtered, subsampled);
-    sensor_msgs::PointCloud2* ptr(new sensor_msgs::PointCloud2(subsampled));
-    this->subsampled_pc = ptr;
+        // Convert to ROS data type
+        pcl_conversions::fromPCL(filtered, subsampled);
+        sensor_msgs::PointCloud2* ptr(new sensor_msgs::PointCloud2(subsampled));
+        this->subsampled_pc = ptr;
+    }
+    else
+    {
+        this->subsampled_pc = this->full_pc;
+    }
 }
 
 void pc_processing::set_subsize(double subsize)
