@@ -3,6 +3,9 @@ project(pc_processing)
 
 # add_definitions(-std=c++11)
 
+####################################333
+## packages
+
 find_package(catkin REQUIRED dynamic_reconfigure)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -20,8 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV 3.3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
-  cfg/subsampling.cfg
-  cfg/line_detection.cfg
+  cfg/registration.cfg
 )
 
 catkin_package(
@@ -31,47 +33,47 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-add_executable(test_node 
-  src/test_node.cpp
-)
+
+####################################333
+## executables
+
 add_executable(pc_processing_nodelet 
   src/pc_processing_nodelet.cpp
 )
-add_executable(cv_node 
-  src/cv_node.cpp
-)
+
+####################################333
+## directories
 
 include_directories(
+  include ${catkin_INCLUDE_DIRS}
   include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(
-    test_node
-        ${catkin_LIBRARIES}
-)
+
+####################################333
+## libraries
+
+add_library(PcProcessing src/PcProcessing.cpp)
 
 target_link_libraries(
-    cv_node
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBRARIES}
-)
-
-add_library(pc_processing src/pc_processing.cpp)
-
-target_link_libraries(
-  pc_processing
-        ${catkin_LIBRARIES}
+  PcProcessing
+    ${catkin_LIBRARIES}
 )
 
 target_link_libraries(
   pc_processing_nodelet
-        ${catkin_LIBRARIES}
-        pc_processing
+    ${catkin_LIBRARIES}
+    PcProcessing
 )
 
-add_dependencies(test_node ${PROJECT_NAME}_gencfg)
-add_dependencies(cv_node ${PROJECT_NAME}_gencfg)
+####################################333
+## dependencies
 
-add_dependencies(pc_processing_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(
+  pc_processing_nodelet 
+    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+    ${catkin_EXPORTED_TARGETS}
+    ${PROJECT_NAME}_gencfg
+)
