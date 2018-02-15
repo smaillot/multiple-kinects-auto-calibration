@@ -6,7 +6,7 @@ pc_processing::pc_processing()
     this->subsize = false;
     this->tf_listener = NULL;
     this->full_pc = NULL;
-    this->subsampled_pc = NULL;
+    this->filtered_pc = NULL;
 }
 
 pc_processing::~pc_processing()
@@ -26,6 +26,7 @@ void pc_processing::merge_pc(const sensor_msgs::PointCloud2ConstPtr& pc1, const 
     pcl::concatenatePointCloud(input1, input2, merged_pc);
     sensor_msgs::PointCloud2* ptr(new sensor_msgs::PointCloud2(merged_pc));
     this->full_pc = ptr;
+    this->filtered_pc = ptr;
 }
 
 void pc_processing::subsample_pc()
@@ -40,9 +41,9 @@ void pc_processing::subsample_pc()
         sensor_msgs::PointCloud2 subsampled;
 
         // Convert to PCL data type
-        pcl_conversions::toPCL(*this->full_pc, *cloud);
+        pcl_conversions::toPCL(*this->filtered_pc, *cloud);
 
-        // Perform the actual filtering
+        // Perform the filtering
         pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
         sor.setInputCloud (cloudPtr);
         sor.setLeafSize (this->subsize, this->subsize, this->subsize);
@@ -51,11 +52,11 @@ void pc_processing::subsample_pc()
         // Convert to ROS data type
         pcl_conversions::fromPCL(filtered, subsampled);
         sensor_msgs::PointCloud2* ptr(new sensor_msgs::PointCloud2(subsampled));
-        this->subsampled_pc = ptr;
+        this->filtered_pc = ptr;
     }
     else
     {
-        this->subsampled_pc = this->full_pc;
+        this->filtered_pc = this->full_pc;
     }
 }
 
@@ -74,7 +75,20 @@ void pc_processing::set_listener(const tf::TransformListener* listener)
     this->tf_listener = listener;
 }
 
-sensor_msgs::PointCloud2* pc_processing::get_subsampled_pc()
+sensor_msgs::PointCloud2* pc_processing::get_filtered_pc()
 {
-    return this->subsampled_pc;
+    return this->filtered_pc;
+}
+
+void pc_processing::filter_pc()
+{
+    // Container for original & filtered data
+    pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2;
+    pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
+    pcl::PCLPointCloud2 filtered;
+
+    // Convert to PCL data type
+    pcl_conversions::toPCL(*this->filtered_pc, *cloud);
+
+    // filtering
 }

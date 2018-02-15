@@ -27,7 +27,7 @@ private:
 	double subsize;
 	const tf::TransformListener* tf_listener;
 	sensor_msgs::PointCloud2* full_pc;
-	sensor_msgs::PointCloud2* subsampled_pc;
+	sensor_msgs::PointCloud2* filtered_pc;
 
 public:
 	pc_processing();
@@ -37,5 +37,6 @@ public:
 	void set_subsize(double subsize);
 	double get_subsize();
 	void set_listener(const tf::TransformListener* listener);
-	sensor_msgs::PointCloud2* get_subsampled_pc();
+	sensor_msgs::PointCloud2* get_filtered_pc();
+	void filter_pc();
 };

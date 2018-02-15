@@ -16,7 +16,7 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     PC_object.subsample_pc();
 
 
-    PointCloud2* ptr = PC_object.get_subsampled_pc() ;
+    PointCloud2* ptr = PC_object.get_filtered_pc() ;
     pub.publish(*ptr);
 }
 
@@ -28,7 +28,7 @@ void dynrec_callback(multiple_kinects::subsamplingConfig &config, uint32_t level
 int main(int argc, char** argv)
 {
     // Initialize ROS
-    ros::init(argc, argv, "test_node");
+    ros::init(argc, argv, "pc_processing_nodelet");
     ros::NodeHandle nh;
     nh.getParam("pc_subsampling_size", subsize);
     listener = new tf::TransformListener();
