@@ -15,6 +15,16 @@ double subsize;
 bool filtering;
 double filter_radius;
 int filter_min_neighbors;
+//      cutting
+bool cutting_x_enable;
+float cutting_x_min;
+float cutting_x_max;
+bool cutting_y_enable;
+float cutting_y_min;
+float cutting_y_max;
+bool cutting_z_enable;
+float cutting_z_min;
+float cutting_z_max;
 
 
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
@@ -25,6 +35,10 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     // subsampling point cloud
     PC_object.set_subsize(subsize);
     PC_object.subsample_pc();
+
+    // cutting point cloud
+    PC_object.set_cutting_params(cutting_x_enable, cutting_x_min, cutting_x_max, cutting_y_enable, cutting_y_min, cutting_y_max, cutting_z_enable, cutting_z_min, cutting_z_max);
+    PC_object.cutting_pc();
 
     // filtering point cloud
     PC_object.set_filtering_params(filtering, filter_radius, filter_min_neighbors);
@@ -37,12 +51,25 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 void dynrec_callback(pc_processing::registrationConfig &config, uint32_t level)
 {
     // subsampling
-    subsize = config.subsampling_enable * config.subsampling_size / 100;
+    subsize = config.subsampling_enable * config.subsampling_size / 1000;
 
     // filtering
     filtering = config.filter_enable;
-    filter_radius = config.filter_radius / 100;
+    filter_radius = config.filter_radius / 1000;
     filter_min_neighbors = config.filter_min_neighbors;
+
+    // cutting
+    cutting_x_enable = config.cutting_x_enable;
+    cutting_x_min = config.cutting_x_min / 1000;
+    cutting_x_max = config.cutting_x_max / 1000;
+    cutting_y_enable = config.cutting_y_enable;
+    cutting_y_min = config.cutting_y_min / 1000;
+    cutting_y_max = config.cutting_y_max / 1000;
+    cutting_z_enable = config.cutting_z_enable;
+    cutting_z_min = config.cutting_z_min / 1000;
+    cutting_z_max = config.cutting_z_max / 1000;
+
+    ROS_DEBUG("Dynamic reconfigure updated !");
 }
 
 int main(int argc, char** argv)

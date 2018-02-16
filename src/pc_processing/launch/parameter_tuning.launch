@@ -1,0 +1,23 @@
+<launch>
+
+    <node name="pc_processing_nodelet" pkg="pc_processing" type="pc_processing_nodelet" />
+
+    <param name="/pc_processing_nodelet/cutting_x_enable" value="true" />
+    <param name="/pc_processing_nodelet/cutting_x_min" value="-675.0" />
+    <param name="/pc_processing_nodelet/cutting_x_max" value="325.0" />
+    <param name="/pc_processing_nodelet/cutting_y_enable" value="true" />
+    <param name="/pc_processing_nodelet/cutting_y_min" value="-1200.0" />
+    <param name="/pc_processing_nodelet/cutting_y_max" value="1390.0" />
+    <param name="/pc_processing_nodelet/cutting_z_enable" value="true" />
+    <param name="/pc_processing_nodelet/cutting_z_min" value="-30.0" />
+    <param name="/pc_processing_nodelet/cutting_z_max" value="700.0" />
+    <param name="/pc_processing_nodelet/filter_enable" value="false" />
+    <param name="/pc_processing_nodelet/filter_min_neighbors" value="100" />
+    <param name="/pc_processing_nodelet/filter_radius" value="90" />
+    <param name="/pc_processing_nodelet/subsampling_enable" value="true" />
+    <param name="/pc_processing_nodelet/subsampling_size" value="15" />
+
+    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" args="pc_processing_nodelet" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pc_processing)/rviz/workspace.rviz" />
+
+</launch>

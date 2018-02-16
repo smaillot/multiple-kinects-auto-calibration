@@ -11,6 +11,7 @@
 #include <pcl_ros/transforms.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/conditional_removal.h>
 // synchronization
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -29,11 +30,23 @@ class PcProcessing
 {
 private:
 	// parameters
+		// subsampling
 	double subsize;
-	
+		//cutting
+	bool cutting_x_enable;
+	float cutting_x_min;
+	float cutting_x_max;
+	bool cutting_y_enable;
+	float cutting_y_min;
+	float cutting_y_max;
+	bool cutting_z_enable;
+	float cutting_z_min;
+	float cutting_z_max;
+		// filtering
 	bool filtering;
 	double filter_radius;
 	int filter_min_neighbors;
+
 
 	// tf listener
 	const tf::TransformListener* tf_listener;
@@ -42,15 +55,18 @@ private:
 	sensor_msgs::PointCloud2* full_pc;
 	sensor_msgs::PointCloud2* filtered_pc;
 
+
 public:
 	PcProcessing();
 	virtual ~PcProcessing();
+
 	void merge_pc(const sensor_msgs::PointCloud2ConstPtr& pc1, const sensor_msgs::PointCloud2ConstPtr& pc2);
 	void subsample_pc();
 	void set_subsize(double subsize);
 	void set_filtering_params(bool filtering, double filter_radius, int filter_min_neighbors);
-	double get_subsize();
+	void set_cutting_params(bool cutting_x_enable, float cutting_x_min, float cutting_x_max, bool cutting_y_enable, float cutting_y_min, float cutting_y_max, bool cutting_z_enable, float cutting_z_min, float cutting_z_max);
 	void set_listener(const tf::TransformListener* listener);
 	sensor_msgs::PointCloud2* get_filtered_pc();
 	void filter_pc();
+	void cutting_pc();
 };
