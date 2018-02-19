@@ -25,6 +25,10 @@ float cutting_y_max;
 bool cutting_z_enable;
 float cutting_z_min;
 float cutting_z_max;
+// plane detectoion
+bool plane_detection;
+double plane_dist_th;
+double plane_filtering;
 
 
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
@@ -43,6 +47,10 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     // filtering point cloud
     PC_object.set_filtering_params(filtering, filter_radius, filter_min_neighbors);
     PC_object.filter_pc();
+
+    // detect plane
+    PC_object.set_plane_detection_params(plane_detection, plane_dist_th, plane_filtering);
+    PC_object.plane_detection();
 
     PointCloud2* ptr = PC_object.get_filtered_pc() ;
     pub.publish(*ptr);
@@ -68,6 +76,11 @@ void dynrec_callback(pc_processing::registrationConfig &config, uint32_t level)
     cutting_z_enable = config.cutting_z_enable;
     cutting_z_min = config.cutting_z_min / 1000;
     cutting_z_max = config.cutting_z_max / 1000;
+
+    // plane detection
+    plane_detection = config.plane_detection_enable;
+    plane_dist_th = config.plane_dist_th / 1000;
+    plane_filtering = config.plane_filtering / 100;
 
     ROS_DEBUG("Dynamic reconfigure updated !");
 }
