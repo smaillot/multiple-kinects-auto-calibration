@@ -15,6 +15,7 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 // synchronization
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -50,9 +51,13 @@ private:
 			double filter_radius;
 			int filter_min_neighbors;
 		// plane detection
-			bool plane_detection_enable;
 			double plane_threshold_dist;
 			double plane_filtering;
+			int plane_max_it;
+			double plane_axis_x;
+			double plane_axis_y;
+			double plane_axis_z;
+			double plane_angle_th;
 
 	// tf listener
 		const tf::TransformListener* tf_listener;
@@ -62,10 +67,12 @@ private:
 		sensor_msgs::PointCloud2* filtered_pc;
 
 	// planes
+		double plane_dist;
 		tf::Quaternion plane_quat;
-
+		sensor_msgs::PointCloud2* plane_pc;
 
 public:
+			bool plane_detection_enable;
 	// constr/destr
 		PcProcessing();
 		virtual ~PcProcessing();
@@ -74,11 +81,12 @@ public:
 		void set_subsize(double subsize);
 		void set_filtering_params(bool filtering, double filter_radius, int filter_min_neighbors);
 		void set_cutting_params(bool cutting_x_enable, float cutting_x_min, float cutting_x_max, bool cutting_y_enable, float cutting_y_min, float cutting_y_max, bool cutting_z_enable, float cutting_z_min, float cutting_z_max);
-		void set_plane_detection_params(bool plane_detection, double dist_th, double filtering);
+		void set_plane_detection_params(bool plane_detection, double dist_th, double filtering, int max_it, double axis_x, double plane_axis_y, double plane_axis_z, double angle_th);
 		void set_listener(const tf::TransformListener* listener);
 
 	// getters
 		sensor_msgs::PointCloud2* get_filtered_pc();
+		sensor_msgs::PointCloud2* get_plane_pc();
 
 	// pc_processing
 		void merge_pc(const sensor_msgs::PointCloud2ConstPtr& pc1, const sensor_msgs::PointCloud2ConstPtr& pc2);

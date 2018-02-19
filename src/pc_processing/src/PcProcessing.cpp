@@ -23,6 +23,11 @@ PcProcessing::PcProcessing()
             this->plane_detection_enable = false;
             this->plane_threshold_dist = 0;
             this->plane_filtering = 0;
+            this->plane_max_it = 0;
+            this->plane_axis_x = 0;
+            this->plane_axis_y = 0;
+            this->plane_axis_z = 0;
+            this->plane_angle_th = 0;
 
     // tf listener
     this->tf_listener = NULL;
@@ -32,8 +37,10 @@ PcProcessing::PcProcessing()
     this->filtered_pc = NULL;
 
     // planes
+    this->plane_pc = NULL;
     tf::Quaternion Q(0, 0, 0, 1);
     this->plane_quat = Q;
+    this->plane_dist = 0;
 }
 
 PcProcessing::~PcProcessing()
@@ -112,11 +119,16 @@ void PcProcessing::set_cutting_params(bool cutting_x_enable, float cutting_x_min
     this->cutting_z_max = cutting_z_max;
 }
 
-void PcProcessing::set_plane_detection_params(bool plane_detection, double dist_th, double filtering)
+void PcProcessing::set_plane_detection_params(bool plane_detection, double dist_th, double filtering, int max_it, double axis_x, double axis_y, double axis_z, double angle_th)
 {
     this->plane_detection_enable = plane_detection;
     this->plane_threshold_dist = dist_th;
     this->plane_filtering = filtering;
+    this->plane_max_it = max_it;
+    this->plane_axis_x = plane_axis_x;
+    this->plane_axis_y = plane_axis_y;
+    this->plane_axis_z = plane_axis_z;
+    this->plane_angle_th = angle_th;
 }
 
 void PcProcessing::set_listener(const tf::TransformListener* listener)
@@ -127,6 +139,11 @@ void PcProcessing::set_listener(const tf::TransformListener* listener)
 sensor_msgs::PointCloud2* PcProcessing::get_filtered_pc()
 {
     return this->filtered_pc;
+}
+
+sensor_msgs::PointCloud2* PcProcessing::get_plane_pc()
+{
+    return this->plane_pc;
 }
 
 void PcProcessing::filter_pc()
@@ -239,8 +256,11 @@ void PcProcessing::plane_detection()
 {
     if (this->plane_detection_enable)
     {
+        ROS_DEBUG("\tStart plane detection");
         pcl::PCLPointCloud2* cloud2 = new pcl::PCLPointCloud2;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>);
 
+        ROS_DEBUG("\tConvert msg to PCL");
         // Convert to PCL data type
             pcl_conversions::toPCL(*this->filtered_pc, *cloud2);
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -249,44 +269,71 @@ void PcProcessing::plane_detection()
         pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
+        ROS_DEBUG("\tCreate segmentation model");
         // Create the segmentation object
             pcl::SACSegmentation<pcl::PointXYZ> seg;
 
-        seg.setOptimizeCoefficients (true);
-        seg.setModelType (pcl::SACMODEL_PLANE);
-        seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setDistanceThreshold (this->plane_threshold_dist);
+            seg.setOptimizeCoefficients (true);
+            seg.setModelType (pcl::SACMODEL_PLANE);
+            seg.setMethodType (pcl::SAC_RANSAC);
+            seg.setDistanceThreshold (this->plane_threshold_dist);
+            seg.setMaxIterations(this->plane_max_it);
+            seg.setAxis(Eigen::Vector3f(this->plane_axis_x, this->plane_axis_y, this->plane_axis_z));
+            seg.setEpsAngle(this->plane_angle_th); 
 
-        seg.setInputCloud (cloud);
-        seg.segment (*inliers, *coefficients);
+            seg.setInputCloud (cloud);
+            seg.segment (*inliers, *coefficients);
 
+        ROS_DEBUG("\tCompute plane translation");
         // translation
             tf::Vector3 normal_vect(coefficients->values[0], coefficients->values[1], coefficients->values[2]);
             double dist = std::abs(coefficients->values[3]) / (std::pow(coefficients->values[0], 2) + std::pow(coefficients->values[1], 2) + std::pow(coefficients->values[2], 2));
-            tf::Vector3 translation = normal_vect * dist;
+            tf::Vector3 translation = -normal_vect * dist;
 
+        ROS_DEBUG("\tCompute plane rotation");
         // rotation
             tf::Vector3 z(0, 0, 1);
             double angle = z.angle(normal_vect);
-            angle = this->plane_filtering * this->plane_quat.getAngle() + (1 - this->plane_filtering) * angle;
             tf::Vector3 axis = z.cross(normal_vect);
+        
+        ROS_DEBUG("\tTime filtering");
+        // time filtering
+            // dist = this->plane_filtering * this->plane_dist + (1 - this->plane_filtering) * dist;
+            angle = this->plane_filtering * this->plane_quat.getAngle() + (1 - this->plane_filtering) * angle;
             axis = this->plane_filtering * this->plane_quat.getAxis() + (1 - this->plane_filtering) * axis;
 
-
+        ROS_DEBUG("\tCompute quaternion");
         // compute quaternion
             tf::Quaternion Q;
             Q.setRotation(axis, angle);
 
-
+        ROS_DEBUG("\tConvert into tf");
         // convert into tf
             tf::Transform transform;
             transform.setOrigin(translation);
             transform.setRotation(Q);
         
-
+        ROS_DEBUG("\tBroadcast tf");
         // broadcast
             this->plane_quat = Q;
+            this->plane_dist = dist;
             static tf::TransformBroadcaster br; 
             br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/cam_center", "/plane")); 
+
+        ROS_DEBUG("\tExtract inliers");
+        // extract inliers
+            pcl::ExtractIndices<pcl::PointXYZ> extract;
+            extract.setInputCloud (cloud);
+            extract.setIndices (inliers);
+            extract.setNegative (false);
+            extract.filter (*plane);
+
+        sensor_msgs::PointCloud2* msg(new sensor_msgs::PointCloud2());
+        pcl::toROSMsg(*plane, *msg);
+        this->plane_pc = msg;
+    }
+    else
+    {
+        ROS_DEBUG("Plane detection is disabled");
     }
 }

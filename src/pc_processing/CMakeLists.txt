@@ -57,23 +57,10 @@ include_directories(
 
 add_library(PcProcessing src/PcProcessing.cpp)
 
-target_link_libraries(
-  PcProcessing
-    ${catkin_LIBRARIES}
-)
-
-target_link_libraries(
-  pc_processing_nodelet
-    ${catkin_LIBRARIES}
-    PcProcessing
-)
+target_link_libraries(PcProcessing ${catkin_LIBRARIES})
+target_link_libraries(pc_processing_nodelet ${catkin_LIBRARIES} PcProcessing)
 
 ####################################333
 ## dependencies
 
-add_dependencies(
-  pc_processing_nodelet 
-    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-    ${catkin_EXPORTED_TARGETS}
-    ${PROJECT_NAME}_gencfg
-)
+add_dependencies(pc_processing_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
