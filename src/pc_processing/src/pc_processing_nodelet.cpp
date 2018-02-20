@@ -5,7 +5,9 @@ using namespace message_filters;
 using namespace std;
 
 ros::Publisher pub_full_pc;
-ros::Publisher pub_table_pc;
+ros::Publisher pub_filtered_pc;
+// ros::Publisher pub_table_pc;
+// ros::Publisher pub_wall_pc;
 tf::TransformListener *listener;
 PcProcessing PC_object;
 
@@ -31,10 +33,10 @@ PcProcessing PC_object;
         double plane_dist_th;
         double plane_filtering;
         int plane_max_it;
-        double plane_axis_x;
-        double plane_axis_y;
-        double plane_axis_z;
-        double plane_angle_th;
+        // double plane_axis_x;
+        // double plane_axis_y;
+        // double plane_axis_z;
+        // double plane_angle_th;
 
 
 void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
@@ -60,16 +62,23 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 
     // detect plane
     ROS_DEBUG("Running planes detection...");
-    PC_object.set_plane_detection_params(plane_detection, plane_dist_th, filtering, plane_max_it, plane_axis_x, plane_axis_y, plane_axis_z, plane_angle_th);
-    PC_object.plane_detection();
-
-    PointCloud2* full_pc = PC_object.get_filtered_pc();
-    pub_full_pc.publish(*full_pc);
-    if (PC_object.plane_detection_enable)
+    PC_object.set_plane_detection_params(plane_detection, plane_dist_th, filtering, plane_max_it); //, plane_axis_x, plane_axis_y, plane_axis_z, plane_angle_th);
+    PC_object.initialize_seg_pc();
+    for (int i = 1 ; i <= 4 ; i++)
     {
-        PointCloud2* table_pc = PC_object.get_plane_pc();
-        pub_table_pc.publish(*table_pc);
+        PC_object.plane_detection(i);
     }
+        
+    PointCloud2* filtered_pc = PC_object.get_filtered_pc();
+    pub_filtered_pc.publish(*filtered_pc);
+    PointCloud2* full_pc = PC_object.get_full_pc();
+    pub_full_pc.publish(*full_pc);
+
+    // if (PC_object.plane_detection_enable)
+    // {
+    //     pub_table_pc.publish(*table_pc);
+    //     pub_wall_pc.publish(*wall_pc);
+    // }
 }
 
 void dynrec_callback(pc_processing::registrationConfig &config, uint32_t level)
@@ -98,10 +107,10 @@ void dynrec_callback(pc_processing::registrationConfig &config, uint32_t level)
     plane_dist_th = config.plane_dist_th / 1000;
     plane_filtering = config.plane_filtering / 100;
     plane_max_it = config.plane_max_it;
-    plane_axis_x = config.plane_axis_x;
-    plane_axis_y = config.plane_axis_y;
-    plane_axis_z = config.plane_axis_z;
-    plane_angle_th = config.plane_angle_th / 180 * 3.14159;
+    // plane_axis_x = config.plane_axis_x;
+    // plane_axis_y = config.plane_axis_y;
+    // plane_axis_z = config.plane_axis_z;
+    // plane_angle_th = config.plane_angle_th / 180 * 3.14159;
 
     ROS_DEBUG("Dynamic reconfigure updated !");
 }
@@ -133,8 +142,10 @@ int main(int argc, char** argv)
     Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
     sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
-    pub_full_pc = nh.advertise<PointCloud2>("/scene/qhd/points", 1);
-    pub_table_pc = nh.advertise<PointCloud2>("/scene/planes/table", 1);
+    pub_filtered_pc = nh.advertise<PointCloud2>("/scene/filtered/points", 1);
+    pub_full_pc = nh.advertise<PointCloud2>("/scene/full/points", 1);
+    // pub_table_pc = nh.advertise<PointCloud2>("/scene/planes/table", 1);
+    // pub_wall_pc = nh.advertise<PointCloud2>("/scene/planes/wall", 1);
 
     // Spin
     ros::spin();

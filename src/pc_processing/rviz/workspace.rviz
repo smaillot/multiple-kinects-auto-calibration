@@ -4,11 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /Grid1
         - /PointCloud21
-        - /PointCloud22
+        - /Grid2
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -33,24 +30,6 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 0.01
-      Class: rviz/Grid
-      Color: 255; 0; 0
-      Enabled: true
-      Line Style:
-        Line Width: 0.03
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 100
-      Reference Frame: plane
-      Value: true
     - Alpha: 0.6
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -72,28 +51,58 @@ Visualization Manager:
       Name: PointCloud2
       Position Transformer: XYZ
       Queue Size: 1
-      Selectable: false
+      Selectable: true
       Size (Pixels): 3
       Size (m): 0.05
       Style: Points
-      Topic: /scene/qhd/points
+      Topic: /scene/full/points
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 1
+    - Alpha: 0.6
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.0269438
-        Min Value: -0.0224184
+        Max Value: 10
+        Min Value: -10
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: AxisColor
+      Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 1
+      Selectable: false
+      Size (Pixels): 3
+      Size (m): 0.05
+      Style: Points
+      Topic: /scene/filtered/points
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 0.94343
+        Min Value: -0.864501
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 0; 0
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -110,6 +119,108 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 0.94343
+        Min Value: -0.864501
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 0; 0; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 10
+      Size (m): 0.01
+      Style: Points
+      Topic: /scene/planes/wall
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 0.5
+      Cell Size: 0.1
+      Class: rviz/Grid
+      Color: 255; 0; 0
+      Enabled: true
+      Line Style:
+        Line Width: 0.02
+        Value: Billboards
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: plane1
+      Value: true
+    - Alpha: 0.5
+      Cell Size: 0.1
+      Class: rviz/Grid
+      Color: 47; 255; 11
+      Enabled: true
+      Line Style:
+        Line Width: 0.02
+        Value: Billboards
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: plane2
+      Value: true
+    - Alpha: 0.5
+      Cell Size: 0.1
+      Class: rviz/Grid
+      Color: 5; 42; 255
+      Enabled: true
+      Line Style:
+        Line Width: 0.02
+        Value: Billboards
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: plane3
+      Value: true
+    - Alpha: 0.5
+      Cell Size: 0.1
+      Class: rviz/Grid
+      Color: 255; 255; 0
+      Enabled: true
+      Line Style:
+        Line Width: 0.02
+        Value: Billboards
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: plane4
       Value: true
   Enabled: true
   Global Options:
@@ -135,22 +246,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.60752
+      Distance: 2.60549
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.0124184
-        Y: 0.0182362
-        Z: 0.134887
+        X: -0.0928698
+        Y: -0.106697
+        Z: 0.322873
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.354796
+      Pitch: 0.284797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.3086
+      Yaw: 5.86859
     Saved: ~
 Window Geometry:
   Displays:
