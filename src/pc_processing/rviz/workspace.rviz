@@ -4,8 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /PointCloud21
         - /Grid2
+        - /Marker1
+        - /Marker1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -42,7 +43,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -59,7 +60,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 0.6
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -72,7 +73,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -89,7 +90,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -190,7 +191,7 @@ Visualization Manager:
       Cell Size: 0.1
       Class: rviz/Grid
       Color: 5; 42; 255
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.02
         Value: Billboards
@@ -203,12 +204,12 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: plane3
-      Value: true
+      Value: false
     - Alpha: 0.5
       Cell Size: 0.1
       Class: rviz/Grid
       Color: 255; 255; 0
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.02
         Value: Billboards
@@ -221,6 +222,14 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: plane4
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /scene/lines
+      Name: Marker
+      Namespaces:
+        intersect: true
+      Queue Size: 1
       Value: true
   Enabled: true
   Global Options:
@@ -246,7 +255,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.60549
+      Distance: 3.39339
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -258,10 +267,10 @@ Visualization Manager:
         Z: 0.322873
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.284797
+      Pitch: 0.314797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.86859
+      Yaw: 5.98859
     Saved: ~
 Window Geometry:
   Displays:

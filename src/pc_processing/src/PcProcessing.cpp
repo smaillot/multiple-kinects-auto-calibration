@@ -52,14 +52,14 @@ PcProcessing::~PcProcessing()
 void PcProcessing::merge_pc(const sensor_msgs::PointCloud2ConstPtr& pc1, const sensor_msgs::PointCloud2ConstPtr& pc2)
 {
     sensor_msgs::PointCloud2 input1 = *pc1;
-    sensor_msgs::PointCloud2 input2 = *pc2;
-    sensor_msgs::PointCloud2 merged_pc;
+    // sensor_msgs::PointCloud2 input2 = *pc2;
+    sensor_msgs::PointCloud2 merged_pc = input1;
 
-    std::string target_tf = "cam_center";
-    pcl_ros::transformPointCloud(target_tf, input1, input1, *this->tf_listener);
-    pcl_ros::transformPointCloud(target_tf, input2, input2, *this->tf_listener);
+    // std::string target_tf = "cam_center";
+    // pcl_ros::transformPointCloud(target_tf, input1, input1, *this->tf_listener);
+    // pcl_ros::transformPointCloud(target_tf, input2, input2, *this->tf_listener);
 
-    pcl::concatenatePointCloud(input1, input2, merged_pc);
+    // pcl::concatenatePointCloud(input1, input2, merged_pc);
     sensor_msgs::PointCloud2* ptr_full(new sensor_msgs::PointCloud2(merged_pc));
     this->full_pc = ptr_full;
     sensor_msgs::PointCloud2* ptr_filt(new sensor_msgs::PointCloud2(merged_pc));
@@ -353,9 +353,25 @@ void PcProcessing::plane_detection(int plane_n)
         sensor_msgs::PointCloud2* msg_neg(new sensor_msgs::PointCloud2());
         pcl::toROSMsg(*remaining, *msg_neg);
         this->segmented_pc = msg_neg;
+
+        Plane plane_to_save(axis, translation);
+        planes.push_back(plane_to_save);
     }
     else
     {
         ROS_DEBUG("Plane detection is disabled");
+    }
+}
+
+void PcProcessing::line_detection()
+{
+    int n = this->planes.size();
+
+    for (int i = 0 ; i < n ; i++)
+    {
+        for  (int j = 0 ; j < i ; j++)
+        {
+            lines.push_back(this->planes[i].intersect(this->planes[j]));
+        }
     }
 }

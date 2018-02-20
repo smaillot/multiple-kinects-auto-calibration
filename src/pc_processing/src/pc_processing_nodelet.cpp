@@ -8,6 +8,7 @@ ros::Publisher pub_full_pc;
 ros::Publisher pub_filtered_pc;
 // ros::Publisher pub_table_pc;
 // ros::Publisher pub_wall_pc;
+ros::Publisher marker_pub;
 tf::TransformListener *listener;
 PcProcessing PC_object;
 
@@ -61,14 +62,14 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     PC_object.filter_pc();
 
     // detect plane
+        
     ROS_DEBUG("Running planes detection...");
     PC_object.set_plane_detection_params(plane_detection, plane_dist_th, filtering, plane_max_it); //, plane_axis_x, plane_axis_y, plane_axis_z, plane_angle_th);
     PC_object.initialize_seg_pc();
-    for (int i = 1 ; i <= 4 ; i++)
+    for (int i = 1 ; i <= 2 ; i++)
     {
         PC_object.plane_detection(i);
     }
-        
     PointCloud2* filtered_pc = PC_object.get_filtered_pc();
     pub_filtered_pc.publish(*filtered_pc);
     PointCloud2* full_pc = PC_object.get_full_pc();
@@ -78,6 +79,32 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     // {
     //     pub_table_pc.publish(*table_pc);
     //     pub_wall_pc.publish(*wall_pc);
+    // }
+
+    // line detection
+    // PC_object.line_detection();
+    // for (int i = 0 ; i < PC_object.lines.size() ; i++)
+    // {
+    //     visualization_msgs::Marker line_strip;
+    //     line_strip.header.frame_id = "/cam_center";
+    //     line_strip.header.stamp = ros::Time::now();
+    //     line_strip.ns = "intersect"; 
+    //     line_strip.action = visualization_msgs::Marker::ADD;
+    //     line_strip.pose.orientation.w = 1.0;
+    //     line_strip.id = i;
+    //     line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    //     line_strip.scale.x = 0.02;
+    //     line_strip.color.r = 1.0;
+    //     line_strip.color.a = 1.0;
+
+    //     geometry_msgs::Point p1;
+    //     p1 = PC_object.lines[i].find_point_min();
+    //     line_strip.points.push_back(p1);
+    //     geometry_msgs::Point p2;
+    //     p2 = PC_object.lines[i].find_point_max();
+    //     line_strip.points.push_back(p2);
+
+    //     marker_pub.publish(line_strip);
     // }
 }
 
@@ -146,6 +173,7 @@ int main(int argc, char** argv)
     pub_full_pc = nh.advertise<PointCloud2>("/scene/full/points", 1);
     // pub_table_pc = nh.advertise<PointCloud2>("/scene/planes/table", 1);
     // pub_wall_pc = nh.advertise<PointCloud2>("/scene/planes/wall", 1);
+    marker_pub = nh.advertise<visualization_msgs::Marker>("/scene/lines", 1);
 
     // Spin
     ros::spin();
