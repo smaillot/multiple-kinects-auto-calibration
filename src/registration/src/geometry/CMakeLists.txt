@@ -9,16 +9,23 @@ project(geometry)
 ## Declare ROS messages, services and actions ##
 ################################################
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  pcl_conversions
-  pcl_ros
+find_package(catkin 
+  REQUIRED 
+    dynamic_reconfigure
+  COMPONENTS
+    roscpp
+    pcl_conversions
+    pcl_ros
 )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
+
+generate_dynamic_reconfigure_options(
+  cfg/SubSampling.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -48,7 +55,6 @@ include_directories(
   include
 )
 
-
 add_library(geometry
   src/Line.cpp
   src/Plane.cpp
@@ -57,6 +63,7 @@ add_library(geometry
 add_dependencies(geometry 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
 target_link_libraries(geometry
   ${catkin_LIBRARIES}
