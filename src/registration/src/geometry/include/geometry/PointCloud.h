@@ -17,9 +17,6 @@
 	#include <tf_conversions/tf_eigen.h>
 	#include <tf/transform_listener.h>
 	#include <tf/transform_broadcaster.h>
-// dynamic reconfigure
-	#include <dynamic_reconfigure/server.h>
-	#include <geometry/SubSamplingConfig.h>
 
 const std::string REFERENCE_FRAME = "cam_center";
 
@@ -28,18 +25,24 @@ struct cutting_axis_t
 	bool enable;
 	float bounds[2];
 };
-struct cutting_param_t
+struct cutting_params_t
 {
 	cutting_axis_t x;
 	cutting_axis_t y;
 	cutting_axis_t z;
 };
-struct subsampling_param_t
+struct subsampling_params_t
 {
 	bool enable;
 	float x;
 	float y;
 	float z;
+};
+struct radius_filtering_params_t
+{
+	bool enable;
+	float radius;
+	int min_neighbors;
 };
 namespace patch
 {
@@ -56,37 +59,41 @@ namespace geometry
 	class PointCloud
 	{
 		private:
-			ros::NodeHandle node;  
-			std::string sub_name;  
-			std::string pub_name;
-			pcl::PCLPointCloud2* cloud;
-        	const tf::TransformListener* tf_listener;
-			pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_grid;
-			dynamic_reconfigure::Server<geometry::SubSamplingConfig> subsampling_config_srv;  
-			dynamic_reconfigure::Server<geometry::SubSamplingConfig>::CallbackType subsampling_config_cb;  
-    		boost::recursive_mutex subsampling_config_mutex; 
-			ros::Subscriber pc_sub;
-			ros::Publisher pc_pub;
+			
+			// ros node interaction
+				ros::NodeHandle node;  
+				const tf::TransformListener* tf_listener;
+
+				std::string sub_name;  
+				std::string pub_name;
+				ros::Subscriber pc_sub;
+				ros::Publisher pc_pub;
+			
+			// point cluod
+				pcl::PCLPointCloud2* cloud;
+				pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
+				pcl::PassThrough<pcl::PCLPointCloud2> filter_cut;
+				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
 
 			// parameters
-				subsampling_param_t subsampling_param;
-				cutting_param_t cutting_param;
-				// radius filtering
-					bool filtering;
-					float filter_radius;
-					int filter_min_neighbors;
-			// config callback
-				void subsampling_conf_callback(geometry::SubSamplingConfig &config, uint32_t level);
+				subsampling_params_t subsampling_params;
+				cutting_params_t cutting_params;
+				radius_filtering_params_t radius_filtering_params;
 
 		public:
-			// constructors
-				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name);
 
+			// constructor
+				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name);
+					
 			// getters
 				sensor_msgs::PointCloud2* get_pc();
 
+			// setters
+				void set_subsampling_params(subsampling_params_t subsamples_params);
+				void set_cutting_params(cutting_params_t cutting_params);
+				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
 
-			// update
+			// 	update
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
 
 			// processing

@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(plane_detection)
+project(registration)
 
 find_package(catkin REQUIRED)
-
-
 
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
 
-
 find_package(catkin 
+  REQUIRED 
+    dynamic_reconfigure
   COMPONENTS
     roscpp
     pcl_conversions
@@ -19,11 +18,15 @@ find_package(catkin
     geometry
 )
 
-
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
+generate_dynamic_reconfigure_options(
+  cfg/SubSampling.cfg
+  cfg/Cutting.cfg
+  cfg/RadiusFiltering.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -42,11 +45,12 @@ include_directories(
   include
 )
 
-add_executable(plane_detection_node src/plane_detection_node.cpp)
-target_link_libraries(plane_detection_node 
+add_executable(preprocessing_node src/preprocessing_node.cpp)
+target_link_libraries(preprocessing_node 
   ${catkin_LIBRARIES}
 )
-add_dependencies(plane_detection_node
+add_dependencies(preprocessing_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
