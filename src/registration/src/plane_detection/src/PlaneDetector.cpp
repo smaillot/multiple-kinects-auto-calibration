@@ -1,5 +1,6 @@
 #include "plane_detection/PlaneDetector.h"
 
+<<<<<<< HEAD
 using namespace geometry;
 
 /**
@@ -108,3 +109,6 @@ void PlaneDetector::detect_planes()
     }
 }
 
+=======
+using namespace geometry;
+>>>>>>> plane_detection
