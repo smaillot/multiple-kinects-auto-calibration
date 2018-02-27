@@ -6,6 +6,9 @@
  * @param direction Vector pointing in the line direction.
  * @param point Any point in the line.
  */
+
+using namespace geometry;
+
 Line::Line(tf::Vector3 direction, tf::Vector3 point)
 {
     this->direction = direction.normalized();

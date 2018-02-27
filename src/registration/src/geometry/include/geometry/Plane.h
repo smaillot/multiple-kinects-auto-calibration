@@ -1,3 +1,6 @@
+#ifndef GEOMETRY_PLANE
+#define GEOMETRY_PLANE
+
 // std
 	#include <cmath>
 // ros
@@ -12,15 +15,20 @@
  * @details The class is capable of computing line intersection between planes.
  */
 
-class Plane
+namespace geometry
 {
-	private:
-		tf::Vector3 normal;                   
-		tf::Vector3 point;
-		float d;                         
+	class Plane
+	{
+		private:
+			tf::Vector3 normal;                   
+			tf::Vector3 point;
+			float d;                         
 
-	public:
-		Plane(tf::Vector3 normal, tf::Vector3 point);
-		Plane(float* coef);
-		Line intersect(Plane P);
-};
+		public:
+			Plane(tf::Vector3 normal, tf::Vector3 point);
+			Plane(float* coef);
+			Line intersect(Plane P);
+	};
+}
+
+#endif

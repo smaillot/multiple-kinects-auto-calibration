@@ -1,9 +1,15 @@
-#include <registration/plane_detection_node.h>
+#include <plane_detection/plane_detection_node.h>
 
 using namespace std;
 
 /*
 *	args parser
+*
+*	node frequency
+*	number of planes
+*	input topics namespace
+*	input topics name
+*	output topics namespace
 */
 
 const string inputs[2] = {"/cam1", "/cam2"};

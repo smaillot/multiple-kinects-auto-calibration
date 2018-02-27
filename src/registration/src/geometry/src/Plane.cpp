@@ -6,6 +6,9 @@
  * @param normal Normal vector to the plane.
  * @param point Any point in the plane.
  */
+
+ using namespace geometry;
+ 
 Plane::Plane(tf::Vector3 normal, tf::Vector3 point)
 {
     this->normal = normal.normalized();

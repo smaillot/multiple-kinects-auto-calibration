@@ -1,3 +1,6 @@
+#ifndef GEOMETRY_POINTCLOUD
+#define GEOMETRY_POINTCLOUD
+
 // std
 	#include <string>
 	#include <iostream>
@@ -102,3 +105,5 @@ namespace geometry
 				void cut();
 	};
 }
+
+#endif
