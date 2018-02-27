@@ -16,7 +16,7 @@ find_package(catkin
     sensor_msgs
     pcl_ros
     geometry
-    plane_detection
+    # plane_detection
 )
 
 ################################################
@@ -49,6 +49,7 @@ include_directories(
 add_executable(preprocessing_node src/preprocessing_node.cpp)
 target_link_libraries(preprocessing_node 
   ${catkin_LIBRARIES}
+  geometry
 )
 add_dependencies(preprocessing_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 

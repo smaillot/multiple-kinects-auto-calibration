@@ -19,15 +19,7 @@ find_package(catkin
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-#   DEPENDS geometry
-)
-
+  
 ###########
 ## Build ##
 ###########
@@ -37,9 +29,22 @@ include_directories(
   include
 )
 
+add_library(plane_detection
+  src/PlaneDetector.cpp
+)
+add_dependencies(plane_detection 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  geometry
+)
+target_link_libraries(plane_detection
+  ${catkin_LIBRARIES}
+)
+
 add_executable(plane_detection_node src/plane_detection_node.cpp)
 target_link_libraries(plane_detection_node 
   ${catkin_LIBRARIES}
+  geometry
 )
 add_dependencies(plane_detection_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
