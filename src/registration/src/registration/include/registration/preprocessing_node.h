@@ -14,10 +14,8 @@
 	#include <registration/SubSamplingConfig.h>
 	#include <registration/CuttingConfig.h>
 	#include <registration/RadiusFilteringConfig.h>
-	#include <registration/FrequencyConfig.h>
 
 // config callback
 	void subsampling_conf_callback(registration::SubSamplingConfig &config, uint32_t level);
 	void cutting_conf_callback(registration::CuttingConfig &config, uint32_t level);
 	void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config, uint32_t level);
-	void frequency_conf_callback(registration::FrequencyConfig &config, uint32_t level);	

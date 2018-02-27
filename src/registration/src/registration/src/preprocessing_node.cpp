@@ -111,20 +111,10 @@ void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config,
     ROS_DEBUG("Radius filtering config updated");
 }
 
-/**
- * @brief Callback for freauency control dynamic reconfigure.
- */
-void frequency_conf_callback(registration::FrequencyConfig &config, uint32_t level)
-{
-	bool enable = config.enable;
-	frequency = config.frequency;
-    ROS_DEBUG("Frequency config updated");
-}
-
 int main(int argc, char *argv[])
 {
 	// verbosity: debug
-		if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) 
+		if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
 		{
 			ros::console::notifyLoggerLevelsChanged();
 		}

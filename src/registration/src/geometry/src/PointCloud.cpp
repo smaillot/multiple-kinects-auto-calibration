@@ -9,11 +9,10 @@ using namespace geometry;
 PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name)
 {
     this->node = nh;
+	this->tf_listener = new tf::TransformListener; 
 
     this->sub_name = topic_name;
     this->pub_name = pub_name;
-
-    this->tf_listener = new tf::TransformListener;
 
     subsampling_params_t subsampling_params = {false, 0.02, 0.02, 0.02};
     cutting_params_t cutting_params = {{false, -1.0, 1.0}, {false, -1.0, 1.0}, {false, -1.0, 1.0}};
@@ -70,26 +69,28 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
 {
     ROS_DEBUG("Updating PC object");
-    sensor_msgs::PointCloud2 msg = *cloud;
-    pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
-    ros::Time t = ros::Time(0);
-    pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
-    pcl_conversions::toPCL(msg, *cloudPtr);
-    this->cloud = cloudPtr;
+    // init variables
+        sensor_msgs::PointCloud2 msg = *cloud;
+        pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
+        ros::Time t = ros::Time(0);
+        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
+        pcl_conversions::toPCL(msg, *cloudPtr);
+        this->cloud = cloudPtr;
 
     /* process cloud */
     
-    this->subsample();
-    // this->cut();
-    // this->radius_filter();
+        this->subsample();
+        // this->cut();
+        // this->radius_filter();
     
     /*****************/
 
     if (this->cloud->data.size() > 0)
     {
-        sensor_msgs::PointCloud2* msg_pub;
-        msg_pub = this->get_pc();
-        this->pc_pub.publish(*msg_pub);
+        // publish
+            sensor_msgs::PointCloud2* msg_pub;
+            msg_pub = this->get_pc();
+            this->pc_pub.publish(*msg_pub);
     }
     else
     {

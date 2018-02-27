@@ -10,11 +10,11 @@
 	#include <pcl_conversions/pcl_conversions.h>
 	#include <pcl/point_cloud.h>
 	#include <pcl/impl/point_types.hpp>
-	#include <sensor_msgs/PointCloud2.h>
 	#include <pcl_ros/transforms.h>
 	#include <pcl/filters/voxel_grid.h>
 	#include <pcl/filters/radius_outlier_removal.h>
 	#include <pcl/filters/passthrough.h>
+	#include <sensor_msgs/PointCloud2.h>
 // tf
 	#include <tf/LinearMath/Transform.h>
 	#include <tf_conversions/tf_eigen.h>
@@ -72,7 +72,7 @@ namespace geometry
 				ros::Subscriber pc_sub;
 				ros::Publisher pc_pub;
 			
-			// point cluod
+			// point cloud
 				pcl::PCLPointCloud2* cloud;
 				pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
 				pcl::PassThrough<pcl::PCLPointCloud2> filter_cut;
@@ -96,7 +96,7 @@ namespace geometry
 				void set_cutting_params(cutting_params_t cutting_params);
 				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
 
-			// 	update
+			// update
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
 
 			// processing

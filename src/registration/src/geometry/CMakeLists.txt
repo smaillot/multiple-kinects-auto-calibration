@@ -22,7 +22,6 @@ catkin_package(
   CATKIN_DEPENDS roscpp pcl_conversions pcl_ros
 )
 
-
 #############
 ## Install ##
 #############
@@ -44,7 +43,6 @@ add_library(geometry
   src/Line.cpp
   src/Plane.cpp
   src/PointCloud.cpp
-  src/PlaneDetector.cpp
 )
 add_dependencies(geometry 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
