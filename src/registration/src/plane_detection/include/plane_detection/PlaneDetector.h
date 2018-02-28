@@ -3,6 +3,7 @@
 
 // std
     #include <string>
+    #include <vector>
     #include <iostream>
 // ros
     #include <ros/console.h>
@@ -10,10 +11,12 @@
 	#include <pcl_conversions/pcl_conversions.h>
 	#include <pcl/segmentation/sac_segmentation.h>
 	#include <pcl/filters/extract_indices.h>
+	#include <pcl_conversions/pcl_conversions.h>
 // My libraries
     #include <geometry/Line.h>
     #include <geometry/Plane.h>
     #include <geometry/PointCloud.h>
+
 
 namespace geometry
 {
@@ -27,7 +30,7 @@ namespace geometry
                 std::string sub_name;  
                 std::string pub_name;
                 ros::Subscriber pc_sub;
-                ros::Publisher pc_pub;
+                std::vector <ros::Publisher> planes_pub;
         
             // parameters
 

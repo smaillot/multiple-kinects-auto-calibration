@@ -1,6 +1,6 @@
 #include <plane_detection/plane_detection_node.h>
-
 using namespace std;
+#include <iostream>
 
 /*
 *	args parser
@@ -16,7 +16,7 @@ const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
 const string pub_topic_name = "/reconstruction/planes";
-int frequency = 0;
+float frequency = 0;
 vector<geometry::PlaneDetector*> PD;
 
 
@@ -28,6 +28,16 @@ vector<geometry::PlaneDetector*> PD;
 std::string get_topic_name(int input_number)
 {
 	return sub_topic_name + inputs[input_number];
+}
+
+/**
+ * @brief Returns the name of the topic to publish lpanes in.
+ *
+ * @params input_number Camera ID in the input list.
+ */
+std::string get_publish_name(int input_number)
+{
+	return pub_topic_name + inputs[input_number];
 }
 
 /**
@@ -59,15 +69,16 @@ int main(int argc, char *argv[])
 	// Initialize ROS
 		ros::init(argc, argv, "plane_detection_node");
 		ros::NodeHandle nh;
+		ros::NodeHandle node_ransac("~/RANSAC");
 
 	// create PointCloud and PlaneDetector objects
 		for (int i = 0 ; i < n_inputs ; i++)
 		{
-			PD.push_back(new geometry::PlaneDetector(nh, get_topic_name(i), pub_topic_name));
+			PD.push_back(new geometry::PlaneDetector(nh, get_topic_name(i), get_publish_name(i)));
 		}
 
 	// dynamic reconfigure
-		dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(nh);
+		dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);
 		dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig>::CallbackType plane_detection_cb;
 		plane_detection_cb = boost::bind(&plane_detection_conf_callback, _1, _2);
 		plane_detection_srv.setCallback(plane_detection_cb);

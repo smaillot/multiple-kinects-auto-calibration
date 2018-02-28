@@ -69,7 +69,7 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
 {
     ROS_DEBUG("Updating PC object");
-    // init variables
+    // convert message
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
         ros::Time t = ros::Time(0);

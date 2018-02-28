@@ -16,7 +16,7 @@ const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string pc_topic_name = "/qhd/points";
 const string pub_topic_name = "/reconstruction/point_clouds";
-int frequency = 0;
+float frequency = 0;
 vector<geometry::PointCloud*> PC;
 
 std::string get_topic_name(int input_number)
