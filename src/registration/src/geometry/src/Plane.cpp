@@ -1,18 +1,32 @@
 #include <geometry/Plane.h>
 
+ using namespace geometry;
+
 /**
  * @brief Plane class constructor defining plane from a point and a normal vector.
  * 
  * @param normal Normal vector to the plane.
  * @param point Any point in the plane.
  */
-
- using namespace geometry;
- 
 Plane::Plane(tf::Vector3 normal, tf::Vector3 point)
 {
     this->normal = normal.normalized();
     this->point = point;
+    this->d = -(normal.dot(point));
+}
+
+/**
+ * @brief Plane class constructor defining plane from a tf transform.
+ * 
+ * @param normal Normal vector to the plane.
+ * @param point Any point in the plane.
+ */
+Plane::Plane(tf::Transform transform)
+{
+    this->point = tf::Vector3(transform.getOrigin().x(),
+                                transform.getOrigin().y(),
+                                transform.getOrigin().z());
+    this->normal = transform.getBasis() * tf::Vector3(0,0,1);
     this->d = -(normal.dot(point));
 }
 
@@ -55,8 +69,8 @@ Line Plane::intersect(Plane P)
     tf::Vector3 u2 = -d1 * n2;                      //-d1 * N2
     tf::Vector3 p = (u1 + u2).cross(v) / dot;       // (d2*N1-d1*N2) X V / V dot V
 
-    ROS_DEBUG_STREAM("Plane 1: normal = (" << this->normal.getX() << ", + " << this->normal.getY() << ", + " << this->normal.getZ() << "), point = (" << this->point.getX() << ", + " << this->point.getY() << ", + " << this->point.getZ() << ")");
-    ROS_DEBUG_STREAM("Plane 2: normal = (" << P.normal.getX() << ", + " << P.normal.getY() << ", + " << P.normal.getZ() << "), point = (" << P.point.getX() << ", + " << P.point.getY() << ", + " << P.point.getZ() << ")");
+    ROS_DEBUG_STREAM("Plane 1: normal = (" << this->normal.getX() << ", " << this->normal.getY() << ", + " << this->normal.getZ() << "), point = (" << this->point.getX() << ", " << this->point.getY() << ", " << this->point.getZ() << ")");
+    ROS_DEBUG_STREAM("Plane 2: normal = (" << P.normal.getX() << ", " << P.normal.getY() << ", + " << P.normal.getZ() << "), point = (" << P.point.getX() << ", " << P.point.getY() << ", " << P.point.getZ() << ")");
     ROS_DEBUG_STREAM("Line detected: direction = (" << v.getX() << ", " << v.getY() << ", " << v.getZ() << "), point =  (" << p.getX() << ", " << p.getY() << ", " << p.getZ() << ")");
 
     return Line(v, p);

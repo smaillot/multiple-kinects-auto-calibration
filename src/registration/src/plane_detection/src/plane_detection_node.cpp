@@ -18,7 +18,7 @@ const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
 const string pub_topic_name = "/reconstruction/planes";
 float frequency = 0;
-vector<geometry::PointCloud*> PC;
+vector<geometry::PlaneDetector*> PD;
 
 
 /**

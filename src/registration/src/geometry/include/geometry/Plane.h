@@ -3,10 +3,12 @@
 
 // std
 	#include <cmath>
+	#include <iostream>
 // ros
 	#include <ros/console.h>
 // tf
 	#include <tf/LinearMath/Vector3.h>
+	#include <tf/transform_listener.h>
 // My libraries
 	#include <geometry/Line.h>
 
@@ -26,6 +28,7 @@ namespace geometry
 
 		public:
 			Plane(tf::Vector3 normal, tf::Vector3 point);
+			Plane(tf::Transform transform);
 			Plane(float* coef);
 			Line intersect(Plane P);
 	};

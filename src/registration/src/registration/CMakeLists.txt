@@ -56,3 +56,13 @@ add_dependencies(preprocessing_node
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
+
+add_executable(line_matching_node src/line_matching_node.cpp)
+target_link_libraries(line_matching_node 
+  ${catkin_LIBRARIES}
+  geometry
+)
+add_dependencies(line_matching_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
