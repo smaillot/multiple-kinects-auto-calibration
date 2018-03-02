@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 			line_list.action = visualization_msgs::Marker::ADD;
 			line_list.pose.orientation.w = 1.0;
 			line_list.type = visualization_msgs::Marker::LINE_LIST;
-			line_list.scale.x = 0.05;
+			line_list.scale.x = 0.01;
 			line_list.color.b = 1.0;
 			line_list.color.a = 1.0;
 

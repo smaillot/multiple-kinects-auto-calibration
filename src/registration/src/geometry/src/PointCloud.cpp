@@ -80,7 +80,7 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
     /* process cloud */
     
         this->subsample();
-        // this->cut();
+        this->cut();
         // this->radius_filter();
     
     /*****************/
@@ -117,29 +117,38 @@ void PointCloud::subsample()
  */
 void PointCloud::cut()
 {
-    if (this->cutting_params.x.enable)
+    if (this->cutting_params.x.enable || this->cutting_params.y.enable || this->cutting_params.z.enable)
     {
-        pcl::PCLPointCloud2ConstPtr cloudPtr(new pcl::PCLPointCloud2(*this->cloud));
-        this->filter_cut.setInputCloud(cloudPtr);
-        this->filter_cut.setFilterFieldName("x");
-        this->filter_cut.setFilterLimits(this->cutting_params.x.bounds[0], this->cutting_params.x.bounds[1]);
-        this->filter_cut.filter(*this->cloud);
-    }
-    if (this->cutting_params.y.enable)
-    {
-        pcl::PCLPointCloud2ConstPtr cloudPtr(new pcl::PCLPointCloud2(*this->cloud));
-        this->filter_cut.setInputCloud(cloudPtr);
-        this->filter_cut.setFilterFieldName("y");
-        this->filter_cut.setFilterLimits(this->cutting_params.y.bounds[0], this->cutting_params.y.bounds[1]);
-        this->filter_cut.filter(*this->cloud);
-    }
-    if (this->cutting_params.z.enable)
-    {
-        pcl::PCLPointCloud2ConstPtr cloudPtr(new pcl::PCLPointCloud2(*this->cloud));
-        this->filter_cut.setInputCloud(cloudPtr);
-        this->filter_cut.setFilterFieldName("z");
-        this->filter_cut.setFilterLimits(this->cutting_params.z.bounds[0], this->cutting_params.z.bounds[1]);
-        this->filter_cut.filter(*this->cloud);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::fromPCLPointCloud2(*this->cloud, *temp_cloud);
+        if (this->cutting_params.x.enable) 
+        {
+            this->filter_cut.setInputCloud(temp_cloud); 
+            this->filter_cut.setFilterFieldName("x"); 
+            this->filter_cut.setFilterLimits(this->cutting_params.x.bounds[0], this->cutting_params.x.bounds[1]); 
+            this->filter_cut.filter(*filtered); 
+            temp_cloud = filtered;
+        } 
+        if (this->cutting_params.y.enable) 
+        { 
+            this->filter_cut.setInputCloud(temp_cloud); 
+            this->filter_cut.setFilterFieldName("y"); 
+            this->filter_cut.setFilterLimits(this->cutting_params.y.bounds[0], this->cutting_params.y.bounds[1]); 
+            this->filter_cut.filter(*filtered); 
+            temp_cloud = filtered;
+        } 
+        if (this->cutting_params.z.enable) 
+        { 
+            this->filter_cut.setInputCloud(temp_cloud); 
+            this->filter_cut.setFilterFieldName("z"); 
+            this->filter_cut.setFilterLimits(this->cutting_params.z.bounds[0], this->cutting_params.z.bounds[1]); 
+            this->filter_cut.filter(*filtered);
+            temp_cloud = filtered;
+        }
+        pcl::PCLPointCloud2* output(new pcl::PCLPointCloud2());
+        pcl::toPCLPointCloud2(*filtered, *output);
+        this->cloud = output;
     }
 }
 

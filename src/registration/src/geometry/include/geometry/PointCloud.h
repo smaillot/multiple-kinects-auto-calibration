@@ -12,8 +12,8 @@
 	#include <pcl/impl/point_types.hpp>
 	#include <pcl_ros/transforms.h>
 	#include <pcl/filters/voxel_grid.h>
-	#include <pcl/filters/radius_outlier_removal.h>
 	#include <pcl/filters/passthrough.h>
+	#include <pcl/filters/radius_outlier_removal.h>
 	#include <sensor_msgs/PointCloud2.h>
 // tf
 	#include <tf/LinearMath/Transform.h>
@@ -75,7 +75,7 @@ namespace geometry
 			// point cloud
 				pcl::PCLPointCloud2* cloud;
 				pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
-				pcl::PassThrough<pcl::PCLPointCloud2> filter_cut;
+    			pcl::PassThrough<pcl::PointXYZRGB> filter_cut;
 				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
 
 			// parameters

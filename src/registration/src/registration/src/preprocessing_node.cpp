@@ -75,14 +75,14 @@ void subsampling_conf_callback(registration::SubSamplingConfig &config, uint32_t
 void cutting_conf_callback(registration::CuttingConfig &config, uint32_t level)
 {
     bool x_enable = config.x_enable;
-	bool x_min = config.x_min;
-	bool x_max = config.x_max;
+	float x_min = config.x_min / 1000;
+	float x_max = config.x_max / 1000;
 	bool y_enable = config.y_enable;
-	bool y_min = config.y_min;
-	bool y_max = config.y_max;
+	float y_min = config.y_min / 1000;
+	float y_max = config.y_max / 1000;
 	bool z_enable = config.z_enable;
-	bool z_min = config.z_min;
-	bool z_max = config.z_max;
+	float z_min = config.z_min / 1000;
+	float z_max = config.z_max / 1000;
 
 	for (int i = 0 ; i < n_inputs ; i++)
 	{
