@@ -159,11 +159,19 @@ void PointCloud::radius_filter()
 {
     if (this->radius_filtering_params.enable)
     {
-        pcl::PCLPointCloud2ConstPtr cloudPtr(new pcl::PCLPointCloud2(*this->cloud));
+        pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2(*this->cloud);
+        pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
+        pcl::PCLPointCloud2 filtered;
+
         filter_radius.setInputCloud(cloudPtr);
         filter_radius.setRadiusSearch(this->radius_filtering_params.radius);
         filter_radius.setMinNeighborsInRadius(this->radius_filtering_params.min_neighbors);
-        filter_radius.filter(*this->cloud);
+        filter_radius.filter(filtered);
+
+        if (filtered.data.size() > 0)
+        {
+            this->cloud = &filtered;
+        }
     }
     else
     {

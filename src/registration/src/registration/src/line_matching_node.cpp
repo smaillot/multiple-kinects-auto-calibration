@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
 		ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>(pub_topic_name, 100);
 		// ros::NodeHandle node_ransac("~/RANSAC");
     	tf::TransformListener tf_listener; 
+		static tf::TransformBroadcaster br;
     	tf::StampedTransform tf; 
 		ros::Duration(0.5).sleep(); // for for tf listener initialization
 		vector <geometry::Plane> cam_planes;
@@ -159,18 +160,20 @@ int main(int argc, char *argv[])
  				marker_pub.publish(line_list);
 			}
 
-		// publish markers
+		// considering 2 planes for each camera
+			tf::Transform transform = lines[0][0].get_transform(lines[1][0]);
+			br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), REFERENCE_FRAME, "cam_center2"));
 
 		// sleep
-		if (frequency > 0)
-		{
-			ros::spinOnce();
-			loop_rate.sleep();
-		}
-		else
-		{
-			ros::spin();
-		}
+			if (frequency > 0)
+			{
+				ros::spinOnce();
+				loop_rate.sleep();
+			}
+			else
+			{
+				ros::spin();
+			}
 	}
 
 	return 0;

@@ -35,3 +35,27 @@ std::vector <geometry_msgs::Point> Line::get_points(float length)
 
     return segment;
 }
+
+
+/**
+* @brief Compute the transform between 2 frames given a identiaue line equation in each frame. 
+* One translation is still undetermine (in the direction of the current line), this is fixed by finding the transformatin that leads to the smallest translation.
+*
+* @params line The line object in a different reference frame.
+*/
+tf::Transform Line::get_transform(geometry::Line line)
+{
+    tf::Vector3 v1 = this->direction;
+    tf::Vector3 v2 = line.point - this->point;
+    tf::Vector3 transl = -v2 - v1.dot(v2) / v1.length() * v1;
+    tf::Vector3 axis = v1.cross(v2);
+    float angle = v1.angle(v2);
+    tf::Quaternion Q(axis, angle);
+
+    // convert into tf
+        tf::Transform transform;
+        transform.setOrigin(transl);
+        transform.setRotation(Q);
+
+    return transform;
+}

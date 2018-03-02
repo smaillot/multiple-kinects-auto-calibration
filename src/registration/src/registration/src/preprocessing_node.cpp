@@ -99,7 +99,7 @@ void cutting_conf_callback(registration::CuttingConfig &config, uint32_t level)
 void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config, uint32_t level)
 {
     bool enable = config.enable;
-	double radius = config.radius;
+	double radius = config.radius / 1000;
 	int min_neighbors = config.min_neighbors;
 
 	for (int i = 0 ; i < n_inputs ; i++)
