@@ -1,0 +1,31 @@
+// std
+    #include <Eigen/Core>
+    #include <vector>
+// pc
+	#include <sensor_msgs/PointCloud2.h>
+    #include <pcl/point_types.h>
+    #include <pcl/point_cloud.h>
+    #include <pcl/common/time.h>
+    #include <pcl/console/print.h>
+    #include <pcl/features/normal_3d_omp.h>
+    #include <pcl/features/fpfh_omp.h>
+    #include <pcl/filters/filter.h>
+    #include <pcl/filters/voxel_grid.h>
+    #include <pcl/io/pcd_io.h>
+    #include <pcl/registration/icp.h>
+    #include <pcl/registration/sample_consensus_prerejective.h>
+    #include <pcl/segmentation/sac_segmentation.h>
+    #include <pcl/visualization/pcl_visualizer.h>
+    #include <pcl/PCLPointCloud2.h>
+    #include <pcl/conversions.h>
+    #include <pcl_conversions/pcl_conversions.h>
+	#include <pcl/filters/extract_indices.h>
+    #include <pcl/PointIndices.h>
+    #include <pcl/PCLHeader.h>
+// synchronization
+    #include <message_filters/subscriber.h>
+    #include <message_filters/time_synchronizer.h>
+    #include <message_filters/sync_policies/approximate_time.h>
+// dynamic reconfigure
+    #include <dynamic_reconfigure/server.h>
+    #include <registration/PoseEstimationConfig.h>

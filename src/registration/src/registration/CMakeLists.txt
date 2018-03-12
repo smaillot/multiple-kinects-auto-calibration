@@ -16,7 +16,6 @@ find_package(catkin
     sensor_msgs
     pcl_ros
     geometry
-    # plane_detection
 )
 
 ################################################
@@ -27,6 +26,7 @@ generate_dynamic_reconfigure_options(
   cfg/SubSampling.cfg
   cfg/Cutting.cfg
   cfg/RadiusFiltering.cfg
+  cfg/PoseEstimation.cfg
 )
 
 ###################################
@@ -74,4 +74,14 @@ target_link_libraries(merging_node
 add_dependencies(merging_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+)
+
+add_executable(robust_pose_estimation_node src/robust_pose_estimation_node.cpp)
+target_link_libraries(robust_pose_estimation_node 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(robust_pose_estimation_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
