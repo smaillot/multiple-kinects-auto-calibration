@@ -1,6 +1,8 @@
 // std
     #include <string>
     #include <iostream>
+// pc
+	#include <sensor_msgs/PointCloud2.h>
 // tf
 	#include <tf/transform_listener.h>
     #include <tf/transform_broadcaster.h>
