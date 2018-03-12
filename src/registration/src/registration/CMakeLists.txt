@@ -66,3 +66,12 @@ add_dependencies(line_matching_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(merging_node src/merging_node.cpp)
+target_link_libraries(merging_node 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(merging_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
