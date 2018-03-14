@@ -57,12 +57,12 @@ add_dependencies(preprocessing_node
   ${PROJECT_NAME}_gencfg
 )
 
-add_executable(line_matching_node src/line_matching_node.cpp)
-target_link_libraries(line_matching_node 
+add_executable(plane_matching_node src/plane_matching_node.cpp)
+target_link_libraries(plane_matching_node 
   ${catkin_LIBRARIES}
   geometry
 )
-add_dependencies(line_matching_node
+add_dependencies(plane_matching_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )

@@ -1,6 +1,7 @@
 // std
     #include <string>
     #include <iostream>
+    #include <vector>
 // tf
 	#include <tf/transform_listener.h>
     #include <tf/transform_broadcaster.h>
