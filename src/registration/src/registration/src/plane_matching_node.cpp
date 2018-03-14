@@ -1,6 +1,7 @@
 #include <registration/plane_matching_node.h>
 
 using namespace std;
+using namespace Eigen;
 /*
 *	args parser
 *
@@ -53,6 +54,48 @@ bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, str
 		// ROS_DEBUG_STREAM(name << " not found");
 	}
 	return exists;
+}
+
+motion_t motion_from_plane_planes(vector <geometry::Plane*> &sourcePlanes, vector <geometry::Plane*> &targetPlanes)
+{
+	int n_planes_1 = sourcePlanes.size();
+	int n_planes_2 = targetPlanes.size();
+	motion_t motion;
+
+	if (n_planes_1 != n_planes_2)
+	{
+		ROS_ERROR("The number of planes detected in the 2 sets must be equal");
+		return motion;
+	}
+	if (n_planes_1 < 3)
+	{
+		ROS_ERROR("At least 3 planes are needed");
+		return motion;
+	}
+
+	MatrixX3d Ns(n_planes_1, 3);
+	MatrixX3d Nt(n_planes_1, 3);
+	VectorXd d(n_planes_1);
+	for (int line = 0; line < n_planes_1; line++)
+	{
+		tf::Vector3 normal_1 = sourcePlanes[line]->normal;
+		tf::Vector3 normal_2 = targetPlanes[line]->normal;
+		Ns(line, 1) = normal_1.getX();
+		Ns(line, 2) = normal_1.getY();
+		Ns(line, 3) = normal_1.getZ();
+		Nt(line, 1) = normal_2.getX();
+		Nt(line, 2) = normal_2.getY();
+		Nt(line, 3) = normal_2.getZ();
+		d(line) = sourcePlanes[line]->d - targetPlanes[line]->d;
+	}
+	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
+	Matrix3d Rhat = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * Ns);
+	Vector3d T = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
+
+	JacobiSVD<Matrix3d> svd(Rhat, ComputeThinU | ComputeThinV);
+	Matrix3d = svd.matrixU() * svd.matrixV().transpose();
+
+	// compute residual
 }
 
 // /**
