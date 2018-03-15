@@ -10,14 +10,18 @@ find_package(catkin REQUIRED)
 find_package(catkin 
   REQUIRED 
     dynamic_reconfigure
+    cmake_modules
   COMPONENTS
     roscpp
     pcl_conversions
+    tf_conversions
     sensor_msgs
     pcl_ros
     geometry
     # plane_detection
 )
+
+find_package(Eigen REQUIRED)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -34,7 +38,7 @@ generate_dynamic_reconfigure_options(
 ###################################
 
 catkin_package(
-#   DEPENDS geometry
+   DEPENDS Eigen
 )
 
 ###########
@@ -43,6 +47,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
   include
 )
 

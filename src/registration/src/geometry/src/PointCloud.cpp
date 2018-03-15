@@ -6,14 +6,41 @@ using namespace geometry;
 /**
  * @brief Default constructor.
  */
-PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name)
+PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name, std::string frame = "cam_center")
 {
     this->node = nh;
-	this->tf_listener = new tf::TransformListener; 
+	this->tf_listener = new tf::TransformListener;
+    this->reference_frame = frame; 
 
     this->sub_name = topic_name;
     this->pub_name = pub_name;
 
+    this->filtering = true;
+    subsampling_params_t subsampling_params = {false, 0.02, 0.02, 0.02};
+    cutting_params_t cutting_params = {{false, -1.0, 1.0}, {false, -1.0, 1.0}, {false, -1.0, 1.0}};
+    radius_filtering_params_t radius_filtering_params = {false, 0.1, 50};
+
+    this->subsampling_params = subsampling_params; 
+    this->cutting_params = cutting_params;
+    this->radius_filtering_params = radius_filtering_params;
+
+    this->pc_sub = this->node.subscribe(this->sub_name, 1, &PointCloud::update, this);
+    this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
+}
+
+/**
+ * @brief Default constructor.
+ */
+PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name, std::string frame = "cam_center", bool filtering = true)
+{
+    this->node = nh;
+	this->tf_listener = new tf::TransformListener;
+    this->reference_frame = frame; 
+
+    this->sub_name = topic_name;
+    this->pub_name = pub_name;
+
+    this->filtering = filtering;
     subsampling_params_t subsampling_params = {false, 0.02, 0.02, 0.02};
     cutting_params_t cutting_params = {{false, -1.0, 1.0}, {false, -1.0, 1.0}, {false, -1.0, 1.0}};
     radius_filtering_params_t radius_filtering_params = {false, 0.1, 50};
@@ -62,6 +89,14 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 }
 
 /**
+ * @brief Reference frame setter.
+ */
+void PointCloud::set_reference_frame(std::string frame)
+{
+    this->reference_frame = frame;
+}
+
+/**
  * @brief Update point cloud from topic.
  * 
  * @param cloud Input cloud message.
@@ -73,15 +108,17 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
         ros::Time t = ros::Time(0);
-        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 
     /* process cloud */
     
-        this->subsample();
-        this->cut();
-        // this->radius_filter();
+        if (this->filtering)
+        {
+            this->subsample();
+            this->cut();
+            // this->radius_filter();
+        }
     
     /*****************/
 
@@ -90,6 +127,7 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         // publish
             sensor_msgs::PointCloud2* msg_pub;
             msg_pub = this->get_pc();
+            pcl_ros::transformPointCloud(this->reference_frame, *msg_pub, *msg_pub, *this->tf_listener);
             this->pc_pub.publish(*msg_pub);
     }
     else

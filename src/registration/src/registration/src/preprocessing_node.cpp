@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 	// create PointCloud objects
 		for (int i = 0 ; i < n_inputs ; i++)
 		{
-			PC.push_back(new geometry::PointCloud(nh, get_topic_name(i), get_publish_name(i)));
+			PC.push_back(new geometry::PointCloud(nh, get_topic_name(i), get_publish_name(i), "cam_center"));
 		}
 
 	// dynamic reconfigure

@@ -26,6 +26,7 @@ namespace geometry
             // ros node interaction
                 ros::NodeHandle node;  
                 const tf::TransformListener* tf_listener;
+                std::string reference_frame;
 
                 std::string sub_name;  
                 std::string pub_name;
@@ -48,7 +49,7 @@ namespace geometry
 
         public:
 
-            PlaneDetector(ros::NodeHandle nh, std::string topic_name, std::string pub_name);
+            PlaneDetector(ros::NodeHandle nh, std::string topic_name, std::string pub_name, std::string frame);
 
             void set_params(bool enabled, int n_planes, float th_dist, int max_it);
 

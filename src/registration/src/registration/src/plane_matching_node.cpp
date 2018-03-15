@@ -14,12 +14,12 @@ using namespace Eigen;
 const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
-const string pub_topic_name = "/reconstruction/lines";
+const string pub_topic_name = "/reconstruction/point_clouds";
 float frequency = 2;
 vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
-// vector <vector <geometry::PointCloud*> > PC[n_inputs];
 
+vector <geometry::PointCloud*> PC;
 /**
  * @brief Returns the publishing topic of a given camera.
  *
@@ -31,13 +31,23 @@ std::string get_topic_name(int input_number, int plane)
 }
 
 /**
+ * @brief Returns the publishing opint cloud topic of a given camera.
+ *
+ * @params input_number Camera ID in the input list.
+ */
+std::string get_pc_topic_name(int input_number)
+{
+	return pub_topic_name + inputs[input_number];
+}
+
+/**
  * @brief Returns the name of the topic to publish planes in.
  *
  * @params input_number Camera ID in the input list.
  */
-std::string get_publish_name(int input_number, int plane_number)
+std::string get_publish_name(int input_number)
 {
-  return pub_topic_name + inputs[input_number] + "_" + patch::to_string(plane_number) + "_registered";
+  return pub_topic_name + "registered/" + inputs[input_number];
 }
 
 bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, string name)
@@ -46,7 +56,7 @@ bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, str
 	ros::Duration(0.1).sleep();
 	try
 	{
-		tf_listener->lookupTransform(REFERENCE_FRAME, name, ros::Time(0), *tf);
+		tf_listener->lookupTransform("cam_center", name, ros::Time(0), *tf);
 		exists = true;
 	}
 	catch (tf::TransformException &ex)
@@ -56,7 +66,7 @@ bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, str
 	return exists;
 }
 
-motion_t motion_from_plane_planes(vector <geometry::Plane*> &sourcePlanes, vector <geometry::Plane*> &targetPlanes)
+motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes, const vector <geometry::Plane*> &targetPlanes)
 {
 	int n_planes_1 = sourcePlanes.size();
 	int n_planes_2 = targetPlanes.size();
@@ -75,27 +85,58 @@ motion_t motion_from_plane_planes(vector <geometry::Plane*> &sourcePlanes, vecto
 
 	MatrixX3d Ns(n_planes_1, 3);
 	MatrixX3d Nt(n_planes_1, 3);
+	VectorXd ds(n_planes_1);
+	VectorXd dt(n_planes_1);
 	VectorXd d(n_planes_1);
 	for (int line = 0; line < n_planes_1; line++)
 	{
 		tf::Vector3 normal_1 = sourcePlanes[line]->normal;
 		tf::Vector3 normal_2 = targetPlanes[line]->normal;
-		Ns(line, 1) = normal_1.getX();
-		Ns(line, 2) = normal_1.getY();
-		Ns(line, 3) = normal_1.getZ();
-		Nt(line, 1) = normal_2.getX();
-		Nt(line, 2) = normal_2.getY();
-		Nt(line, 3) = normal_2.getZ();
-		d(line) = sourcePlanes[line]->d - targetPlanes[line]->d;
+		Ns(line, 0) = normal_1.getX();
+		Ns(line, 1) = normal_1.getY();
+		Ns(line, 2) = normal_1.getZ();
+		Nt(line, 0) = normal_2.getX();
+		Nt(line, 1) = normal_2.getY();
+		Nt(line, 2) = normal_2.getZ();
+		ds(line) = sourcePlanes[line]->d;
+		dt(line) = targetPlanes[line]->d;
 	}
+	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
 	Matrix3d Rhat = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * Ns);
 	Vector3d T = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
 
-	JacobiSVD<Matrix3d> svd(Rhat, ComputeThinU | ComputeThinV);
-	Matrix3d = svd.matrixU() * svd.matrixV().transpose();
+	JacobiSVD<Matrix3d> svd(Rhat, ComputeFullV | ComputeFullU);
+	Matrix3d R = svd.matrixU() * svd.matrixV().transpose();
 
-	// compute residual
+	// compute residuals
+		Matrix4d H = Matrix4d::Identity();
+		H.topLeftCorner(3, 3) = R;
+		H.topRightCorner(3, 1) = T;
+		MatrixX4d planes_target(n_planes_1, 4);
+		MatrixX4d planes_source(n_planes_1, 4);
+		planes_source.topLeftCorner(n_planes_1, 3) = Ns;
+		planes_source.topRightCorner(n_planes_1, 1) = ds;
+		planes_target.topLeftCorner(n_planes_1, 3) = Nt;
+		planes_target.topRightCorner(n_planes_1, 1) = dt;
+		MatrixX4d residuals_mat;
+		residuals_mat = planes_target - planes_source * H.inverse();
+
+		vector <float> residuals_angle;
+		vector <float> residuals_translation;
+		for (int i = 0; i < n_planes_1; i++)
+		{
+			residuals_angle.push_back(sqrt(pow(residuals_mat(i, 0), 2.0) + pow(residuals_mat(i, 1), 2.0) + pow(residuals_mat(i, 2), 2.0)));
+			residuals_translation.push_back(residuals_mat(i, 3));
+		}
+
+	Affine3d transform;
+	transform.matrix() = H;
+	tf::transformEigenToTF(transform, motion.H);
+	motion.residuals_angle = residuals_angle;
+	motion.residuals_translation = residuals_translation;
+
+	return motion;
 }
 
 // /**
@@ -127,13 +168,17 @@ int main(int argc, char *argv[])
 	// Initialize ROS
 		ros::init(argc, argv, "plane_matching_node");
 		ros::NodeHandle nh;
-		ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>(pub_topic_name, 100);
-		// ros::NodeHandle node_ransac("~/RANSAC");
     	tf::TransformListener tf_listener; 
 		static tf::TransformBroadcaster br;
     	tf::StampedTransform tf; 
-		ros::Duration(0.5).sleep(); // for for tf listener initialization
-		bool new_planes;
+		ros::Duration(0.5).sleep();
+
+		for (int i = 0; i < n_inputs; i++)
+		{
+			string frame = "registration";
+			if (i == 0) frame = "cam_center";
+			PC.push_back(new geometry::PointCloud(nh, get_pc_topic_name(i), get_publish_name(i), frame, false));
+		}
 
 	// // dynamic reconfigure
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);
@@ -157,17 +202,14 @@ int main(int argc, char *argv[])
 					n++;
 				}
 				planes.push_back(temp_planes);
-			// // update point clouds if needed
-			// 	if (new_planes) 
-			// 	{
-			// 		PC[i].clear();
-			// 		ROS_DEBUG_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
-			// 		for (int j = 0 ; j < n ; j++)
-			// 		{
-			// 			PC[i].push_back(new geometry::PointCloud(nh, get_topic_name(i, j), get_publish_name(i, j)));
-			// 		}
-			// 	}
+				ROS_DEBUG_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
 		}
+
+		motion_t motion = motion_from_plane_planes(planes[0], planes[1]);
+		br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "registration"));
+
+		ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
+		ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
 
 	// sleep
 		if (frequency > 0)
