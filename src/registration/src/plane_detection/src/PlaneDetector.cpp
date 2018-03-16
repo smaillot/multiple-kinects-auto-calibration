@@ -8,11 +8,12 @@ using namespace geometry;
  * @params n_planes Number of planes to detect
  * @params PC Pointer on a custom PointCloud object from geometry package
  */
- PlaneDetector::PlaneDetector(ros::NodeHandle nh, std::string topic_name, std::string pub_name)
+ PlaneDetector::PlaneDetector(ros::NodeHandle nh, std::string topic_name, std::string pub_name, std::string frame = "cam_center")
 { 
     this->node = nh;
     this->sub_name = topic_name;
     this->pub_name = pub_name;
+    this->reference_frame = frame;
     this->tf_listener = new tf::TransformListener; 
     this->seg = pcl::SACSegmentation<pcl::PointXYZ>();
     this->cloud = new pcl::PCLPointCloud2;
@@ -65,7 +66,7 @@ void PlaneDetector::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
         ros::Time t = ros::Time(0);
-        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
+        pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 

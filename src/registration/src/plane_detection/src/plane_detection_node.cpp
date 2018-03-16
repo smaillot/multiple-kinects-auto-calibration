@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 	// create PlaneDetector objects
 		for (int i = 0 ; i < n_inputs ; i++)
 		{
-			PD.push_back(new geometry::PlaneDetector(nh, get_topic_name(i), get_publish_name(i)));
+			PD.push_back(new geometry::PlaneDetector(nh, get_topic_name(i), get_publish_name(i), "cam_center"));
 		}
 
 	// dynamic reconfigure

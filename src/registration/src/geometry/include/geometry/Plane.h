@@ -21,12 +21,11 @@ namespace geometry
 {
 	class Plane
 	{
-		private:
+		public:
 			tf::Vector3 normal;                   
 			tf::Vector3 point;
 			float d;                         
 
-		public:
 			Plane(tf::Vector3 normal, tf::Vector3 point);
 			Plane(tf::Transform transform);
 			Plane(float* coef);
