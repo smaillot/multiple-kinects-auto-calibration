@@ -9,8 +9,7 @@ using namespace geometry;
 PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name)
 {
     this->node = nh;
-	this->tf_listener = new tf::TransformListener;
-    this->reference_frame = "cam_center";
+	this->tf_listener = new tf::TransformListener; 
 
     this->sub_name = topic_name;
     this->pub_name = pub_name;
@@ -63,14 +62,6 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 }
 
 /**
- * @brief Reference frame setter.
- */
-void PointCloud::set_reference_frame(std::string frame)
-{
-    this->reference_frame = frame;
-}
-
-/**
  * @brief Update point cloud from topic.
  * 
  * @param cloud Input cloud message.
@@ -82,6 +73,7 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
         ros::Time t = ros::Time(0);
+        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 
@@ -98,7 +90,6 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         // publish
             sensor_msgs::PointCloud2* msg_pub;
             msg_pub = this->get_pc();
-            pcl_ros::transformPointCloud("cam_center", *msg_pub, *msg_pub, *this->tf_listener);
             this->pc_pub.publish(*msg_pub);
     }
     else

@@ -21,6 +21,8 @@
 	#include <tf/transform_listener.h>
 	#include <tf/transform_broadcaster.h>
 
+const std::string REFERENCE_FRAME = "cam_center";
+
 struct cutting_axis_t
 {
 	bool enable;
@@ -64,7 +66,6 @@ namespace geometry
 			// ros node interaction
 				ros::NodeHandle node;  
 				const tf::TransformListener* tf_listener;
-				std::string reference_frame;
 
 				std::string sub_name;  
 				std::string pub_name;
@@ -94,7 +95,6 @@ namespace geometry
 				void set_subsampling_params(subsampling_params_t subsamples_params);
 				void set_cutting_params(cutting_params_t cutting_params);
 				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
-				void set_reference_frame(std::string frame);
 
 			// update
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);

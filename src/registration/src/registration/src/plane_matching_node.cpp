@@ -15,12 +15,11 @@ const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
 const string pub_topic_name = "/reconstruction/point_clouds";
-float frequency = 2;
+float frequency = 0;
 vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
-tf::TransformListener *tf_listener;
+vector <PCRegistered*> PC;
 
-vector <geometry::PointCloud*> PC;
 /**
  * @brief Returns the publishing topic of a given camera.
  *
@@ -48,21 +47,21 @@ std::string get_pc_topic_name(int input_number)
  */
 std::string get_publish_name(int input_number)
 {
-  return pub_topic_name + "registered/" + inputs[input_number];
+  return pub_topic_name + "/registered" + inputs[input_number];
 }
 
-bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, string name)
+bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* transf, string name)
 {
 	bool exists = false;
 	ros::Duration(0.1).sleep();
 	try
 	{
-		tf_listener->lookupTransform("cam_center", name, ros::Time(0), *tf);
+		tf_listener->lookupTransform("cam_center", name, ros::Time(0), *transf);
 		exists = true;
 	}
 	catch (tf::TransformException &ex)
 	{
-		// ROS_DEBUG_STREAM(name << " not found");
+		ROS_DEBUG_STREAM(name << " not found");
 	}
 	return exists;
 }
@@ -158,13 +157,52 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 //     ROS_DEBUG("Plane detection parameters config updated");
 // }
 
-void pc_callback(sensor_msgs::PointCloud2 &pc, int i, ros::Publisher pc_pub)
+void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 {
-	std::string frame = "registration";
-	if (i == 0) frame = "cam_center";
-	sensor_msgs::PointCloud2 temp;
-	pcl_ros::transformPointCloud(frame, pc, temp, *tf_listener);
-	pc_pub.publish(temp);
+    tf::StampedTransform transf; 
+	planes.clear();
+	for (int i = 0; i < n_inputs; i++)
+	{
+		// update planes
+			temp_planes.clear();
+			int n = 0;
+			while (tf_exists(&this->tf_listener, &transf, get_topic_name(i, n+1)))
+			{
+				temp_planes.push_back(new geometry::Plane(transf));
+				n++;
+			}
+			planes.push_back(temp_planes);
+			ROS_DEBUG_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
+	}
+
+	motion_t motion = motion_from_plane_planes(planes[0], planes[1]);
+	this->br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), "/cam_center", "/registration"));
+
+	ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
+	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
+
+	sensor_msgs::PointCloud2 input = *pc;
+	sensor_msgs::PointCloud2 output;
+
+	pcl_ros::transformPointCloud(this->frame, input, output, this->tf_listener);
+	if (output.data.size() > 0)
+	{
+		this->pc_pub.publish(output);
+	}
+	else
+	{
+		ROS_WARN_STREAM("frame " + this->frame + " not found");
+	}
+}
+
+PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, std::string frame, ros::NodeHandle node)
+{
+	this->sub_name = sub_name;
+	this->pub_name = pub_name;
+	this->frame = frame;
+	this->node = node;
+	this->pc_sub = this->node.subscribe(this->sub_name, 1, &PCRegistered::pc_callback, this);
+	this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
 }
 
 int main(int argc, char *argv[])
@@ -178,22 +216,14 @@ int main(int argc, char *argv[])
 	// Initialize ROS
 		ros::init(argc, argv, "plane_matching_node");
 		ros::NodeHandle nh;
-		static tf::TransformBroadcaster br;
-    	tf::StampedTransform tf; 
-		tf_listener = new tf::TransformListener();
 		ros::Duration(0.5).sleep();
-		// vector <ros::Subscriber> pc_sub;
-		// vector <ros::Publisher> pc_pub;
 
-		// for (int i = 0; i < n_inputs; i++)
-		// {
-		// 	ros::Subscriber temp_sub;
-		// 	ros::Publisher temp_pub;
-		// 	temp_sub = nh.subscribe(get_pc_topic_name(i), 1, boost::bind(pc_callback, _1, i));
-    	// 	temp_pub = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(i), 1);
-		// 	pc_sub.push_back(temp_sub);
-		// 	pc_pub.push_back(temp_pub);
-		// }
+		for (int i = 0; i < n_inputs; i++)
+		{
+			std::string frame = "/cam_center";
+			if (i == 1) frame = "/registration";
+			PC.push_back(new PCRegistered(get_pc_topic_name(i), get_publish_name(i), frame, nh));
+		}
 
 	// // dynamic reconfigure
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);
@@ -205,27 +235,6 @@ int main(int argc, char *argv[])
 	ros::Rate loop_rate(frequency);
 	while (ros::ok())
 	{
-		planes.clear();
-		for (int i = 0; i < n_inputs; i++)
-		{
-			// update planes
-				temp_planes.clear();
-				int n = 0;
-				while (tf_exists(tf_listener, &tf, get_topic_name(i, n+1)))
-				{
-					temp_planes.push_back(new geometry::Plane(tf));
-					n++;
-				}
-				planes.push_back(temp_planes);
-				ROS_DEBUG_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
-		}
-
-		motion_t motion = motion_from_plane_planes(planes[0], planes[1]);
-		br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "registration"));
-
-		ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
-		ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
-
 	// sleep
 		if (frequency > 0)
 		{

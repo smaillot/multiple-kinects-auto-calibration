@@ -23,4 +23,21 @@ struct motion_t
     std::vector <float> residuals_translation;
 };
 
+class PCRegistered
+{
+	private:
+		std::string sub_name;
+		std::string pub_name;
+		std::string frame;
+		ros::NodeHandle node;
+		tf::TransformListener tf_listener;
+		ros::Subscriber pc_sub;
+		ros::Publisher pc_pub;
+        tf::TransformBroadcaster br;
+		
+	public:
+		PCRegistered(std::string sub_name, std::string pub_name, std::string frame, ros::NodeHandle node);
+		void pc_callback(const sensor_msgs::PointCloud2ConstPtr& pc);
+};
+
 bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, std::string name);
