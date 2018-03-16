@@ -78,7 +78,6 @@ namespace geometry
 				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
 
 			// parameters
-				bool filtering;
 				subsampling_params_t subsampling_params;
 				cutting_params_t cutting_params;
 				radius_filtering_params_t radius_filtering_params;
@@ -86,8 +85,7 @@ namespace geometry
 		public:
 
 			// constructor
-				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name, std::string frames);
-				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name, std::string frames, bool filtering);
+				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name);
 					
 			// getters
 				sensor_msgs::PointCloud2* get_pc();

@@ -18,6 +18,7 @@ const string pub_topic_name = "/reconstruction/point_clouds";
 float frequency = 2;
 vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
+tf::TransformListener *tf_listener;
 
 vector <geometry::PointCloud*> PC;
 /**
@@ -157,6 +158,15 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 //     ROS_DEBUG("Plane detection parameters config updated");
 // }
 
+void pc_callback(sensor_msgs::PointCloud2 &pc, int i, ros::Publisher pc_pub)
+{
+	std::string frame = "registration";
+	if (i == 0) frame = "cam_center";
+	sensor_msgs::PointCloud2 temp;
+	pcl_ros::transformPointCloud(frame, pc, temp, *tf_listener);
+	pc_pub.publish(temp);
+}
+
 int main(int argc, char *argv[])
 {
 	// verbosity: debug
@@ -168,17 +178,22 @@ int main(int argc, char *argv[])
 	// Initialize ROS
 		ros::init(argc, argv, "plane_matching_node");
 		ros::NodeHandle nh;
-    	tf::TransformListener tf_listener; 
 		static tf::TransformBroadcaster br;
     	tf::StampedTransform tf; 
+		tf_listener = new tf::TransformListener();
 		ros::Duration(0.5).sleep();
+		// vector <ros::Subscriber> pc_sub;
+		// vector <ros::Publisher> pc_pub;
 
-		for (int i = 0; i < n_inputs; i++)
-		{
-			string frame = "registration";
-			if (i == 0) frame = "cam_center";
-			PC.push_back(new geometry::PointCloud(nh, get_pc_topic_name(i), get_publish_name(i), frame, false));
-		}
+		// for (int i = 0; i < n_inputs; i++)
+		// {
+		// 	ros::Subscriber temp_sub;
+		// 	ros::Publisher temp_pub;
+		// 	temp_sub = nh.subscribe(get_pc_topic_name(i), 1, boost::bind(pc_callback, _1, i));
+    	// 	temp_pub = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(i), 1);
+		// 	pc_sub.push_back(temp_sub);
+		// 	pc_pub.push_back(temp_pub);
+		// }
 
 	// // dynamic reconfigure
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);
@@ -196,7 +211,7 @@ int main(int argc, char *argv[])
 			// update planes
 				temp_planes.clear();
 				int n = 0;
-				while (tf_exists(&tf_listener, &tf, get_topic_name(i, n+1)))
+				while (tf_exists(tf_listener, &tf, get_topic_name(i, n+1)))
 				{
 					temp_planes.push_back(new geometry::Plane(tf));
 					n++;
