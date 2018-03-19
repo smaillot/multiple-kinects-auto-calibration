@@ -11,6 +11,15 @@ using namespace Eigen;
 *	output topics namespace
 */
 
+/* metaparameters influencing registration precision
+
+* number of planes
+* coefficient (trust) for each plane in W matrix
+* algorithm (plane-plane, points-plane)
+* plane matching
+
+*/
+
 const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
@@ -103,6 +112,7 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
+	W(2,2) = 0.0001; // the 3rd plane is less to be trusted, we need it only to fix y translation
 	Matrix3d Rhat = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * Ns);
 	Vector3d T = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
 

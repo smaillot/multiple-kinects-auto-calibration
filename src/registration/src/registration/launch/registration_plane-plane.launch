@@ -1,0 +1,8 @@
+<launch>
+  <group ns="registration">
+    <node pkg="registration" name="preprocessing_node" type="preprocessing_node" />
+    <node pkg="plane_detection" name="plane_detection_node" type="plane_detection_node" />
+    <node pkg="registration" name="plane_matching_node" type="plane_matching_node" />
+    <node pkg="registration" name="merging_node" type="merging_node" />
+  </group>
+</launch>
