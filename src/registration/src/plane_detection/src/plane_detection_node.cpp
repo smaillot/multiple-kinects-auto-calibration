@@ -13,7 +13,7 @@ using namespace std;
 *	output topics namespace
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
+const string inputs[] = {"/cam1", "/cam2", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
 const string pub_topic_name = "/reconstruction/planes";
@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
 		ros::init(argc, argv, "plane_detection_node");
 		ros::NodeHandle nh;
 		ros::NodeHandle node_ransac("~/RANSAC");
+		ros::Duration(0.5).sleep();
 
 	// create PlaneDetector objects
 		for (int i = 0 ; i < n_inputs ; i++)

@@ -58,3 +58,13 @@ add_dependencies(plane_detection_node
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
+
+add_executable(histogram_printer_node src/histogram_printer_node.cpp)
+target_link_libraries(histogram_printer_node 
+  ${catkin_LIBRARIES}
+  geometry
+)
+add_dependencies(histogram_printer_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)

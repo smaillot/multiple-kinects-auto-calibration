@@ -11,7 +11,7 @@ using namespace message_filters;
 *   output topics namespace
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
+const string inputs[2] = {"/cam1", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
 const string pub_topic_name = "/reconstruction/point_clouds/merged";
@@ -43,7 +43,7 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     {
         pcl_ros::transformPointCloud(target_tf, input2, input2, *listener);
     }
-	catch (tf::TransformException &ex)
+	catch (...)
 	{
 		ROS_WARN("Error while transforming point cloud");
 	}

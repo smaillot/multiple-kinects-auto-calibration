@@ -4,6 +4,8 @@
 // std
 	#include <string>
 	#include <iostream>
+	#include <math.h>
+    #include <Eigen/Core>
 // ros
 	#include <ros/console.h>
 // point cloud
@@ -103,6 +105,7 @@ namespace geometry
 				void subsample();
 				void radius_filter();
 				void cut();
+
 	};
 }
 

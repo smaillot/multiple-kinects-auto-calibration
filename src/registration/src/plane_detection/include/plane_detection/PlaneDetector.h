@@ -42,7 +42,7 @@ namespace geometry
 
             // Point cloud
                 pcl::PCLPointCloud2* cloud;
-                pcl::SACSegmentation<pcl::PointXYZ> seg;
+                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
 
             // Results
                 std::vector<Plane> planes;

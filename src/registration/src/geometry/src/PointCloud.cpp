@@ -1,6 +1,7 @@
 #include "geometry/PointCloud.h"
 
 using namespace geometry;
+using namespace std;
 
 
 /**

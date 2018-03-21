@@ -21,6 +21,8 @@ namespace geometry
 {
 	class Plane
 	{
+		private:
+			friend std::ostream& operator<<(std::ostream&, const Plane&);
 		public:
 			tf::Vector3 normal;                   
 			tf::Vector3 point;

@@ -12,7 +12,7 @@ using namespace std;
 *		registration algorithms
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
+const string inputs[] = {"/cam1", "/cam2", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string pc_topic_name = "/qhd/points";
 const string pub_topic_name = "/reconstruction/point_clouds";

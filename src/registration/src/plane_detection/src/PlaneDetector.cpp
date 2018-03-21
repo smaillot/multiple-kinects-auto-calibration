@@ -15,7 +15,7 @@ using namespace geometry;
     this->pub_name = pub_name;
     this->reference_frame = frame;
     this->tf_listener = new tf::TransformListener; 
-    this->seg = pcl::SACSegmentation<pcl::PointXYZ>();
+    this->seg = pcl::SACSegmentation<pcl::PointXYZRGB>();
     this->cloud = new pcl::PCLPointCloud2;
 
     // init segmentation model
@@ -81,9 +81,9 @@ void PlaneDetector::detect_planes()
 {
     // init variables
         pcl::PCLPointCloud2* input_cloud = new pcl::PCLPointCloud2(*this->cloud);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromPCLPointCloud2(*input_cloud, *temp_cloud);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
 
@@ -122,7 +122,7 @@ void PlaneDetector::detect_planes()
                 br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/cam_center", pub_name + "/plane" + patch::to_string(i+1))); 
             
             // extract inliers
-                pcl::ExtractIndices<pcl::PointXYZ> extract_pos;
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract_pos;
                 extract_pos.setInputCloud(temp_cloud);
                 extract_pos.setIndices(inliers);
                 extract_pos.setNegative(false);
@@ -137,7 +137,7 @@ void PlaneDetector::detect_planes()
                 }
 
             //subtract inliers
-                pcl::ExtractIndices<pcl::PointXYZ> extract_neg;
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract_neg;
                 extract_neg.setInputCloud(temp_cloud);
                 extract_neg.setIndices(inliers);
                 extract_neg.setNegative(true);

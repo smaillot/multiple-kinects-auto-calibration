@@ -75,3 +75,10 @@ Line Plane::intersect(Plane P)
 
     return Line(v, p);
 }
+
+std::ostream& operator<<(std::ostream &strm, const Plane &P) {
+    float x = P.normal.getX();
+    float y = P.normal.getY();
+    float z = P.normal.getZ();
+    return strm << "Plane:\n" << x << "x + "<< y <<"y + "<< z << "z + "<< P.d <<" = 0\nnormal: ("<< x <<", "<< y <<", "<< z <<")\npoint: ("<< P.point.getX() <<", "<< P.point.getY() <<", "<< P.point.getZ() <<")";
+}

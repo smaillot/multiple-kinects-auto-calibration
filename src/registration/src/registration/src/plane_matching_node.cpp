@@ -14,13 +14,16 @@ using namespace Eigen;
 /* metaparameters influencing registration precision
 
 * number of planes
-* coefficient (trust) for each plane in W matrix
+* weight (trust) for each plane in W matrix
 * algorithm (plane-plane, points-plane)
 * plane matching
 
+* cam1: 502561243142
+* cam2: 502515343142
+
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
+const string inputs[2] = {"/cam1", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
 const string pub_topic_name = "/reconstruction/point_clouds";
@@ -99,6 +102,7 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	VectorXd d(n_planes_1);
 	for (int line = 0; line < n_planes_1; line++)
 	{
+
 		tf::Vector3 normal_1 = sourcePlanes[line]->normal;
 		tf::Vector3 normal_2 = targetPlanes[line]->normal;
 		Ns(line, 0) = normal_1.getX();
@@ -112,12 +116,23 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
-	W(2,2) = 0.0001; // the 3rd plane is less to be trusted, we need it only to fix y translation
+	// W(2,2) = 0.001; // the 3rd plane is less to be trusted, we need it only to fix y translation
+	
+	ROS_DEBUG_STREAM("Ns = \n" << Ns);
+	ROS_DEBUG_STREAM("Nt = \n" << Nt);
+	ROS_DEBUG_STREAM("d = \n" << d);
+	ROS_DEBUG_STREAM("W = \n" << W);
+
 	Matrix3d Rhat = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * Ns);
-	Vector3d T = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
+	Vector3d T = -(Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
+
+	ROS_DEBUG_STREAM("rotation estimate = \n" << Rhat);
+	ROS_DEBUG_STREAM("translation = \n" << T);
 
 	JacobiSVD<Matrix3d> svd(Rhat, ComputeFullV | ComputeFullU);
 	Matrix3d R = svd.matrixU() * svd.matrixV().transpose();
+
+	ROS_DEBUG_STREAM("rotation normalized = \n" << R);
 
 	// compute residuals
 		Matrix4d H = Matrix4d::Identity();
@@ -134,11 +149,18 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 
 		vector <float> residuals_angle;
 		vector <float> residuals_translation;
+		ROS_DEBUG("\nresiduals:");
 		for (int i = 0; i < n_planes_1; i++)
 		{
-			residuals_angle.push_back(sqrt(pow(residuals_mat(i, 0), 2.0) + pow(residuals_mat(i, 1), 2.0) + pow(residuals_mat(i, 2), 2.0)));
-			residuals_translation.push_back(residuals_mat(i, 3));
+			float angle = sqrt(pow(residuals_mat(i, 0), 2.0) + pow(residuals_mat(i, 1), 2.0) + pow(residuals_mat(i, 2), 2.0));
+			float transl = residuals_mat(i, 3);
+			residuals_angle.push_back(angle);
+			residuals_translation.push_back(transl);
+			ROS_DEBUG_STREAM("\tplane " << i);
+			ROS_DEBUG_STREAM("\t\ttranslation: " << transl);
+			ROS_DEBUG_STREAM("\t\tangle: " << angle);
 		}
+
 
 	Affine3d transform;
 	transform.matrix() = H;
@@ -226,7 +248,7 @@ int main(int argc, char *argv[])
 	// Initialize ROS
 		ros::init(argc, argv, "plane_matching_node");
 		ros::NodeHandle nh;
-		ros::Duration(0.5).sleep();
+		ros::Duration(3).sleep();
 
 		for (int i = 0; i < n_inputs; i++)
 		{
@@ -255,7 +277,30 @@ int main(int argc, char *argv[])
 		{
 			ros::spin();
 		}
-	}
+	}/*
+
+	geometry::Plane* p1 = new geometry::Plane(tf::Vector3(1, 0, 0), tf::Vector3(0, 0, 0));
+	geometry::Plane* p2 = new geometry::Plane(tf::Vector3(0, 1, 0), tf::Vector3(0, 0, 0));
+	geometry::Plane* p3 = new geometry::Plane(tf::Vector3(0, 0, 1), tf::Vector3(0, 0, 0));
+	ROS_DEBUG_STREAM("\n" << *p1 << "\n" << *p2 << "\n" << *p3);
+
+	geometry::Plane* q1 = new geometry::Plane(tf::Vector3(0, 1, 0), tf::Vector3(1, 0, 0));
+	geometry::Plane* q2 = new geometry::Plane(tf::Vector3(-1, 0, 0), tf::Vector3(1, 0, 0));
+	geometry::Plane* q3 = new geometry::Plane(tf::Vector3(0, 0, 1), tf::Vector3(1, 0, 0));
+	ROS_DEBUG_STREAM("\n" << *q1 << "\n" << *q2 << "\n" << *q3);
+
+	temp_planes.push_back(p1);
+	temp_planes.push_back(p2);
+	temp_planes.push_back(p3);
+	planes.push_back(temp_planes);
+
+	temp_planes.clear();
+	temp_planes.push_back(q1);
+	temp_planes.push_back(q2);
+	temp_planes.push_back(q3);
+	planes.push_back(temp_planes);
+
+	motion_t mot = motion_from_plane_planes(planes[0], planes[1]);*/
 
 	return 0;
 }
