@@ -14,3 +14,5 @@ devel/
 build_isolated/
 
 devel_isolated/
+
+*.pyc

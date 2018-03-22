@@ -61,7 +61,7 @@ void pc_callback(const PointCloud2ConstPtr& pc)
     string filename = "/home/inhands-user3/catkin_ws/src/registration/src/plane_detection/hist/cam" + patch::to_string(cam) + "/plane" + patch::to_string(plane) + "/plane_hist_" + patch::to_string(resolution) + "_" + patch::to_string(ms) + ".txt";
     ofstream output_file(filename.data());
     ostream_iterator<int> output_iterator(output_file, "\t");
-    output_file << "**********************************\n";
+    output_file << resolution << "\n";
     for ( int i = 0 ; i < histogram.size() ; i++ ) 
     {
         copy(histogram.at(i).begin(), histogram.at(i).end(), output_iterator);
