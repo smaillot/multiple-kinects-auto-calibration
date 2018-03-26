@@ -23,7 +23,7 @@ using namespace Eigen;
 
 */
 
-const string inputs[2] = {"/cam1", "/cam3"};
+const string inputs[2] = {"/fix", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
 const string pub_topic_name = "/reconstruction/point_clouds";

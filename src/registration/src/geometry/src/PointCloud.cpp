@@ -11,6 +11,7 @@ PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string p
 {
     this->node = nh;
 	this->tf_listener = new tf::TransformListener; 
+    this->frame = "";
 
     this->sub_name = topic_name;
     this->pub_name = pub_name;
@@ -62,6 +63,11 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
     this->radius_filtering_params = radius_filtering_params;
 }
 
+void PointCloud::change_frame(std::string frame)
+{
+    this->frame = frame;
+}
+
 /**
  * @brief Update point cloud from topic.
  * 
@@ -70,11 +76,18 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
 {
     ROS_DEBUG("Updating PC object");
+
+    // std::string current_frame = cloud->header.frame_id;
+    // if (this->frame.size() == 0)
+    // {
+    //     this->frame = current_frame;
+    // }
+
     // convert message
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
-        ros::Time t = ros::Time(0);
-        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener);
+        ros::Time t = ros::Time(0); 
+        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener); 
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 
@@ -83,6 +96,11 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         this->subsample();
         this->cut();
         // this->radius_filter();
+        // if (this->frame != current_frame) 
+        // {
+        //     ROS_DEBUG_STREAM("Point cloud moved to " << this->frame << " reference frame.");
+        //     this->transform();
+        // }
     
     /*****************/
 
@@ -178,4 +196,14 @@ void PointCloud::radius_filter()
     {
         // filtering disableds
     }
+}
+
+void PointCloud::transform()
+{
+    sensor_msgs::PointCloud2* input = this->get_pc();
+    sensor_msgs::PointCloud2* msg;
+    pcl_ros::transformPointCloud(this->frame, *input, *msg, *this->tf_listener);
+    pcl::PCLPointCloud2* output;
+    pcl_conversions::toPCL(*msg, *output);
+    this->cloud = output;
 }

@@ -13,7 +13,7 @@ using namespace std;
 *	output topics namespace
 */
 
-const string inputs[] = {"/cam1", "/cam2", "/cam3"};
+const string inputs[] = {"/fix", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
 const string pub_topic_name = "/reconstruction/planes";

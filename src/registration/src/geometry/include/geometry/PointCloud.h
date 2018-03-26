@@ -68,6 +68,7 @@ namespace geometry
 			// ros node interaction
 				ros::NodeHandle node;  
 				const tf::TransformListener* tf_listener;
+				std::string frame;
 
 				std::string sub_name;  
 				std::string pub_name;
@@ -97,6 +98,7 @@ namespace geometry
 				void set_subsampling_params(subsampling_params_t subsamples_params);
 				void set_cutting_params(cutting_params_t cutting_params);
 				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
+				void change_frame(std::string frame);
 
 			// update
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
@@ -105,6 +107,7 @@ namespace geometry
 				void subsample();
 				void radius_filter();
 				void cut();
+				void transform();
 
 	};
 }

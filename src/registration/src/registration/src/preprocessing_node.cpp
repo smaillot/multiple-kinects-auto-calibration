@@ -14,6 +14,8 @@ using namespace std;
 
 const string inputs[] = {"/cam1", "/cam2", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
+const int fix[] = {0,1};
+const int n_fix = sizeof(fix) / sizeof(*fix);
 const string pc_topic_name = "/qhd/points";
 const string pub_topic_name = "/reconstruction/point_clouds";
 float frequency = 0;
@@ -130,6 +132,13 @@ int main(int argc, char *argv[])
 		for (int i = 0 ; i < n_inputs ; i++)
 		{
 			PC.push_back(new geometry::PointCloud(nh, get_topic_name(i), get_publish_name(i)));
+			// for (int j = 0 ; j < n_fix ; j++)
+			// {
+			// 	if (i == fix[j])
+			// 	{
+			// 		PC[i]->change_frame("cam_center");
+			// 	}
+			// }
 		}
 
 	// dynamic reconfigure

@@ -11,10 +11,10 @@ using namespace message_filters;
 *   output topics namespace
 */
 
-const string inputs[2] = {"/cam1", "/cam3"};
+const string inputs[2] = {"/cam1", "/cam2"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/point_clouds";
-const string pub_topic_name = "/reconstruction/point_clouds/merged";
+const string pub_topic_name = "/reconstruction/point_clouds/fix";
 float frequency = 0;
 ros::Publisher pub_pc;
 tf::TransformListener *listener;
@@ -27,7 +27,7 @@ tf::StampedTransform transf;
  */
 std::string get_topic_name(int input_number)
 {
-    return sub_topic_name + "/registered" + inputs[input_number];
+    return sub_topic_name + inputs[input_number];
 }
 
 /**
@@ -38,15 +38,16 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     PointCloud2 input1 = *pc1;
     PointCloud2 input2 = *pc2;
     PointCloud2 merged_pc;
-    std::string target_tf = "/registration";
-    try
-    {
-        pcl_ros::transformPointCloud(target_tf, input2, input2, *listener);
-    }
-	catch (...)
-	{
-		ROS_WARN("Error while transforming point cloud");
-	}
+    // std::string target_tf = "/cam_center";
+    // try
+    // {
+    //     ros::Time t = ros::Time(0);
+    //     pcl_ros::transformPointCloud(target_tf, input2, input2, *listener);
+    // }
+	// catch (...)
+	// {
+	// 	ROS_WARN("Error while transforming point cloud");
+	// }
     pcl::concatenatePointCloud(input1, input2, merged_pc);
 
     pub_pc.publish(merged_pc);
