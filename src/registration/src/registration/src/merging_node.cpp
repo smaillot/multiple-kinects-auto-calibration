@@ -11,10 +11,10 @@ using namespace message_filters;
 *   output topics namespace
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
-const int n_inputs = sizeof(inputs) / sizeof(*inputs);
-const string sub_topic_name = "/reconstruction/point_clouds";
-const string pub_topic_name = "/reconstruction/point_clouds/fix";
+vector <string> inputs; // {"/reconstruction/point_clouds/cam1", "/reconstruction/point_clouds/cam2"};
+//const int n_inputs = sizeof(inputs) / sizeof(*inputs);
+const string topic_namespace = "/reconstruction/point_clouds";
+string output_name; // = "fix";
 float frequency = 0;
 ros::Publisher pub_pc;
 tf::TransformListener *listener;
@@ -27,7 +27,12 @@ tf::StampedTransform transf;
  */
 std::string get_topic_name(int input_number)
 {
-    return sub_topic_name + inputs[input_number];
+    return inputs[input_number];
+}
+
+std::string get_publish_name()
+{
+	return output_name;
 }
 
 /**
@@ -61,9 +66,25 @@ int main(int argc, char *argv[])
             ros::console::notifyLoggerLevelsChanged();
         }
 
+    // parsing arguments
+
+		// TODO error catching 
+
+		inputs.clear();
+        string node_name = "merging_";
+        node_name += argv[1];
+		int i = 2;
+		while (i < argc-1) 
+		{
+			inputs.push_back(argv[i]);
+			i++;
+		}
+        output_name = argv[argc-1];
+
     // Initialize ROS
-        ros::init(argc, argv, "merging_node");
+        ros::init(argc, argv, node_name);
         ros::NodeHandle nh;
+    
 
     // Synchronize both kinects messages
         message_filters::Subscriber<PointCloud2> cam1(nh, get_topic_name(0), 1);
@@ -73,7 +94,7 @@ int main(int argc, char *argv[])
         sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
         
-        pub_pc = nh.advertise<sensor_msgs::PointCloud2>(pub_topic_name, 1);
+        pub_pc = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(), 1);
 
     // ROS loop
     ros::Rate loop_rate(frequency);
