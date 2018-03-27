@@ -31,6 +31,7 @@ generate_dynamic_reconfigure_options(
   cfg/SubSampling.cfg
   cfg/Cutting.cfg
   cfg/RadiusFiltering.cfg
+  cfg/Merging.cfg
 )
 
 ###################################
@@ -80,4 +81,5 @@ target_link_libraries(merging_node
 add_dependencies(merging_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
