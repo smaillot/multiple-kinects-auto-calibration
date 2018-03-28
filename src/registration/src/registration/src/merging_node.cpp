@@ -13,8 +13,8 @@ using namespace message_filters;
 
 vector <string> inputs; // {"/reconstruction/point_clouds/cam1", "/reconstruction/point_clouds/cam2"};
 //const int n_inputs = sizeof(inputs) / sizeof(*inputs);
-const string topic_namespace = "/reconstruction/point_clouds";
 string frame[2];
+string name;
 string output_name; // = "fix";
 float frequency = 0;
 ros::Publisher pub_pc;
@@ -44,18 +44,19 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     PointCloud2 input1 = *pc1;
     PointCloud2 input2 = *pc2;
     PointCloud2 merged_pc;
-    try
-    {
-        pcl_ros::transformPointCloud(frame[0], input1, input1, *listener);
-        pcl_ros::transformPointCloud(frame[1], input2, input2, *listener);
-    }
-    catch (...)
-    {
-    	ROS_WARN("Error while transforming point cloud");
-    }
+    // try
+    // {
+    //     pcl_ros::transformPointCloud(frame[0], input1, input1, *listener);
+    //     pcl_ros::transformPointCloud(frame[1], input2, input2, *listener);
+    // }
+    // catch (...)
+    // {
+    // 	ROS_WARN("Error while transforming point cloud");
+    // }
     pcl::concatenatePointCloud(input1, input2, merged_pc);
 
     pub_pc.publish(merged_pc);
+    ROS_DEBUG_STREAM("Publish merged point cloud " + name + " (" + patch::to_string(merged_pc.data.size()) + " points)");
 }
 
 void dynrec_callback(registration::MergingConfig &config, uint32_t level)
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
 		// TODO error catching 
 
 		inputs.clear();
-        string name = argv[1];
+        name = argv[1];
         string node_name = "merging_" + name;
 		int i = 2;
 		while (i < argc-1) 
@@ -107,6 +108,7 @@ int main(int argc, char *argv[])
 
         
         pub_pc = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(), 1);
+        ROS_INFO_STREAM("Start publishing merged point cloud " + name + " from topics\n\t" + inputs[0] + " and " + inputs[1]);
 
     // ROS loop
     ros::Rate loop_rate(frequency);

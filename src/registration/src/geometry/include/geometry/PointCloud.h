@@ -74,6 +74,7 @@ namespace geometry
 				std::string pub_name;
 				ros::Subscriber pc_sub;
 				ros::Publisher pc_pub;
+				ros::Publisher pc_pub_raw;
 			
 			// point cloud
 				pcl::PCLPointCloud2* cloud;

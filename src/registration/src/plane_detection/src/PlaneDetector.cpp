@@ -41,7 +41,6 @@ void PlaneDetector::set_params(bool enabled, int n_planes, float th_dist, int ma
 {
     this->enabled = enabled;
     this->n_planes = n_planes;
-	ROS_DEBUG_STREAM("detecting " << patch::to_string(this->n_planes) << " planes");
     this->th_dist = th_dist;
     this->max_it = max_it;
 
@@ -51,6 +50,7 @@ void PlaneDetector::set_params(bool enabled, int n_planes, float th_dist, int ma
     for (int i = 0 ; i < this->n_planes ; i++)
     {
         this->planes_pub.push_back(this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/plane" + patch::to_string(i+1), 1));
+        ROS_INFO_STREAM("Start searching for " + patch::to_string(this->n_planes) + " planes from " + this->sub_name);
     }
 }
 
@@ -134,6 +134,7 @@ void PlaneDetector::detect_planes()
                         sensor_msgs::PointCloud2* msg_pub(new sensor_msgs::PointCloud2());
                         pcl::toROSMsg(*plane_cloud, *msg_pub);
                         this->planes_pub[i].publish(*msg_pub);
+                        ROS_DEBUG_STREAM("Publish plane" + patch::to_string(i+1) +  " on " + this->pub_name + " (" + patch::to_string(msg_pub->data.size()) + " points)");
                 }
 
             //subtract inliers

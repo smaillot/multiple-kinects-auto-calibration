@@ -9,6 +9,11 @@ using namespace std;
  */
 PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string pub_name)
 {
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
+    {
+        ros::console::notifyLoggerLevelsChanged();
+    }
+
     this->node = nh;
 	this->tf_listener = new tf::TransformListener; 
     this->frame = "";
@@ -25,7 +30,9 @@ PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string p
     this->radius_filtering_params = radius_filtering_params;
 
     this->pc_sub = this->node.subscribe(this->sub_name, 1, &PointCloud::update, this);
-    this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
+    this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/preprocessed", 1);
+    this->pc_pub_raw = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
+    ROS_INFO_STREAM("Start publishing raw and preprocessed data from " + sub_name);
 }
 
 /**
@@ -104,16 +111,27 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
     
     /*****************/
 
+    if (cloud->data.size() > 0 && this->sub_name != this->pub_name)
+    {
+        // publish
+            this->pc_pub_raw.publish(*cloud);
+            ROS_DEBUG_STREAM("Publish raw point cloud on " + this->pub_name + " (" + patch::to_string(cloud->data.size()) + " points)");
+    }
+    else
+    {
+        ROS_DEBUG("Can't publish, raw point cloud is empty or already published");
+    }
     if (this->cloud->data.size() > 0)
     {
         // publish
             sensor_msgs::PointCloud2* msg_pub;
             msg_pub = this->get_pc();
             this->pc_pub.publish(*msg_pub);
+            ROS_DEBUG_STREAM("Publish preprocessed point cloud on " + this->pub_name + " (" + patch::to_string(msg_pub->data.size()) + " points)");
     }
     else
     {
-        ROS_DEBUG("Can't publish, point cloud is empty");
+        ROS_DEBUG("Can't publish, preprocessed point cloud is empty");
     }
 }
 

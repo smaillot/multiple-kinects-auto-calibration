@@ -1,6 +1,0 @@
-<launch>
-  <group ns="registration">
-    <node pkg="registration" name="plane_matching" type="plane_matching_node" output="screen" />
-    <node pkg="registration" name="merging" type="merging_node" output="screen" />
-  </group>
-</launch>

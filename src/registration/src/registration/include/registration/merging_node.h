@@ -25,3 +25,13 @@
 // dyn rec
 	#include <dynamic_reconfigure/server.h>
 	#include <registration/MergingConfig.h>
+
+	namespace patch
+{
+    template < typename T > std::string to_string( const T& n )
+    {
+        std::ostringstream stm ;
+        stm << n ;
+        return stm.str() ;
+    }
+}
