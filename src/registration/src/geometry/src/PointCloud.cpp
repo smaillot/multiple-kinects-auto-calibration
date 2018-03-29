@@ -84,17 +84,13 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
 {
     ROS_DEBUG("Updating PC object");
 
-    // std::string current_frame = cloud->header.frame_id;
-    // if (this->frame.size() == 0)
-    // {
-    //     this->frame = current_frame;
-    // }
+    std::string current_frame = cloud->header.frame_id;
 
     // convert message
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
         ros::Time t = ros::Time(0); 
-        pcl_ros::transformPointCloud(REFERENCE_FRAME, msg, msg, *this->tf_listener); 
+        pcl_ros::transformPointCloud("cam_center", msg, msg, *this->tf_listener); 
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 
@@ -114,7 +110,7 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
     if (cloud->data.size() > 0 && this->sub_name != this->pub_name)
     {
         // publish
-            this->pc_pub_raw.publish(*cloud);
+            this->pc_pub_raw.publish(msg);
             ROS_DEBUG_STREAM("Publish raw point cloud on " + this->pub_name + " (" + patch::to_string(cloud->data.size()) + " points)");
     }
     else
@@ -218,10 +214,17 @@ void PointCloud::radius_filter()
 
 void PointCloud::transform()
 {
-    sensor_msgs::PointCloud2* input = this->get_pc();
-    sensor_msgs::PointCloud2* msg;
-    pcl_ros::transformPointCloud(this->frame, *input, *msg, *this->tf_listener);
-    pcl::PCLPointCloud2* output;
-    pcl_conversions::toPCL(*msg, *output);
-    this->cloud = output;
+    if (this->tf_listener->waitForTransform(this->cloud->header.frame_id, this->frame, ros::Time::now(), ros::Duration(1.0)))
+    {
+        sensor_msgs::PointCloud2* input = this->get_pc();
+        sensor_msgs::PointCloud2* msg;
+        pcl_ros::transformPointCloud(this->frame, *input, *msg, *this->tf_listener);
+        pcl::PCLPointCloud2* output;
+        pcl_conversions::toPCL(*msg, *output);
+        this->cloud = output;
+    }
+    else
+    {
+        ROS_ERROR_STREAM("No tf received from " + this->cloud->header.frame_id + " to " + this->frame + " in 1s. Abort point cloud transform.");
+    }
 }

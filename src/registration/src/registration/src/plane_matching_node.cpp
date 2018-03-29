@@ -49,7 +49,7 @@ std::string get_topic_name(int input_number, int plane)
  */
 std::string get_pc_topic_name(int input_number)
 {
-	return pub_topic_name + "/" + inputs[input_number];
+	return pub_topic_name + "/" + inputs[input_number]; // + "/preprocessed";
 }
 
 /**
@@ -165,6 +165,7 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	Affine3d transform;
 	transform.matrix() = H;
 	tf::transformEigenToTF(transform, motion.H);
+	motion.mat = H;
 	motion.residuals_angle = residuals_angle;
 	motion.residuals_translation = residuals_translation;
 
@@ -204,7 +205,7 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 				n++;
 			}
 			planes.push_back(temp_planes);
-			ROS_DEBUG_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
+			ROS_INFO_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
 	}
 
 	motion_t motion = motion_from_plane_planes(planes[0], planes[1]);
@@ -213,30 +214,37 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	{
 		new_frame += "_" + inputs[i];
 	}
-	this->br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), this->frame, "/" + new_frame));
+	this->br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame));
 
 	ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
 	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
 
 	sensor_msgs::PointCloud2 input = *pc;
-	sensor_msgs::PointCloud2 output;
+	sensor_msgs::PointCloud2 output = input;
+	pcl_ros::transformPointCloud(motion.mat.cast <float>(), input, output);
+	// if (this->tf_listener.waitForTransform(pc->header.frame_id, new_frame, ros::Time(0), ros::Duration(1.0)))
+	// {
+	// 	pcl_ros::transformPointCloud(new_frame, input, output, this->tf_listener);
+	// }
+	// else
+	// {
+    //     ROS_ERROR_STREAM("No tf received from " + pc->header.frame_id + " to " + new_frame + " in 1s. Abort point cloud transform.");
+	// 	output = input;
+	// }
+	// if (output.data.size() == 0)
+	// {
+	// 	ROS_WARN("Registered point cloud is empty");
+	// 	output = input;
+	// }
 
-	pcl_ros::transformPointCloud(this->frame, input, output, this->tf_listener);
-	if (output.data.size() > 0)
-	{
-		this->pc_pub.publish(output);
-	}
-	else
-	{
-		ROS_WARN_STREAM("frame " + this->frame + " not found");
-	}
+	this->pc_pub.publish(output);
+	ROS_DEBUG_STREAM("Publish registered point cloud on " + this->pub_name + " (" + patch::to_string(output.data.size()) + " points)");
 }
 
-PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, std::string frame, ros::NodeHandle node)
+PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, ros::NodeHandle node)
 {
 	this->sub_name = sub_name;
 	this->pub_name = pub_name;
-	this->frame = frame;
 	this->node = node;
 	this->pc_sub = this->node.subscribe(this->sub_name, 1, &PCRegistered::pc_callback, this);
 	this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
@@ -267,8 +275,7 @@ int main(int argc, char *argv[])
 		ros::NodeHandle nh;
 		ros::Duration(3).sleep();
 
-		std::string frame = "/cam_center";
-		PC = new PCRegistered(get_pc_topic_name(0), get_publish_name(0), frame, nh);
+		PC = new PCRegistered(get_pc_topic_name(0), get_publish_name(0), nh);
 
 	// // dynamic reconfigure
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);

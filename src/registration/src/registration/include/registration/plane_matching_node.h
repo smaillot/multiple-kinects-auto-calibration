@@ -19,6 +19,7 @@
 struct motion_t
 {
     tf::Transform H;
+    Eigen::Matrix4d mat;
     std::vector <float> residuals_angle;
     std::vector <float> residuals_translation;
 };
@@ -28,7 +29,6 @@ class PCRegistered
 	private:
 		std::string sub_name;
 		std::string pub_name;
-		std::string frame;
 		ros::NodeHandle node;
 		tf::TransformListener tf_listener;
 		ros::Subscriber pc_sub;
@@ -36,7 +36,7 @@ class PCRegistered
         tf::TransformBroadcaster br;
 		
 	public:
-		PCRegistered(std::string sub_name, std::string pub_name, std::string frame, ros::NodeHandle node);
+		PCRegistered(std::string sub_name, std::string pub_name, ros::NodeHandle node);
 		void pc_callback(const sensor_msgs::PointCloud2ConstPtr& pc);
 };
 

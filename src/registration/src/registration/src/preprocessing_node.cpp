@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
 
 	ros::NodeHandle nh_subsampling("preprocessing/" + input_name + "/subsampling");
 	PC = new geometry::PointCloud(nh, topic, get_publish_name());
+	PC->change_frame("cam_center");
 	ros::NodeHandle nh_cutting("preprocessing/" + input_name + "/cutting");
 	ros::NodeHandle nh_radius_filtering("preprocessing/" + input_name + "/radius_filtering");
 

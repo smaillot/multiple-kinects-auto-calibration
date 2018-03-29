@@ -43,17 +43,32 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
 {
     PointCloud2 input1 = *pc1;
     PointCloud2 input2 = *pc2;
+    PointCloud2 output1 = *pc1;
+    PointCloud2 output2 = *pc2;
     PointCloud2 merged_pc;
     // try
-    // {
-    //     pcl_ros::transformPointCloud(frame[0], input1, input1, *listener);
-    //     pcl_ros::transformPointCloud(frame[1], input2, input2, *listener);
+    // {    
+    //     listener->lookupTransform(frame[0], pc1->header.frame_id, ros::Time::now(), transf);
+    //     pcl_ros::transformPointCloud(frame[0], transf, input1, output1);
     // }
-    // catch (...)
+    // catch (tf::TransformException ex)
     // {
-    // 	ROS_WARN("Error while transforming point cloud");
+    //   ROS_ERROR("%s",ex.what());
+    //   ros::Duration(1.0).sleep();
     // }
-    pcl::concatenatePointCloud(input1, input2, merged_pc);
+    // try
+    // {
+    //     listener->waitForTransform(frame[1], "cam_center", ros::Time::now(), ros::Duration(10.0));
+    //     listener->lookupTransform(frame[1], "cam_center", ros::Time::now(), transf);
+    //     pcl_ros::transformPointCloud(frame[1], transf, input2, output2);
+    // }
+    // catch (tf::TransformException ex)
+    // {
+    //   ROS_ERROR("%s",ex.what());
+    //   ros::Duration(1.0).sleep();
+    // }
+     
+    pcl::concatenatePointCloud(output1, output2, merged_pc);
 
     pub_pc.publish(merged_pc);
     ROS_DEBUG_STREAM("Publish merged point cloud " + name + " (" + patch::to_string(merged_pc.data.size()) + " points)");
