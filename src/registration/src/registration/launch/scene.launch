@@ -1,0 +1,9 @@
+<launch>
+    <arg name="in1" default="cam3" />
+    <arg name="in2" default="fix" />
+    <arg name="path" default="/reconstruction/point_clouds/" />
+    <arg name="verbosity" default="info" />
+    <node name="plane_matching" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) $(arg verbosity)" output="screen" />
+    <node name="merging_scene" pkg="registration" type="merging_node" args="scene $(arg path)$(arg in1)/registered $(arg path)$(arg in2) $(arg path)scene $(arg verbosity)" output="screen" />
+    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg path)scene $(arg verbosity)" output="screen" />
+</launch>

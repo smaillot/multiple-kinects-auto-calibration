@@ -1,0 +1,7 @@
+<launch>
+    <arg name="in1" default="/reconstruction/point_clouds/fix/preprocessed" />
+    <arg name="in2" default="/reconstruction/point_clouds/cam3/preprocessed" />
+    <arg name="verbosity" default="info" />
+    <node name="fix_plane_detection" pkg="plane_detection" type="plane_detection_node" args="fix $(arg in1) $(arg verbosity)" output="screen" />
+    <node name="cam3_plane_detection" pkg="plane_detection" type="plane_detection_node" args="cam3 $(arg in2) $(arg verbosity)" output="screen" />
+</launch>

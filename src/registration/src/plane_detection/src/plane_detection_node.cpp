@@ -15,7 +15,7 @@ using namespace std;
 
 string topic; 
 string name;
-string frame;
+//string frame;
 const string pub_topic_name = "/reconstruction/planes";
 float frequency = 0;
 geometry::PlaneDetector* PD;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 		
 		name = argv[1];
 		topic = argv[2];
-		frame = argv[3];
+		//frame = argv[3];
 
 	// Initialize ROS
 		string node_name = "plane_detection_";
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 		ros::Duration(0.5).sleep();
 
 	// create PlaneDetector object
-		PD = new geometry::PlaneDetector(nh, topic, get_publish_name(), frame);
+		PD = new geometry::PlaneDetector(nh, topic, get_publish_name(), "cam_center");//, frame);
 
 	// dynamic reconfigure
 		dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);

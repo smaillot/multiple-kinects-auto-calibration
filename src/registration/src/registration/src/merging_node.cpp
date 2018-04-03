@@ -90,18 +90,27 @@ int main(int argc, char *argv[])
 
     // parsing arguments
 
-		// TODO error catching 
-
 		inputs.clear();
-        name = argv[1];
-        string node_name = "merging_" + name;
-		int i = 2;
-		while (i < argc-1) 
-		{
-			inputs.push_back(argv[i]);
-			i++;
-		}
-        output_name = argv[argc-1];
+
+        string node_name = "merging";
+        ROS_DEBUG_STREAM(patch::to_string(argc) + " arguments found:");
+        for (int i = 0; i < argc; i++)
+        {
+            ROS_DEBUG_STREAM("arg" + patch::to_string(i) + " = " + argv[i]);
+        }
+        if (argc >= 4+2)
+        {
+            name = argv[1];
+            node_name += "_" + name;
+            inputs.push_back(argv[2]);
+            inputs.push_back(argv[3]);
+            output_name = argv[4];
+        }
+        else
+        {
+            ROS_FATAL("4 arguments are needed\nusage:\tnew_name\tinput topic 1\tinput topic 2\toutput topic");
+            return 1;
+        }
 
     // Initialize ROS
         ros::init(argc, argv, node_name);
@@ -115,15 +124,16 @@ int main(int argc, char *argv[])
         server.setCallback(f);
 
     // Synchronize both kinects messages
+        ROS_DEBUG_STREAM("Subscribe to " + get_topic_name(0));
+        ROS_DEBUG_STREAM("Subscribe to " + get_topic_name(1));
         message_filters::Subscriber<PointCloud2> cam1(nh, get_topic_name(0), 1);
         message_filters::Subscriber<PointCloud2> cam2(nh, get_topic_name(1), 1);
         typedef sync_policies::ApproximateTime<PointCloud2, PointCloud2> KinectSync;
         Synchronizer<KinectSync> sync(KinectSync(10), cam1, cam2);
         sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
-        
-        pub_pc = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(), 1);
         ROS_INFO_STREAM("Start publishing merged point cloud " + name + " from topics\n\t" + inputs[0] + " and " + inputs[1]);
+        pub_pc = nh.advertise<sensor_msgs::PointCloud2>(get_publish_name(), 1);
 
     // ROS loop
     ros::Rate loop_rate(frequency);

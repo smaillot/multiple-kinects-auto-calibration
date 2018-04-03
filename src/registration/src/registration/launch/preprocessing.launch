@@ -1,0 +1,7 @@
+<launch>
+    <arg name="pc_path" default="/qhd/points" />
+    <arg name="verbosity" default="info" />
+    <node name="preprocessing_cam1" pkg="registration" type="preprocessing_node" args="cam1 /cam1$(arg pc_path) $(arg verbosity)" output="screen" />
+    <node name="preprocessing_cam2" pkg="registration" type="preprocessing_node" args="cam2 /cam2$(arg pc_path) $(arg verbosity)" output="screen" />
+    <node name="preprocessing_cam3" pkg="registration" type="preprocessing_node" args="cam3 /cam3$(arg pc_path) $(arg verbosity)" output="screen" />
+</launch>

@@ -16,10 +16,7 @@ using namespace Eigen;
 * number of planes
 * weight (trust) for each plane in W matrix
 * algorithm (plane-plane, points-plane)
-* plane matching
-
-* cam1: 502561243142
-* cam2: 502515343142
+* plane matchings
 
 */
 
@@ -263,10 +260,8 @@ int main(int argc, char *argv[])
 		// TODO error catching 
 
 		inputs.clear();
-		for (int i = 1; i < 3; i++) 
-		{
-			inputs.push_back(argv[i]);
-		}
+		inputs.push_back(argv[1]);
+		inputs.push_back(argv[2]);
 		n_inputs = inputs.size();
 
 	// Initialize ROS

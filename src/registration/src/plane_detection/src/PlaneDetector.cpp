@@ -65,9 +65,9 @@ void PlaneDetector::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
     {
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
-        ros::Time t = ros::Time(0);
-        this->tf_listener->waitForTransform(msg.header.frame_id, this->reference_frame, ros::Time::now(), ros::Duration(3.0));
-        pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
+        //ros::Time t = ros::Time(0);
+        //this->tf_listener->waitForTransform(msg.header.frame_id, this->reference_frame, ros::Time::now(), ros::Duration(3.0));
+        //pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
         this->cloud = cloudPtr;
 
