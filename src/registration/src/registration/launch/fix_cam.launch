@@ -2,7 +2,6 @@
     <arg name="in1" default="/reconstruction/point_clouds/cam1/preprocessed" />
     <arg name="in2" default="/reconstruction/point_clouds/cam2/preprocessed" />
     <arg name="out" default="/reconstruction/point_clouds/fix" />
-    <arg name="verbosity" default="info" />
-    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg in1) $(arg in2) $(arg out) $(arg verbosity)" output="screen" />
-    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out) $(arg verbosity)" output="screen" />
+    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg in1) $(arg in2) $(arg out)" output="screen" />
+    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out)" output="screen" />
 </launch>

@@ -82,11 +82,6 @@ void dynrec_callback(registration::MergingConfig &config, uint32_t level)
 
 int main(int argc, char *argv[])
 {
-    // verbosity: debug
-        if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
-        {
-            ros::console::notifyLoggerLevelsChanged();
-        }
 
     // parsing arguments
 

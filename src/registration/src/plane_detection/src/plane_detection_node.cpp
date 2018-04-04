@@ -47,11 +47,6 @@ void plane_detection_conf_callback(plane_detection::PlaneDetectionConfig &config
 
 int main(int argc, char *argv[])
 {
-	// verbosity: debug
-		if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
-		{
-			ros::console::notifyLoggerLevelsChanged();
-		}
 
 	// parsing arguments
 

@@ -86,11 +86,6 @@ void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config,
 
 int main(int argc, char *argv[])
 {
-	// verbosity: debug
-		if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
-		{
-			ros::console::notifyLoggerLevelsChanged();
-		}
 
 	// parsing arguments
 
