@@ -99,7 +99,6 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	VectorXd d(n_planes_1);
 	for (int line = 0; line < n_planes_1; line++)
 	{
-
 		tf::Vector3 normal_1 = sourcePlanes[line]->normal;
 		tf::Vector3 normal_2 = targetPlanes[line]->normal;
 		Ns(line, 0) = normal_1.getX();
@@ -187,6 +186,95 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 //     ROS_DEBUG("Plane detection parameters config updated");
 // }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr create_pc(vector <geometry::Plane*> planes)
+{
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+	cloud->width	= planes.size();
+	cloud->height	= 1;
+	cloud->is_dense	= false;
+	cloud->points.resize(cloud->width * cloud->height);
+	for (int i = 0; i < planes.size(); i++)
+	{
+		cloud->points[i].x	= planes[i]->normal.getX();
+		cloud->points[i].y	= planes[i]->normal.getY();
+		cloud->points[i].z	= planes[i]->normal.getZ();
+	}
+	return cloud;
+}
+
+double point_dist(const pcl::PointXYZ& p1, const pcl::PointXYZ& p2)
+{
+	double d = 0;
+	d += pow(p1.x - p2.x, 2);
+	d += pow(p1.y - p2.y, 2);
+	d += pow(p1.z - p2.z, 2);
+
+	return sqrt(d);
+}
+
+MatrixXd compute_dist(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2)
+{
+	MatrixXd mat(planes[0].size(), planes[1].size());
+	for (int i = 0; i < planes[0].size(); i++)
+	{
+		for (int j = 0; j < planes[1].size(); j++)
+		{
+			mat(i, j) = point_dist(pc1->points[i], pc2->points[j]);
+		}
+	}
+	return mat;
+}
+
+vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane*> > planes, double th)
+{
+  	pcl::PointCloud<pcl::PointXYZ>::Ptr normals1(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr normals2(new pcl::PointCloud<pcl::PointXYZ>);
+	normals1 = create_pc(planes[0]);
+	normals2 = create_pc(planes[1]);
+
+	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	icp.setInputSource(normals1);
+	icp.setInputTarget(normals2);
+
+  	pcl::PointCloud<pcl::PointXYZ>::Ptr res(new pcl::PointCloud<pcl::PointXYZ>);
+	icp.align(*res);
+
+	MatrixXd dist_mat = compute_dist(res, normals2);
+
+	vector <vector <int> > matches; 
+	for (int i = 0; i < planes[0].size(); i++)
+	{
+		for (int j = 0; j < planes[1].size(); j++)
+		{
+			double dist = dist_mat(i, j);
+			ROS_DEBUG_STREAM("Trying to match " + inputs[0] + "/plane" + patch::to_string(i) + " with " + inputs[1] + "/plane" + patch::to_string(j) + ": normal dist = " + patch::to_string(dist) + " / " + patch::to_string(th));
+			if (dist < th)
+			{
+				vector <int> match(2, 0);
+				match[0] = i;
+				match[1] = j;
+				matches.push_back(match);
+			}
+		}
+	}
+
+	vector <vector <geometry::Plane*> > output;
+	vector <geometry::Plane*> planes1;
+	vector <geometry::Plane*> planes2;
+
+	for (int i = 0; i < matches.size(); i++)
+	{
+		planes1.push_back(planes[0][matches[i][0]]);
+		planes2.push_back(planes[1][matches[i][1]]);
+		ROS_DEBUG_STREAM(inputs[0] + "/plane" + patch::to_string(matches[i][0]) + " matched with " + inputs[1] + "/plane" + patch::to_string(matches[i][1]));
+	}
+
+	output.push_back(planes1);
+	output.push_back(planes2);
+
+	return output;
+}
+
 void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 {
     tf::StampedTransform transf; 
@@ -205,7 +293,8 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 			ROS_INFO_STREAM(patch::to_string(n) << " planes detected for " << inputs[i]);
 	}
 
-	motion_t motion = motion_from_plane_planes(planes[0], planes[1]);
+	vector <vector <geometry::Plane*> > matched_planes = match_planes(planes, 0.2);
+	motion_t motion = motion_from_plane_planes(matched_planes[0], matched_planes[1]);
 	string new_frame = "registration";
 	for (int i=0; i < 2; i++)
 	{
@@ -249,10 +338,7 @@ PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, ros::Node
 
 int main(int argc, char *argv[])
 {
-
-		// parsing arguments
-
-		// TODO error catching 
+	// TODO error catching 
 
 		inputs.clear();
 		inputs.push_back(argv[1]);

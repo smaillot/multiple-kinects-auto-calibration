@@ -83,3 +83,13 @@ add_dependencies(merging_node
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
+
+add_executable(icp_node src/icp_node.cpp)
+target_link_libraries(icp_node 
+  ${catkin_LIBRARIES}
+  geometry
+)
+add_dependencies(icp_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
