@@ -225,6 +225,15 @@ MatrixXd compute_dist(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<p
 	return mat;
 }
 
+void debug_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc, string name)
+{
+	ROS_DEBUG_STREAM(name);
+	for (int i = 0; i < pc->points.size(); i++)
+	{
+		ROS_DEBUG_STREAM(patch::to_string(pc->points[i].x) << " " << patch::to_string(pc->points[i].y) << " " << patch::to_string(pc->points[i].z));
+	}
+}
+
 vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane*> > planes, double th)
 {
   	pcl::PointCloud<pcl::PointXYZ>::Ptr normals1(new pcl::PointCloud<pcl::PointXYZ>);
@@ -238,6 +247,10 @@ vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane
 
   	pcl::PointCloud<pcl::PointXYZ>::Ptr res(new pcl::PointCloud<pcl::PointXYZ>);
 	icp.align(*res);
+
+	debug_pc(normals1, "planes1");
+	debug_pc(normals2, "planes2");
+	debug_pc(res, "planes1 after transform");
 
 	MatrixXd dist_mat = compute_dist(res, normals2);
 
@@ -339,7 +352,6 @@ PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, ros::Node
 int main(int argc, char *argv[])
 {
 	// TODO error catching 
-
 		inputs.clear();
 		inputs.push_back(argv[1]);
 		inputs.push_back(argv[2]);
@@ -352,7 +364,7 @@ int main(int argc, char *argv[])
 		ros::Duration(3).sleep();
 
 		PC = new PCRegistered(get_pc_topic_name(0), get_publish_name(0), nh);
-
+		
 	// // dynamic reconfigure
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);
 	// 	dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig>::CallbackType plane_detection_cb;
