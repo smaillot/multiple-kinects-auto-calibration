@@ -15,7 +15,7 @@ using namespace std;
 string topic; // = ("/cam1/qhd/points", "/cam2/qhd/points", "/cam3/qhd/points");
 string input_name; // = ("cam1", "cam2", "cam3");
 const string pub_topic_name = "/reconstruction/point_clouds";
-float frequency = 0;
+float frequency = 1;
 geometry::PointCloud* PC;
 
 std::string get_publish_name()

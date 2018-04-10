@@ -17,7 +17,7 @@ string topic;
 string name;
 //string frame;
 const string pub_topic_name = "/reconstruction/planes";
-float frequency = 0;
+float frequency = 1;
 geometry::PlaneDetector* PD;
 
 /**

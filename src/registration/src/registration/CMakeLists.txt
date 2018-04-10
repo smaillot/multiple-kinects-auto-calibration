@@ -93,3 +93,12 @@ add_dependencies(icp_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(result_saving_node src/result_saving_node.cpp)
+target_link_libraries(result_saving_node 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(result_saving_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)

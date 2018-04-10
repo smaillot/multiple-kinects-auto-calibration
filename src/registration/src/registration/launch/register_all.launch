@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find registration)/launch/reg_1_2.launch" />
+    <include file="$(find plane_detection)/launch/plane_detection.launch" />
+    <include file="$(find registration)/launch/scene.launch" />
+</launch>

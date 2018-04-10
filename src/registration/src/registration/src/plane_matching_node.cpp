@@ -24,10 +24,11 @@ vector <string> inputs;
 int n_inputs;
 const string sub_topic_name = "/reconstruction/planes";
 const string pub_topic_name = "/reconstruction/point_clouds";
-float frequency = 0;
+float frequency = 1;
 vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
 PCRegistered* PC;
+vector <int> force_match;
 
 /**
  * @brief Returns the publishing topic of a given camera.
@@ -112,6 +113,9 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
+	W(0,0) = 1;
+	W(1,1) = 1;
+	W(2,2) = 1;
 	// W(2,2) = 0.001; // the 3rd plane is less to be trusted, we need it only to fix y translation
 	
 	ROS_DEBUG_STREAM("Ns = \n" << Ns);
@@ -253,22 +257,27 @@ vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane
 	debug_pc(res, "planes1 after transform");
 
 	MatrixXd dist_mat = compute_dist(res, normals2);
+	ROS_DEBUG_STREAM(dist_mat);
 
-	vector <vector <int> > matches; 
+	vector <vector <int> > matches;
 	for (int i = 0; i < planes[0].size(); i++)
 	{
-		for (int j = 0; j < planes[1].size(); j++)
-		{
-			double dist = dist_mat(i, j);
-			ROS_DEBUG_STREAM("Trying to match " + inputs[0] + "/plane" + patch::to_string(i) + " with " + inputs[1] + "/plane" + patch::to_string(j) + ": normal dist = " + patch::to_string(dist) + " / " + patch::to_string(th));
-			if (dist < th)
-			{
-				vector <int> match(2, 0);
-				match[0] = i;
-				match[1] = j;
-				matches.push_back(match);
-			}
-		}
+		// for (int j = 0; j < planes[1].size(); j++)
+		// {
+		// 	double dist = dist_mat(i, j);
+		// 	ROS_DEBUG_STREAM("Trying to match " + inputs[0] + "/plane" + patch::to_string(i) + " with " + inputs[1] + "/plane" + patch::to_string(j) + ": normal dist = " + patch::to_string(dist) + " / " + patch::to_string(th));
+		// 	if (dist < th)
+		// 	{
+		// 		vector <int> match(2, 0);
+		// 		match[0] = i;
+		// 		match[1] = j;
+		// 		matches.push_back(match);
+		// 	}
+		// }
+		vector <int> match(2, 0);
+		match[0] = force_match[i];
+		match[1] = i;
+		matches.push_back(match);
 	}
 
 	vector <vector <geometry::Plane*> > output;
@@ -284,6 +293,73 @@ vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane
 
 	output.push_back(planes1);
 	output.push_back(planes2);
+
+	return output;
+}
+
+vector < vector <int> > permutations()
+{
+	vector < vector <int> > perms;
+	vector <int> temp;
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			if (j != i)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					if (k != i && k != j)
+					{
+						temp.clear();
+						temp.push_back(i);
+						temp.push_back(j);
+						temp.push_back(k);
+						perms.push_back(temp);
+					}
+				}
+			}
+		}
+	}
+	return perms;
+}
+
+void compute_matching(vector <vector <geometry::Plane*> > planes)
+{
+	pcl::PointCloud<pcl::PointXYZ>::Ptr normals1(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr normals2(new pcl::PointCloud<pcl::PointXYZ>);
+	normals1 = create_pc(planes[0]);
+	normals2 = create_pc(planes[1]);
+
+	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	icp.setInputSource(normals1);
+	icp.setInputTarget(normals2);
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr res(new pcl::PointCloud<pcl::PointXYZ>);
+	icp.align(*res);
+
+	MatrixXd dist_mat = compute_dist(res, normals2);
+	ROS_DEBUG_STREAM(dist_mat);
+}
+
+vector <vector <geometry::Plane*> > match_planes_brute(vector <vector <geometry::Plane*> > planes, int i)
+{
+	int n = planes[0].size();
+	vector <vector <geometry::Plane*> > output;
+	vector <geometry::Plane*> planes1 = planes[0];
+	vector <geometry::Plane*> planes2;
+	vector < vector <int> > perm = permutations();
+
+	output.clear();
+	planes2.clear();
+	ROS_DEBUG_STREAM("evaluating matching with " << perm[i][0] << " " << perm[i][1] << " " << perm[i][2]);
+	for (int j = 0; j < perm[i].size(); j++)
+	{
+		planes2.push_back(planes[1][(int)perm[i][j]]);
+	}
+	output.push_back(planes1);
+	output.push_back(planes2);
+	compute_matching(output);
 
 	return output;
 }
@@ -307,6 +383,7 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	}
 
 	vector <vector <geometry::Plane*> > matched_planes = match_planes(planes, 0.2);
+	//vector <vector <geometry::Plane*> > matched_planes = match_planes_brute(planes, i);
 	motion_t motion = motion_from_plane_planes(matched_planes[0], matched_planes[1]);
 	string new_frame = "registration";
 	for (int i=0; i < 2; i++)
@@ -356,6 +433,11 @@ int main(int argc, char *argv[])
 		inputs.push_back(argv[1]);
 		inputs.push_back(argv[2]);
 		n_inputs = inputs.size();
+		for (int i = 3; i < 6; i++)
+		{
+			force_match.push_back((int) *argv[i]-48);
+		}
+		ROS_DEBUG_STREAM("Force matching of " << force_match[0] << " " << force_match[1] << " " << force_match[2]);
 
 	// Initialize ROS
 		string node_name = "plane_matching_" + inputs[0] + "_to_" + inputs[1];

@@ -13,7 +13,7 @@ using namespace sensor_msgs;
 const string inputs[] = {"/fix", "/cam3"};
 const int n_inputs = sizeof(inputs) / sizeof(*inputs);
 const string sub_topic_name = "/reconstruction/planes";
-float frequency = 0;
+float frequency = 1;
 int planes = 3;
 vector <ros::Subscriber> sub;
 int resolution = 32;

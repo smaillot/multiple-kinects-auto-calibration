@@ -16,7 +16,7 @@ vector <string> inputs; // {"/reconstruction/point_clouds/cam1", "/reconstructio
 string frame[2];
 string name;
 string output_name; // = "fix";
-float frequency = 0;
+float frequency = 1;
 ros::Publisher pub_pc;
 tf::TransformListener *listener;
 tf::StampedTransform transf; 

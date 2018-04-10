@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find registration)/launch/preprocessing.launch" />
+    <include file="$(find plane_detection)/launch/plane_1_2.launch" />
+    <include file="$(find registration)/launch/cam_1_2.launch" />
+</launch>

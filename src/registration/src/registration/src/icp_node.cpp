@@ -7,7 +7,7 @@ using namespace message_filters;
 vector <string> inputs;
 string name;
 string output_name; 
-float frequency = 0;
+float frequency = 1;
 ros::Publisher pub_pc;
 tf::TransformListener *listener;
 tf::StampedTransform transf; 
