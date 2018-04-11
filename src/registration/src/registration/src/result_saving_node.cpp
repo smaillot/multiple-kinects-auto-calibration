@@ -37,7 +37,7 @@ string print_tf1(tf::StampedTransform transform)
     if (change1 > 0.00001 || change1 < -0.00001)
     {
         output += patch::to_string(t.getX()) + "\t" + patch::to_string(t.getY()) + "\t" + patch::to_string(t.getZ()) + "\t";
-        output += patch::to_string(t.getX()) + "\t" + patch::to_string(t.getY()) + "\t" + patch::to_string(t.getZ()) + "\t";
+        output += patch::to_string(a.getX()) + "\t" + patch::to_string(a.getY()) + "\t" + patch::to_string(a.getZ()) + "\t";
         output += patch::to_string(q.getAngle()) + "\n";
         last1 = q.getAngle();
     }

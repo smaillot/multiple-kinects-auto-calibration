@@ -1,6 +1,6 @@
 <launch>
     <arg name="pc_path" default="/qhd/points" />
-    <node name="preprocessing_cam1" pkg="registration" type="preprocessing_node" args="cam1 /cam1$(arg pc_path)" output="screen" />
+    <node name="preprocessing_cam1" pkg="registration" type="preprocessing_node" args="cam1 /cam1$(arg pc_path)" output="screen" launch-prefix="valgrind --tool=callgrind" />
     <node name="preprocessing_cam2" pkg="registration" type="preprocessing_node" args="cam2 /cam2$(arg pc_path)" output="screen" />
     <node name="preprocessing_cam3" pkg="registration" type="preprocessing_node" args="cam3 /cam3$(arg pc_path)" output="screen" />
 </launch>

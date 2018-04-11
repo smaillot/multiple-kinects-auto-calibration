@@ -15,7 +15,7 @@ using namespace std;
 string topic; // = ("/cam1/qhd/points", "/cam2/qhd/points", "/cam3/qhd/points");
 string input_name; // = ("cam1", "cam2", "cam3");
 const string pub_topic_name = "/reconstruction/point_clouds";
-float frequency = 1;
+float frequency = 0;
 geometry::PointCloud* PC;
 
 std::string get_publish_name()
@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
 		node_name += input_name;
 		ros::init(argc, argv, node_name);
 		ros::NodeHandle nh;
-
 
 	ros::NodeHandle nh_subsampling("preprocessing/" + input_name + "/subsampling");
 	PC = new geometry::PointCloud(nh, topic, get_publish_name());

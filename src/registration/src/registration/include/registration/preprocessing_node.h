@@ -1,6 +1,8 @@
 // ros
 	#include <ros/console.h>
 	#include "ros/ros.h"
+	#include <ros/callback_queue.h>
+	#include <ros/callback_queue_interface.h>
 // std
 	#include <string>
 	#include <vector>
@@ -14,6 +16,7 @@
 	#include <registration/SubSamplingConfig.h>
 	#include <registration/CuttingConfig.h>
 	#include <registration/RadiusFilteringConfig.h>
+	
 
 // config callback
 	void subsampling_conf_callback(registration::SubSamplingConfig &config, uint32_t level);

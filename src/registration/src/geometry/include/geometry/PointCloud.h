@@ -8,6 +8,8 @@
     #include <Eigen/Core>
 // ros
 	#include <ros/console.h>
+	#include <ros/callback_queue.h>
+	#include <ros/callback_queue_interface.h>
 // point cloud
 	#include <pcl_conversions/pcl_conversions.h>
 	#include <pcl/point_cloud.h>
@@ -75,6 +77,7 @@ namespace geometry
 				ros::Subscriber pc_sub;
 				ros::Publisher pc_pub;
 				ros::Publisher pc_pub_raw;
+    			ros::CallbackQueue queue;
 			
 			// point cloud
 				pcl::PCLPointCloud2* cloud;

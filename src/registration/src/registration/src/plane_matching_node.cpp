@@ -24,7 +24,7 @@ vector <string> inputs;
 int n_inputs;
 const string sub_topic_name = "/reconstruction/planes";
 const string pub_topic_name = "/reconstruction/point_clouds";
-float frequency = 1;
+float frequency = 0;
 vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
 PCRegistered* PC;
