@@ -2,7 +2,8 @@
     <arg name="in1" default="cam3" />
     <arg name="in2" default="fix" />
     <arg name="path" default="/reconstruction/point_clouds/" />
-    <node name="plane_matching_cam3_fix" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) 2 0 1" output="screen" />
-    <node name="merging_scene" pkg="registration" type="merging_node" args="scene $(arg path)$(arg in1)/registered $(arg path)$(arg in2) $(arg path)scene" output="screen" />
-    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg path)scene" output="screen" />
+    <arg name="f" default="0" />
+    <node name="plane_matching_cam3_fix" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) 1 0 2 $(arg f)" output="screen" respawn="true" />
+    <node name="merging_scene" pkg="registration" type="merging_node" args="scene $(arg path)$(arg in1)/registered $(arg path)$(arg in2) $(arg path)scene $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg path)scene $(arg f)" output="screen" respawn="true" />
 </launch>

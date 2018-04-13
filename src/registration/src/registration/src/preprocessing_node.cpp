@@ -17,6 +17,7 @@ string input_name; // = ("cam1", "cam2", "cam3");
 const string pub_topic_name = "/reconstruction/point_clouds";
 float frequency = 0;
 geometry::PointCloud* PC;
+ros::MultiThreadedSpinner spinner(frequency);
 
 std::string get_publish_name()
 {
@@ -93,6 +94,8 @@ int main(int argc, char *argv[])
 
 		input_name = argv[1];
 		topic = argv[2];
+		string f(argv[3]);
+		frequency = (float)atof(f.c_str());
 
 	// Initialize ROS
 		string node_name = "preprocessing_";

@@ -106,6 +106,8 @@ int main(int argc, char *argv[])
             ROS_FATAL("4 arguments are needed\nusage:\tnew_name\tinput topic 1\tinput topic 2\toutput topic");
             return 1;
         }
+		string fr(argv[5]);
+		frequency = (float)atof(fr.c_str());
 
     // Initialize ROS
         ros::init(argc, argv, node_name);

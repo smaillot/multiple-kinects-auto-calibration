@@ -77,10 +77,8 @@ namespace geometry
 				ros::Subscriber pc_sub;
 				ros::Publisher pc_pub;
 				ros::Publisher pc_pub_raw;
-    			ros::CallbackQueue queue;
 			
 			// point cloud
-				pcl::PCLPointCloud2* cloud;
 				pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
     			pcl::PassThrough<pcl::PointXYZRGB> filter_cut;
 				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
@@ -94,9 +92,6 @@ namespace geometry
 
 			// constructor
 				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name);
-					
-			// getters
-				sensor_msgs::PointCloud2* get_pc();
 
 			// setters
 				void set_subsampling_params(subsampling_params_t subsamples_params);
@@ -108,10 +103,10 @@ namespace geometry
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
 
 			// processing
-				void subsample();
-				void radius_filter();
-				void cut();
-				void transform();
+				pcl::PCLPointCloud2ConstPtr subsample(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr radius_filter(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr cut(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				//pcl::PCLPointCloud2ConstPtr transform();
 
 	};
 }

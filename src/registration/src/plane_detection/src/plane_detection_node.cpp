@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
 		
 		name = argv[1];
 		topic = argv[2];
-		//frame = argv[3];
+		string f(argv[3]);
+		frequency = (float)atof(f.c_str());
 
 	// Initialize ROS
 		string node_name = "plane_detection_";

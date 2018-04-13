@@ -54,7 +54,7 @@ namespace geometry
             void set_params(bool enabled, int n_planes, float th_dist, int max_it);
 
             void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
-            void detect_planes();          
+            void detect_planes(pcl::PCLPointCloud2* cloud);          
 
     };
 };

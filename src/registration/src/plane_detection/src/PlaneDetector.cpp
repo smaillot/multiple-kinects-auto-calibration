@@ -69,19 +69,18 @@ void PlaneDetector::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
         //this->tf_listener->waitForTransform(msg.header.frame_id, this->reference_frame, ros::Time::now(), ros::Duration(3.0));
         //pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
-        this->cloud = cloudPtr;
-
-        this->detect_planes();
+        
+        this->detect_planes(cloudPtr);
     }
 }
 
 /**
  * @brief Default constructor.
  */
-void PlaneDetector::detect_planes()
+void PlaneDetector::detect_planes(pcl::PCLPointCloud2* cloud)
 {
     // init variables
-        pcl::PCLPointCloud2* input_cloud = new pcl::PCLPointCloud2(*this->cloud);
+        pcl::PCLPointCloud2* input_cloud = new pcl::PCLPointCloud2(*cloud);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromPCLPointCloud2(*input_cloud, *temp_cloud);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);

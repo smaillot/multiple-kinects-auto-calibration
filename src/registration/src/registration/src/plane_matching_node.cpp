@@ -396,8 +396,7 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
 
 	sensor_msgs::PointCloud2 input = *pc;
-	sensor_msgs::PointCloud2 output = input;
-	pcl_ros::transformPointCloud(motion.mat.cast <float>(), input, output);
+	pcl_ros::transformPointCloud(motion.mat.cast <float>(), input, input);
 	// if (this->tf_listener.waitForTransform(pc->header.frame_id, new_frame, ros::Time(0), ros::Duration(1.0)))
 	// {
 	// 	pcl_ros::transformPointCloud(new_frame, input, output, this->tf_listener);
@@ -413,8 +412,8 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	// 	output = input;
 	// }
 
-	this->pc_pub.publish(output);
-	ROS_DEBUG_STREAM("Publish registered point cloud on " + this->pub_name + " (" + patch::to_string(output.data.size()) + " points)");
+	this->pc_pub.publish(input);
+	ROS_DEBUG_STREAM("Publish registered point cloud on " + this->pub_name + " (" + patch::to_string(input.data.size()) + " points)");
 }
 
 PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, ros::NodeHandle node)
@@ -437,6 +436,8 @@ int main(int argc, char *argv[])
 		{
 			force_match.push_back((int) *argv[i]-48);
 		}
+		string f(argv[6]);
+		frequency = (float)atof(f.c_str());
 		ROS_DEBUG_STREAM("Force matching of " << force_match[0] << " " << force_match[1] << " " << force_match[2]);
 
 	// Initialize ROS
