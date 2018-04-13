@@ -87,7 +87,7 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         {
             // publish
                 this->pc_pub_raw.publish(msg);
-                ROS_DEBUG_STREAM("Publish raw point cloud on " + this->pub_name + " (" + patch::to_string(cloud->data.size()) + " points)");
+                ROS_DEBUG_STREAM("Publish raw point cloud on " + this->pub_name + " (" + patch::to_string(cloud_msg->data.size()) + " points)");
         }
         else
         {
