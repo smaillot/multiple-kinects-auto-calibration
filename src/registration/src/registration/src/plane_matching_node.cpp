@@ -29,6 +29,8 @@ vector <geometry::Plane*> temp_planes;
 vector <vector <geometry::Plane*> > planes;
 PCRegistered* PC;
 vector <int> force_match;
+int it = 0;
+float filter = 0; // 0 -> overhall mean tf
 
 /**
  * @brief Returns the publishing topic of a given camera.
@@ -113,10 +115,9 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
-	W(0,0) = 1;
+	W(0,0) = 10;
 	W(1,1) = 1;
-	W(2,2) = 1;
-	// W(2,2) = 0.001; // the 3rd plane is less to be trusted, we need it only to fix y translation
+	W(2,2) = 0.1;
 	
 	ROS_DEBUG_STREAM("Ns = \n" << Ns);
 	ROS_DEBUG_STREAM("Nt = \n" << Nt);
@@ -367,6 +368,7 @@ vector <vector <geometry::Plane*> > match_planes_brute(vector <vector <geometry:
 void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 {
     tf::StampedTransform transf; 
+	
 	planes.clear();
 	for (int i = 0; i < 2; i++)
 	{
@@ -390,27 +392,51 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	{
 		new_frame += "_" + inputs[i];
 	}
-	this->br.sendTransform(tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame));
+	
+    tf::StampedTransform new_tf; 
+
+	if (it > 0)
+	{
+		tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
+		if (!this->outlying(computed))
+		{
+			if (filter > 0)
+			{
+				new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
+			}
+			else
+			{
+				new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it+1)), ros::Time::now(), "cam_center", "/" + new_frame);
+			}
+		}
+		else
+		{
+			ROS_WARN("Outlier !");
+			new_tf = this->last_tf;
+		}
+	}
+	else
+	{
+		new_tf = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/last_" + new_frame);
+	}
+	it++;
+
+	this->last_tf = new_tf;
+	this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
 
 	ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
 	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
 
+	Matrix4d H = Matrix4d::Identity();
+	Matrix3d R;
+	Vector3d T;
+	tf::matrixTFToEigen(new_tf.getBasis(), R);
+	tf::vectorTFToEigen(new_tf.getOrigin(), T);
+	H.topLeftCorner(3, 3) = R;
+	H.topRightCorner(3, 1) = T;
+
 	sensor_msgs::PointCloud2 input = *pc;
-	pcl_ros::transformPointCloud(motion.mat.cast <float>(), input, input);
-	// if (this->tf_listener.waitForTransform(pc->header.frame_id, new_frame, ros::Time(0), ros::Duration(1.0)))
-	// {
-	// 	pcl_ros::transformPointCloud(new_frame, input, output, this->tf_listener);
-	// }
-	// else
-	// {
-    //     ROS_ERROR_STREAM("No tf received from " + pc->header.frame_id + " to " + new_frame + " in 1s. Abort point cloud transform.");
-	// 	output = input;
-	// }
-	// if (output.data.size() == 0)
-	// {
-	// 	ROS_WARN("Registered point cloud is empty");
-	// 	output = input;
-	// }
+	pcl_ros::transformPointCloud(H.cast <float>(), input, input);
 
 	this->pc_pub.publish(input);
 	ROS_DEBUG_STREAM("Publish registered point cloud on " + this->pub_name + " (" + patch::to_string(input.data.size()) + " points)");
@@ -423,6 +449,30 @@ PCRegistered::PCRegistered(std::string sub_name, std::string pub_name, ros::Node
 	this->node = node;
 	this->pc_sub = this->node.subscribe(this->sub_name, 1, &PCRegistered::pc_callback, this);
 	this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
+}
+
+tf::Transform PCRegistered::filter_tf(tf::StampedTransform new_tf, float ratio)
+{
+	tf::Transform result;
+	tf::Vector3 res_o = (1 - ratio) * this->last_tf.getOrigin() + ratio * new_tf.getOrigin();
+	tf::Quaternion res_q = this->last_tf.getRotation() * tfScalar(1 - ratio) + new_tf.getRotation() * tfScalar(ratio);
+	result.setOrigin(res_o);
+	result.setRotation(res_q);
+
+	return result;
+}
+
+bool PCRegistered::outlying(tf::StampedTransform new_tf)
+{
+	double th = 0.1;
+	if ((new_tf.getOrigin().getX() - this->last_tf.getOrigin().getX() > th) || (new_tf.getOrigin().getY() - this->last_tf.getOrigin().getY() > th) || (new_tf.getOrigin().getZ() - this->last_tf.getOrigin().getZ() > th))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -438,6 +488,11 @@ int main(int argc, char *argv[])
 		}
 		string f(argv[6]);
 		frequency = (float)atof(f.c_str());
+		if (argc > 7)
+		{
+			f = argv[7];
+			filter = (float)atof(f.c_str());
+		}
 		ROS_DEBUG_STREAM("Force matching of " << force_match[0] << " " << force_match[1] << " " << force_match[2]);
 
 	// Initialize ROS

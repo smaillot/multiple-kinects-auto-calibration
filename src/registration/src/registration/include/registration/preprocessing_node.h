@@ -16,6 +16,7 @@
 	#include <registration/SubSamplingConfig.h>
 	#include <registration/CuttingConfig.h>
 	#include <registration/RadiusFilteringConfig.h>
+	#include <registration/OutliersRemovalConfig.h>
 	
 
 // config callback

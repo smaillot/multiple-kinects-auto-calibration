@@ -85,6 +85,18 @@ void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config,
     ROS_DEBUG_STREAM("Radius filtering config updated for " + input_name);
 }
 
+void outliers_removal_conf_callback(registration::OutliersRemovalConfig &config, uint32_t level)
+{
+    bool enable = config.enable;
+	int meank = config.meank;
+	float std_mul = config.std_mul;
+
+	outliers_removal_params_t outliers_removal_params = {enable, meank, std_mul};
+	PC->set_outliers_removal_params(outliers_removal_params);
+
+    ROS_DEBUG_STREAM("Outliers removal config updated for " + input_name);
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -108,16 +120,19 @@ int main(int argc, char *argv[])
 	PC->change_frame("cam_center");
 	ros::NodeHandle nh_cutting("preprocessing/" + input_name + "/cutting");
 	ros::NodeHandle nh_radius_filtering("preprocessing/" + input_name + "/radius_filtering");
+	ros::NodeHandle nh_outliers_removal("preprocessing/" + input_name + "/outliers_removal");
 
 	// dynamic reconfigure
 			
 		dynamic_reconfigure::Server<registration::SubSamplingConfig> subsampling_srv(nh_subsampling);
 		dynamic_reconfigure::Server<registration::CuttingConfig> cutting_srv(nh_cutting);
 		dynamic_reconfigure::Server<registration::RadiusFilteringConfig> radius_filtering_srv(nh_radius_filtering);
+		dynamic_reconfigure::Server<registration::OutliersRemovalConfig> outliers_removal_srv(nh_outliers_removal);
 	
 		subsampling_srv.setCallback(boost::bind(&subsampling_conf_callback, _1, _2));
 		cutting_srv.setCallback(boost::bind(&cutting_conf_callback, _1, _2));
 		radius_filtering_srv.setCallback(boost::bind(&radius_filtering_conf_callback, _1, _2));
+		outliers_removal_srv.setCallback(boost::bind(&outliers_removal_conf_callback, _1, _2));
 
 	// ROS loop
 	ros::Rate loop_rate(frequency);

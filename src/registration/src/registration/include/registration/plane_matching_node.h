@@ -10,6 +10,7 @@
     #include <tf/transform_broadcaster.h>
     #include <tf/LinearMath/Vector3.h>
     #include <tf/LinearMath/Matrix3x3.h>
+    #include <tf/LinearMath/Quaternion.h>
     #include <tf_conversions/tf_eigen.h>
 // custom
     #include <geometry/Line.h>
@@ -37,6 +38,7 @@ class PCRegistered
 		std::string pub_name;
 		ros::NodeHandle node;
 		tf::TransformListener tf_listener;
+        tf::StampedTransform last_tf; 
 		ros::Subscriber pc_sub;
 		ros::Publisher pc_pub;
         tf::TransformBroadcaster br;
@@ -44,6 +46,8 @@ class PCRegistered
 	public:
 		PCRegistered(std::string sub_name, std::string pub_name, ros::NodeHandle node);
 		void pc_callback(const sensor_msgs::PointCloud2ConstPtr& pc);
+        tf::Transform filter_tf(tf::StampedTransform new_tf, float ratio);
+        bool outlying(tf::StampedTransform new_tf);
 };
 
 bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* tf, std::string name);

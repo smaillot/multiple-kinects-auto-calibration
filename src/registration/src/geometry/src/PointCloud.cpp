@@ -24,10 +24,12 @@ PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string p
     subsampling_params_t subsampling_params = {false, 0.02, 0.02, 0.02};
     cutting_params_t cutting_params = {{false, -1.0, 1.0}, {false, -1.0, 1.0}, {false, -1.0, 1.0}};
     radius_filtering_params_t radius_filtering_params = {false, 0.1, 50};
+    outliers_removal_params_t outliers_removal_params = {false, 50, 1.0};
 
     this->subsampling_params = subsampling_params; 
     this->cutting_params = cutting_params;
     this->radius_filtering_params = radius_filtering_params;
+    this->outliers_removal_params = outliers_removal_params;
 
     this->pc_sub = this->node.subscribe(this->sub_name, 1, &PointCloud::update, this);
     this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/preprocessed", 1);
@@ -57,6 +59,11 @@ void PointCloud::set_cutting_params(cutting_params_t cutting_params)
 void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_filtering_params)
 {
     this->radius_filtering_params = radius_filtering_params;
+}
+
+void PointCloud::set_outliers_removal_params(outliers_removal_params_t outliers_removal_params)
+{
+    this->outliers_removal_params = outliers_removal_params;
 }
 
 void PointCloud::change_frame(std::string frame)
@@ -98,8 +105,8 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
     /* process cloud */
     
+        cloudPtr = this->outliers_removal(cloudPtr);
         cloudPtr = this->subsample(cloudPtr);
-        cloudPtr = this->radius_filter(cloudPtr);
         cloudPtr = this->cut(cloudPtr);
 
         pcl_conversions::fromPCL(*cloudPtr, msg);
@@ -186,10 +193,10 @@ pcl::PCLPointCloud2ConstPtr PointCloud::radius_filter(pcl::PCLPointCloud2ConstPt
     {
         pcl::PCLPointCloud2 filtered;
 
-        filter_radius.setInputCloud(cloudPtr);
-        filter_radius.setRadiusSearch(this->radius_filtering_params.radius);
-        filter_radius.setMinNeighborsInRadius(this->radius_filtering_params.min_neighbors);
-        filter_radius.filter(filtered);
+        this->filter_radius.setInputCloud(cloudPtr);
+        this->filter_radius.setRadiusSearch(this->radius_filtering_params.radius);
+        this->filter_radius.setMinNeighborsInRadius(this->radius_filtering_params.min_neighbors);
+        this->filter_radius.filter(filtered);
 
         if (filtered.data.size() > 0)
         {
@@ -200,6 +207,27 @@ pcl::PCLPointCloud2ConstPtr PointCloud::radius_filter(pcl::PCLPointCloud2ConstPt
     else
     {
         // filtering disabled
+    }
+    return cloudPtr;
+}
+
+pcl::PCLPointCloud2ConstPtr PointCloud::outliers_removal(pcl::PCLPointCloud2ConstPtr cloudPtr)
+{
+    if (this->outliers_removal_params.enable)
+    {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::fromPCLPointCloud2(*cloudPtr, *temp_cloud);
+
+        this->sor.setInputCloud(temp_cloud);
+        this->sor.setMeanK (this->outliers_removal_params.meank);
+        this->sor.setStddevMulThresh (this->outliers_removal_params.std_mul);
+        this->sor.filter(*filtered);
+
+        pcl::PCLPointCloud2* output(new pcl::PCLPointCloud2());
+        pcl::toPCLPointCloud2(*filtered, *output);
+        pcl::PCLPointCloud2ConstPtr temp(output);
+        cloudPtr = temp;
     }
     return cloudPtr;
 }

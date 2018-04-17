@@ -1,0 +1,23 @@
+<launch>
+    
+    <arg name="in2" default="cam2" />
+    <arg name="in3" default="cam3" />
+    <arg name="f" default="0" />
+    <arg name="filtering" default="0.1" />
+    <arg name="order" default="1 2 0" />
+    
+    <arg name="pc_path" value="/qhd/points" />
+    <arg name="out_path" default="/reconstruction/point_clouds" />
+
+    <node name="preprocessing_$(arg in2)" pkg="registration" type="preprocessing_node" args="$(arg in2) /$(arg in2)$(arg pc_path) $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_$(arg in3)" pkg="registration" type="preprocessing_node" args="$(arg in3) /$(arg in3)$(arg pc_path) $(arg f)" output="screen" respawn="true" />
+
+    <node name="plane_detection_$(arg in2)" pkg="plane_detection" type="plane_detection_node" args="$(arg in2) $(arg out_path)/$(arg in2)/preprocessed $(arg f)" output="screen" respawn="true" />
+    <node name="plane_detection_$(arg in3)" pkg="plane_detection" type="plane_detection_node" args="$(arg in3) $(arg out_path)/$(arg in3)/preprocessed $(arg f)" output="screen" respawn="true" />
+
+    <node name="plane_matching_$(arg in3)_$(arg in2)" pkg="registration" type="plane_matching_node" args="$(arg in3) $(arg in2) $(arg order) $(arg f) $(arg filtering)" output="screen" respawn="true" />
+    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg out_path)/$(arg in3)/registered $(arg out_path)/$(arg in2) $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+    
+    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+
+</launch>

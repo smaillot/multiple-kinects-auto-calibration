@@ -41,6 +41,8 @@ string print_tf1(tf::StampedTransform transform)
         output += patch::to_string(a.getX()) + "\t" + patch::to_string(a.getY()) + "\t" + patch::to_string(a.getZ()) + "\t";
         output += patch::to_string(q.getAngle()) + "\n";
         last1 = q.getAngle();
+        i++;
+        ROS_DEBUG_STREAM("print #" + patch::to_string(i));
     }
 
     return output;
@@ -59,15 +61,13 @@ string print_tf2(tf::StampedTransform transform)
         output += patch::to_string(a.getX()) + "\t" + patch::to_string(a.getY()) + "\t" + patch::to_string(a.getZ()) + "\t";
         output += patch::to_string(q.getAngle()) + "\n";
         last2 = q.getAngle();
-        i++;
-        ROS_DEBUG_STREAM("print #" + patch::to_string(i));
     }
 
     return output;
 }
 
-ofstream output_file1("/home/inhands-user3/catkin_ws/src/registration/src/registration/rec/registration/cam1_cam2.log");
-ofstream output_file2("/home/inhands-user3/catkin_ws/src/registration/src/registration/rec/registration/cam3_fix.log");
+ofstream output_file1("/home/inhands-user3/catkin_ws/src/registration/src/registration/rec/registration/cam3_cam2.log");
+//ofstream output_file2("/home/inhands-user3/catkin_ws/src/registration/src/registration/rec/registration/cam3_fix.log");
 
 int main(int argc, char *argv[])
 {
@@ -95,27 +95,27 @@ int main(int argc, char *argv[])
 
         try
         {
-            listener1.waitForTransform("/registration_cam1_cam2", "/cam_center", ros::Time(0), ros::Duration(5.0));
-            listener1.lookupTransform("/registration_cam1_cam2", "/cam_center", ros::Time(0), transform1);
+            listener1.waitForTransform("/registration_cam3_cam2", "/cam_center", ros::Time(0), ros::Duration(5.0));
+            listener1.lookupTransform("/registration_cam3_cam2", "/cam_center", ros::Time(0), transform1);
             }
             catch (tf::TransformException &ex) {
             ROS_ERROR("%s",ex.what());
             ros::Duration(1.0).sleep();
             continue;
         }
-        try
-        {
-            listener2.waitForTransform("/registration_cam3_fix", "/cam_center", ros::Time(0), ros::Duration(5.0));
-            listener2.lookupTransform("registration_cam3_fix", "cam_center", ros::Time(0), transform2);
-            }
-            catch (tf::TransformException &ex) {
-            ROS_ERROR("%s",ex.what());
-            ros::Duration(1.0).sleep();
-            continue;
-        }
+        // try
+        // {
+        //     listener2.waitForTransform("/registration_cam3_fix", "/cam_center", ros::Time(0), ros::Duration(5.0));
+        //     listener2.lookupTransform("registration_cam3_fix", "cam_center", ros::Time(0), transform2);
+        //     }
+        //     catch (tf::TransformException &ex) {
+        //     ROS_ERROR("%s",ex.what());
+        //     ros::Duration(1.0).sleep();
+        //     continue;
+        // }
 
         output_file1 << print_tf1(transform1);
-        output_file2 << print_tf2(transform2);
+        // output_file2 << print_tf2(transform2);
 
         // sleep
             ros::spinOnce();

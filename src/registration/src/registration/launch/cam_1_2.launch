@@ -1,9 +1,0 @@
-<launch>
-    <arg name="in1" default="cam1" />
-    <arg name="in2" default="cam2" />
-    <arg name="f" default="0" />
-    <arg name="path" default="/reconstruction/point_clouds/" />
-    <node name="plane_matching_$(arg in1)_$(arg in2)" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) 0 1 2 $(arg f)" output="screen" respawn="true" />
-    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg path)$(arg in1)/registered $(arg path)$(arg in2) $(arg path)fix $(arg f)" output="screen" respawn="true" />
-    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg path)fix $(arg f)" output="screen" respawn="true" />
-</launch>

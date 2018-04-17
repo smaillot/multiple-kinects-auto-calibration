@@ -1,8 +1,0 @@
-<launch>
-    <arg name="in1" default="/reconstruction/point_clouds/cam1/preprocessed" />
-    <arg name="in2" default="/reconstruction/point_clouds/cam2/preprocessed" />
-    <arg name="out" default="/reconstruction/point_clouds/fix" />
-    <arg name="f" default="0" />
-    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg in1) $(arg in2) $(arg out) $(arg f)" output="screen" respawn="true"  />
-    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out) $(arg f)" output="screen" respawn="true"  />
-</launch>

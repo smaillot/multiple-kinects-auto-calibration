@@ -31,6 +31,7 @@ generate_dynamic_reconfigure_options(
   cfg/SubSampling.cfg
   cfg/Cutting.cfg
   cfg/RadiusFiltering.cfg
+  cfg/OutliersRemoval.cfg
   cfg/Merging.cfg
 )
 
