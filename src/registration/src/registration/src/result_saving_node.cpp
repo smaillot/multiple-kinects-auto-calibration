@@ -9,6 +9,7 @@
 #include <tf/LinearMath/Matrix3x3.h>
 #include <tf_conversions/tf_eigen.h>
 #include <Eigen/Core>
+#include <time.h>
 
 using namespace std;
 int i = 0;
@@ -55,7 +56,7 @@ string print_tf2(tf::StampedTransform transform)
     if (change2 > 0.00001 || change2 < -0.00001)
     {
         output += patch::to_string(t.getX()) + "\t" + patch::to_string(t.getY()) + "\t" + patch::to_string(t.getZ()) + "\t";
-        output += patch::to_string(t.getX()) + "\t" + patch::to_string(t.getY()) + "\t" + patch::to_string(t.getZ()) + "\t";
+        output += patch::to_string(a.getX()) + "\t" + patch::to_string(a.getY()) + "\t" + patch::to_string(a.getZ()) + "\t";
         output += patch::to_string(q.getAngle()) + "\n";
         last2 = q.getAngle();
         i++;

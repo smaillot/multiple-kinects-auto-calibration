@@ -1,0 +1,31 @@
+<launch>
+    
+    <arg name="in1" default="cam1" />
+    <arg name="in2" default="cam2" />
+    <arg name="in3" default="cam3" />
+    <arg name="f" default="0" />
+    <arg name="order1" default="0 1 2" />
+    <arg name="order2" default="1 0 2" />
+    
+    <arg name="pc_path" value="/qhd/points" />
+    <arg name="out_path" default="/reconstruction/point_clouds" />
+
+    <node name="preprocessing_$(arg in1)" pkg="registration" type="preprocessing_node" args="$(arg in1) /$(arg in1)$(arg pc_path) $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_$(arg in2)" pkg="registration" type="preprocessing_node" args="$(arg in2) /$(arg in2)$(arg pc_path) $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_c" pkg="registration" type="preprocessing_node" args="$(arg in3) /$(arg in3)$(arg pc_path) $(arg f)" output="screen" respawn="true" />
+
+    <node name="plane_detection_$(arg in1)" pkg="plane_detection" type="plane_detection_node" args="$(arg in1) $(arg out_path)/$(arg in1)/preprocessed $(arg f)" output="screen" respawn="true" />
+    <node name="plane_detection_$(arg in2)" pkg="plane_detection" type="plane_detection_node" args="$(arg in2) $(arg out_path)/$(arg in2)/preprocessed $(arg f)" output="screen" respawn="true" />
+    <node name="plane_detection_$(arg in3)" pkg="plane_detection" type="plane_detection_node" args="$(arg in3) $(arg out_path)/$(arg in3)/preprocessed $(arg f)" output="screen" respawn="true"  />
+
+    <node name="plane_matching_$(arg in1)_$(arg in2)" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) $(arg order1) $(arg f)" output="screen" respawn="true" />
+    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg out_path)/$(arg in1)/registered $(arg out_path)/$(arg in2) $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+    
+    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+    <node name="plane_detection_fix" pkg="plane_detection" type="plane_detection_node" args="fix $(arg out_path)/fix/preprocessed $(arg f)" output="screen" respawn="true"  />
+
+    <node name="plane_matching_$(arg in3)_fix" pkg="registration" type="plane_matching_node" args="$(arg in3) fix $(arg order2) $(arg f)" output="screen" respawn="true" />
+    <node name="merging_scene" pkg="registration" type="merging_node" args="scene $(arg out_path)/$(arg in3)/registered $(arg out_path)/fix $(arg out_path)/scene $(arg f)" output="screen" respawn="true" />
+
+    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg out_path)/scene $(arg f)" output="screen" respawn="true" />
+</launch>
