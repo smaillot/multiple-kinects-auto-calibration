@@ -115,9 +115,9 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
-	W(0,0) = 10;
+	W(0,0) = 1;
 	W(1,1) = 1;
-	W(2,2) = 0.1;
+	W(2,2) = 1;
 	
 	ROS_DEBUG_STREAM("Ns = \n" << Ns);
 	ROS_DEBUG_STREAM("Nt = \n" << Nt);
@@ -400,7 +400,7 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 		tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
 		if (!this->outlying(computed))
 		{
-			if (filter > 0)
+			if (filter == -1)
 			{
 				new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
 			}
