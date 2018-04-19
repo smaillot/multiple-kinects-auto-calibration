@@ -10,8 +10,10 @@
 #include <tf_conversions/tf_eigen.h>
 #include <Eigen/Core>
 #include <time.h>
+#include <math.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/Quaternion.h>
+#include <std_msgs/Float32.h>
 
 using namespace std;
 int i = 0;
@@ -21,6 +23,7 @@ float last2 = 0;
 float change2;
 ros::Publisher pub_tr;
 ros::Publisher pub_rot;
+ros::Publisher pub_error;
 
 namespace patch
 {
@@ -60,6 +63,9 @@ string print_tf1(tf::StampedTransform transform)
     rot_msg.w = q.getAngle() * 180 / 3.14159;
     pub_tr.publish(tr_msg);
     pub_rot.publish(rot_msg);
+    std_msgs::Float32 error;
+    error.data = (float) sqrt(pow(tr_msg.x-40.2454, 2)+pow(tr_msg.y-52.1693, 2)+pow(tr_msg.z+26.1507, 2));
+    pub_error.publish(error);
 
     return output;
 }
@@ -98,6 +104,7 @@ int main(int argc, char *argv[])
         ros::NodeHandle nh;
         pub_tr = nh.advertise<geometry_msgs::Vector3>("registration/translation", 10);
         pub_rot = nh.advertise<geometry_msgs::Quaternion>("registration/rotation", 10);
+        pub_error = nh.advertise<std_msgs::Float32>("registration/error", 1000);
 
     tf::TransformListener listener1;
     tf::TransformListener listener2;
