@@ -42,7 +42,7 @@ namespace geometry
 
             // Point cloud
                 pcl::PCLPointCloud2* cloud;
-                pcl::SACSegmentation<pcl::PointXYZ> seg;
+                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
 
             // Results
                 std::vector<Plane> planes;
@@ -54,8 +54,7 @@ namespace geometry
             void set_params(bool enabled, int n_planes, float th_dist, int max_it);
 
             void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
-            void detect_planes();
-            
+            void detect_planes(pcl::PCLPointCloud2* cloud);          
 
     };
 };

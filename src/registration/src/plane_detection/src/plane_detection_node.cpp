@@ -13,32 +13,21 @@ using namespace std;
 *	output topics namespace
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
-const int n_inputs = sizeof(inputs) / sizeof(*inputs);
-const string sub_topic_name = "/reconstruction/point_clouds";
+string topic; 
+string name;
+//string frame;
 const string pub_topic_name = "/reconstruction/planes";
 float frequency = 0;
-vector<geometry::PlaneDetector*> PD;
-
-
-/**
- * @brief Returns the publishing topic of a given camera.
- *
- * @params input_number Camera ID in the input list.
- */
-std::string get_topic_name(int input_number)
-{
-	return sub_topic_name + inputs[input_number];
-}
+geometry::PlaneDetector* PD;
 
 /**
  * @brief Returns the name of the topic to publish lpanes in.
  *
  * @params input_number Camera ID in the input list.
  */
-std::string get_publish_name(int input_number)
+std::string get_publish_name()
 {
-	return pub_topic_name + inputs[input_number];
+	return pub_topic_name + "/" + name;
 }
 
 /**
@@ -51,32 +40,33 @@ void plane_detection_conf_callback(plane_detection::PlaneDetectionConfig &config
 	float th_dist = config.th_dist / 1000;
 	int max_it = config.max_it;
 
-	for (int i = 0 ; i < n_inputs ; i++)
-	{
-		PD[i]->set_params(enabled, n_planes, th_dist, max_it);
-	}
+	PD->set_params(enabled, n_planes, th_dist, max_it);
 
     ROS_DEBUG("Plane detection parameters config updated");
 }
 
 int main(int argc, char *argv[])
 {
-	// verbosity: debug
-		if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
-		{
-			ros::console::notifyLoggerLevelsChanged();
-		}
+
+	// parsing arguments
+
+		// TODO error catching 
+		
+		name = argv[1];
+		topic = argv[2];
+		string f(argv[3]);
+		frequency = (float)atof(f.c_str());
 
 	// Initialize ROS
-		ros::init(argc, argv, "plane_detection_node");
+		string node_name = "plane_detection_";
+		node_name += name;
+		ros::init(argc, argv, node_name);
 		ros::NodeHandle nh;
-		ros::NodeHandle node_ransac("~/RANSAC");
+		ros::NodeHandle node_ransac("plane_detection/" + name);
+		ros::Duration(0.5).sleep();
 
-	// create PlaneDetector objects
-		for (int i = 0 ; i < n_inputs ; i++)
-		{
-			PD.push_back(new geometry::PlaneDetector(nh, get_topic_name(i), get_publish_name(i), "cam_center"));
-		}
+	// create PlaneDetector object
+		PD = new geometry::PlaneDetector(nh, topic, get_publish_name(), "cam_center");//, frame);
 
 	// dynamic reconfigure
 		dynamic_reconfigure::Server<plane_detection::PlaneDetectionConfig> plane_detection_srv(node_ransac);

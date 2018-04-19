@@ -4,8 +4,12 @@
 // std
 	#include <string>
 	#include <iostream>
+	#include <math.h>
+    #include <Eigen/Core>
 // ros
 	#include <ros/console.h>
+	#include <ros/callback_queue.h>
+	#include <ros/callback_queue_interface.h>
 // point cloud
 	#include <pcl_conversions/pcl_conversions.h>
 	#include <pcl/point_cloud.h>
@@ -14,6 +18,7 @@
 	#include <pcl/filters/voxel_grid.h>
 	#include <pcl/filters/passthrough.h>
 	#include <pcl/filters/radius_outlier_removal.h>
+	#include <pcl/filters/statistical_outlier_removal.h>
 	#include <sensor_msgs/PointCloud2.h>
 // tf
 	#include <tf/LinearMath/Transform.h>
@@ -47,6 +52,12 @@ struct radius_filtering_params_t
 	float radius;
 	int min_neighbors;
 };
+struct outliers_removal_params_t
+{
+	bool enable;
+	int meank;
+	float std_mul;
+};
 namespace patch
 {
     template < typename T > std::string to_string( const T& n )
@@ -66,43 +77,48 @@ namespace geometry
 			// ros node interaction
 				ros::NodeHandle node;  
 				const tf::TransformListener* tf_listener;
+				std::string frame;
 
 				std::string sub_name;  
 				std::string pub_name;
 				ros::Subscriber pc_sub;
 				ros::Publisher pc_pub;
+				ros::Publisher pc_pub_raw;
 			
 			// point cloud
-				pcl::PCLPointCloud2* cloud;
 				pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
     			pcl::PassThrough<pcl::PointXYZRGB> filter_cut;
 				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
+				pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
 
 			// parameters
 				subsampling_params_t subsampling_params;
 				cutting_params_t cutting_params;
 				radius_filtering_params_t radius_filtering_params;
+				outliers_removal_params_t outliers_removal_params;
 
 		public:
 
 			// constructor
 				PointCloud(ros::NodeHandle nh, std::string subscribe_name, std::string publish_name);
-					
-			// getters
-				sensor_msgs::PointCloud2* get_pc();
 
 			// setters
 				void set_subsampling_params(subsampling_params_t subsamples_params);
 				void set_cutting_params(cutting_params_t cutting_params);
 				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
+				void set_outliers_removal_params(outliers_removal_params_t outliers_removal_params);
+				void change_frame(std::string frame);
 
 			// update
 				void update(const sensor_msgs::PointCloud2ConstPtr& cloud);
 
 			// processing
-				void subsample();
-				void radius_filter();
-				void cut();
+				pcl::PCLPointCloud2ConstPtr subsample(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr cut(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr radius_filter(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr outliers_removal(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				//pcl::PCLPointCloud2ConstPtr transform();
+
 	};
 }
 

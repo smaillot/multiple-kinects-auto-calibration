@@ -15,7 +15,7 @@ using namespace geometry;
     this->pub_name = pub_name;
     this->reference_frame = frame;
     this->tf_listener = new tf::TransformListener; 
-    this->seg = pcl::SACSegmentation<pcl::PointXYZ>();
+    this->seg = pcl::SACSegmentation<pcl::PointXYZRGB>();
     this->cloud = new pcl::PCLPointCloud2;
 
     // init segmentation model
@@ -41,7 +41,6 @@ void PlaneDetector::set_params(bool enabled, int n_planes, float th_dist, int ma
 {
     this->enabled = enabled;
     this->n_planes = n_planes;
-	ROS_DEBUG_STREAM("detecting " << patch::to_string(this->n_planes) << " planes");
     this->th_dist = th_dist;
     this->max_it = max_it;
 
@@ -51,6 +50,7 @@ void PlaneDetector::set_params(bool enabled, int n_planes, float th_dist, int ma
     for (int i = 0 ; i < this->n_planes ; i++)
     {
         this->planes_pub.push_back(this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/plane" + patch::to_string(i+1), 1));
+        ROS_INFO_STREAM("Start searching for " + patch::to_string(this->n_planes) + " planes from " + this->sub_name);
     }
 }
 
@@ -65,25 +65,25 @@ void PlaneDetector::update(const sensor_msgs::PointCloud2ConstPtr& cloud)
     {
         sensor_msgs::PointCloud2 msg = *cloud;
         pcl::PCLPointCloud2* cloudPtr(new pcl::PCLPointCloud2);
-        ros::Time t = ros::Time(0);
-        pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
+        //ros::Time t = ros::Time(0);
+        //this->tf_listener->waitForTransform(msg.header.frame_id, this->reference_frame, ros::Time::now(), ros::Duration(3.0));
+        //pcl_ros::transformPointCloud(this->reference_frame, msg, msg, *this->tf_listener);
         pcl_conversions::toPCL(msg, *cloudPtr);
-        this->cloud = cloudPtr;
-
-        this->detect_planes();
+        
+        this->detect_planes(cloudPtr);
     }
 }
 
 /**
  * @brief Default constructor.
  */
-void PlaneDetector::detect_planes()
+void PlaneDetector::detect_planes(pcl::PCLPointCloud2* cloud)
 {
     // init variables
-        pcl::PCLPointCloud2* input_cloud = new pcl::PCLPointCloud2(*this->cloud);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PCLPointCloud2* input_cloud = new pcl::PCLPointCloud2(*cloud);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::fromPCLPointCloud2(*input_cloud, *temp_cloud);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
 
@@ -122,7 +122,7 @@ void PlaneDetector::detect_planes()
                 br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/cam_center", pub_name + "/plane" + patch::to_string(i+1))); 
             
             // extract inliers
-                pcl::ExtractIndices<pcl::PointXYZ> extract_pos;
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract_pos;
                 extract_pos.setInputCloud(temp_cloud);
                 extract_pos.setIndices(inliers);
                 extract_pos.setNegative(false);
@@ -134,10 +134,11 @@ void PlaneDetector::detect_planes()
                         sensor_msgs::PointCloud2* msg_pub(new sensor_msgs::PointCloud2());
                         pcl::toROSMsg(*plane_cloud, *msg_pub);
                         this->planes_pub[i].publish(*msg_pub);
+                        ROS_DEBUG_STREAM("Publish plane" + patch::to_string(i+1) +  " on " + this->pub_name + " (" + patch::to_string(msg_pub->data.size()) + " points)");
                 }
 
             //subtract inliers
-                pcl::ExtractIndices<pcl::PointXYZ> extract_neg;
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract_neg;
                 extract_neg.setInputCloud(temp_cloud);
                 extract_neg.setIndices(inliers);
                 extract_neg.setNegative(true);

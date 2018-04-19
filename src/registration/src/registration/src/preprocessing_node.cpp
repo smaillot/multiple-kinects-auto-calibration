@@ -12,33 +12,16 @@ using namespace std;
 *		registration algorithms
 */
 
-const string inputs[2] = {"/cam1", "/cam2"};
-const int n_inputs = sizeof(inputs) / sizeof(*inputs);
-const string pc_topic_name = "/qhd/points";
+string topic; // = ("/cam1/qhd/points", "/cam2/qhd/points", "/cam3/qhd/points");
+string input_name; // = ("cam1", "cam2", "cam3");
 const string pub_topic_name = "/reconstruction/point_clouds";
 float frequency = 0;
-vector<geometry::PointCloud*> PC;
+geometry::PointCloud* PC;
+ros::MultiThreadedSpinner spinner(frequency);
 
-std::string get_topic_name(int input_number)
+std::string get_publish_name()
 {
-	return inputs[input_number] + pc_topic_name;
-}
-
-std::string get_publish_name(int input_number)
-{
-	return pub_topic_name + inputs[input_number];
-}
-
-int get_input_number(std::string topic_name)
-{
-	for (int i = 0 ; i < n_inputs ; i++)
-	{
-		if (get_topic_name(i) == topic_name)
-		{
-			return i;
-		}
-	}
-	return -1;
+	return pub_topic_name + "/" + input_name;
 }
 
 /**
@@ -60,13 +43,10 @@ void subsampling_conf_callback(registration::SubSamplingConfig &config, uint32_t
     float z = config.size_z;
     /**************************************************************/
 
-	for (int i = 0 ; i < n_inputs ; i++)
-	{
-		subsampling_params_t subsampling_params = {enable, x, y, z};
-		PC[i]->set_subsampling_params(subsampling_params);
-	}
+	subsampling_params_t subsampling_params = {enable, x, y, z};
+	PC->set_subsampling_params(subsampling_params);
 
-    ROS_DEBUG("Subsampling config updated");
+    ROS_DEBUG_STREAM("Subsampling config updated for " + input_name);
 }
 
 /**
@@ -83,14 +63,11 @@ void cutting_conf_callback(registration::CuttingConfig &config, uint32_t level)
 	bool z_enable = config.z_enable;
 	float z_min = config.z_min / 1000;
 	float z_max = config.z_max / 1000;
+	
+	cutting_params_t cutting_params = {x_enable, x_min, x_max, y_enable, y_min, y_max, z_enable, z_min, z_max};
+	PC->set_cutting_params(cutting_params);
 
-	for (int i = 0 ; i < n_inputs ; i++)
-	{
-		cutting_params_t cutting_params = {x_enable, x_min, x_max, y_enable, y_min, y_max, z_enable, z_min, z_max};
-		PC[i]->set_cutting_params(cutting_params);
-	}
-
-    ROS_DEBUG("Cutting config updated");
+    ROS_DEBUG_STREAM("Cutting config updated for " + input_name);
 }
 
 /**
@@ -102,52 +79,64 @@ void radius_filtering_conf_callback(registration::RadiusFilteringConfig &config,
 	double radius = config.radius / 1000;
 	int min_neighbors = config.min_neighbors;
 
-	for (int i = 0 ; i < n_inputs ; i++)
-	{
-		radius_filtering_params_t radius_filtering_params = {enable, radius, min_neighbors};
-		PC[i]->set_radius_filtering_params(radius_filtering_params);
-	}
+	radius_filtering_params_t radius_filtering_params = {enable, radius, min_neighbors};
+	PC->set_radius_filtering_params(radius_filtering_params);
 
-    ROS_DEBUG("Radius filtering config updated");
+    ROS_DEBUG_STREAM("Radius filtering config updated for " + input_name);
+}
+
+void outliers_removal_conf_callback(registration::OutliersRemovalConfig &config, uint32_t level)
+{
+    bool enable = config.enable;
+	int meank = config.meank;
+	float std_mul = config.std_mul;
+
+	outliers_removal_params_t outliers_removal_params = {enable, meank, std_mul};
+	PC->set_outliers_removal_params(outliers_removal_params);
+
+    ROS_DEBUG_STREAM("Outliers removal config updated for " + input_name);
 }
 
 int main(int argc, char *argv[])
 {
-	// verbosity: debug
-		if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug)) 
-		{
-			ros::console::notifyLoggerLevelsChanged();
-		}
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info)) 
+        {
+            ros::console::notifyLoggerLevelsChanged();
+        }
+
+	// parsing arguments
+
+		// TODO error catching 
+
+		input_name = argv[1];
+		topic = argv[2];
+		string f(argv[3]);
+		frequency = (float)atof(f.c_str());
 
 	// Initialize ROS
-		ros::init(argc, argv, "preprocessing_node");
+		string node_name = "preprocessing_";
+		node_name += input_name;
+		ros::init(argc, argv, node_name);
 		ros::NodeHandle nh;
-		ros::NodeHandle nh_subsampling("~/subsampling");
-		ros::NodeHandle nh_cutting("~/cutting");
-		ros::NodeHandle nh_radius_filtering("~/radius_filtering");
 
-	// create PointCloud objects
-		for (int i = 0 ; i < n_inputs ; i++)
-		{
-			PC.push_back(new geometry::PointCloud(nh, get_topic_name(i), get_publish_name(i)));
-		}
+	ros::NodeHandle nh_subsampling("preprocessing/" + input_name + "/subsampling");
+	PC = new geometry::PointCloud(nh, topic, get_publish_name());
+	PC->change_frame("cam_center");
+	ros::NodeHandle nh_cutting("preprocessing/" + input_name + "/cutting");
+	ros::NodeHandle nh_radius_filtering("preprocessing/" + input_name + "/radius_filtering");
+	ros::NodeHandle nh_outliers_removal("preprocessing/" + input_name + "/outliers_removal");
 
 	// dynamic reconfigure
+			
 		dynamic_reconfigure::Server<registration::SubSamplingConfig> subsampling_srv(nh_subsampling);
 		dynamic_reconfigure::Server<registration::CuttingConfig> cutting_srv(nh_cutting);
 		dynamic_reconfigure::Server<registration::RadiusFilteringConfig> radius_filtering_srv(nh_radius_filtering);
-		
-		dynamic_reconfigure::Server<registration::SubSamplingConfig>::CallbackType subsampling_cb;
-		dynamic_reconfigure::Server<registration::CuttingConfig>::CallbackType cutting_cb;
-		dynamic_reconfigure::Server<registration::RadiusFilteringConfig>::CallbackType radius_filtering_cb;
-		
-		subsampling_cb = boost::bind(&subsampling_conf_callback, _1, _2);
-		cutting_cb = boost::bind(&cutting_conf_callback, _1, _2);
-		radius_filtering_cb = boost::bind(&radius_filtering_conf_callback, _1, _2);
-		
-		subsampling_srv.setCallback(subsampling_cb);
-		cutting_srv.setCallback(cutting_cb);
-		radius_filtering_srv.setCallback(radius_filtering_cb);
+		dynamic_reconfigure::Server<registration::OutliersRemovalConfig> outliers_removal_srv(nh_outliers_removal);
+	
+		subsampling_srv.setCallback(boost::bind(&subsampling_conf_callback, _1, _2));
+		cutting_srv.setCallback(boost::bind(&cutting_conf_callback, _1, _2));
+		radius_filtering_srv.setCallback(boost::bind(&radius_filtering_conf_callback, _1, _2));
+		outliers_removal_srv.setCallback(boost::bind(&outliers_removal_conf_callback, _1, _2));
 
 	// ROS loop
 	ros::Rate loop_rate(frequency);

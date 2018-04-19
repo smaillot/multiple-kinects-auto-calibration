@@ -22,3 +22,16 @@
 	#include <message_filters/subscriber.h>
 	#include <message_filters/time_synchronizer.h>
 	#include <message_filters/sync_policies/approximate_time.h>
+// dyn rec
+	#include <dynamic_reconfigure/server.h>
+	#include <registration/MergingConfig.h>
+
+	namespace patch
+{
+    template < typename T > std::string to_string( const T& n )
+    {
+        std::ostringstream stm ;
+        stm << n ;
+        return stm.str() ;
+    }
+}

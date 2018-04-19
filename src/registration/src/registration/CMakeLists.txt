@@ -31,6 +31,8 @@ generate_dynamic_reconfigure_options(
   cfg/SubSampling.cfg
   cfg/Cutting.cfg
   cfg/RadiusFiltering.cfg
+  cfg/OutliersRemoval.cfg
+  cfg/Merging.cfg
 )
 
 ###################################
@@ -38,7 +40,8 @@ generate_dynamic_reconfigure_options(
 ###################################
 
 catkin_package(
-   DEPENDS Eigen
+   DEPENDS 
+    Eigen
 )
 
 ###########
@@ -78,6 +81,26 @@ target_link_libraries(merging_node
   geometry
 )
 add_dependencies(merging_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+
+add_executable(icp_node src/icp_node.cpp)
+target_link_libraries(icp_node 
+  ${catkin_LIBRARIES}
+  geometry
+)
+add_dependencies(icp_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+add_executable(result_saving_node src/result_saving_node.cpp)
+target_link_libraries(result_saving_node 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(result_saving_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )

@@ -1,0 +1,7 @@
+<launch>
+    <arg name="in1" default="/reconstruction/point_clouds/cam1/preprocessed" />
+    <arg name="in2" default="/reconstruction/point_clouds/cam2/preprocessed" />
+    <arg name="f" default="0" />
+    <node name="plane_detection_cam1" pkg="plane_detection" type="plane_detection_node" args="cam1 $(arg in1) $(arg f)" output="screen" respawn="true"  />
+    <node name="plane_detection_cam2" pkg="plane_detection" type="plane_detection_node" args="cam2 $(arg in2) $(arg f)" output="screen" respawn="true"  />
+</launch>
