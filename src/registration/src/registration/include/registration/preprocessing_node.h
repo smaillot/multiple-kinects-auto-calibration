@@ -1,8 +1,6 @@
 // ros
 	#include <ros/console.h>
 	#include "ros/ros.h"
-	#include <ros/callback_queue.h>
-	#include <ros/callback_queue_interface.h>
 // std
 	#include <string>
 	#include <vector>

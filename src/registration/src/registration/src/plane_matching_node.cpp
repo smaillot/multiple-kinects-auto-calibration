@@ -31,6 +31,7 @@ PCRegistered* PC;
 vector <int> force_match;
 int it = 0;
 float filter = 0; // 0 -> overhall mean tf
+int outliers;
 
 /**
  * @brief Returns the publishing topic of a given camera.
@@ -395,34 +396,43 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	
     tf::StampedTransform new_tf; 
 
+	if (outliers > 5)
+	{
+		outliers = 0;
+		it = 0;
+		ROS_WARN("Transform reinitialized after too many outliers.");
+	}
 	if (it > 0)
 	{
 		tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
 		if (!this->outlying(computed))
 		{
-			if (filter == -1)
+			outliers = 0;
+			if (filter >= 0)
 			{
 				new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
 			}
 			else
 			{
-				new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it+1)), ros::Time::now(), "cam_center", "/" + new_frame);
+				new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it)), ros::Time::now(), "cam_center", "/" + new_frame);
 			}
+			this->last_tf = new_tf;
+			this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
+			it++;
 		}
 		else
 		{
-			ROS_WARN("Outlier !");
-			new_tf = this->last_tf;
+			outliers++;
+			new_tf = this->last_tf; 
+			ROS_WARN_STREAM("Outlier " + patch::to_string(outliers) + " !");
 		}
 	}
 	else
 	{
 		new_tf = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/last_" + new_frame);
+		this->last_tf = new_tf;
+		it++;
 	}
-	it++;
-
-	this->last_tf = new_tf;
-	this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
 
 	ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
 	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");

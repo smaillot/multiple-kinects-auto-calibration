@@ -99,6 +99,10 @@ void outliers_removal_conf_callback(registration::OutliersRemovalConfig &config,
 
 int main(int argc, char *argv[])
 {
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info)) 
+        {
+            ros::console::notifyLoggerLevelsChanged();
+        }
 
 	// parsing arguments
 

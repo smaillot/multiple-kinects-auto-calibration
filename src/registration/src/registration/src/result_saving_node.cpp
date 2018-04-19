@@ -10,6 +10,8 @@
 #include <tf_conversions/tf_eigen.h>
 #include <Eigen/Core>
 #include <time.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 
 using namespace std;
 int i = 0;
@@ -17,6 +19,8 @@ float last1 = 0;
 float change1;
 float last2 = 0;
 float change2;
+ros::Publisher pub_tr;
+ros::Publisher pub_rot;
 
 namespace patch
 {
@@ -44,6 +48,18 @@ string print_tf1(tf::StampedTransform transform)
         i++;
         ROS_DEBUG_STREAM("print #" + patch::to_string(i));
     }
+
+    geometry_msgs::Vector3 tr_msg;
+    geometry_msgs::Quaternion rot_msg;
+    tr_msg.x = t.getX() * 1000;
+    tr_msg.y = t.getY() * 1000;
+    tr_msg.z = t.getZ() * 1000;
+    rot_msg.x = a.getX() * 1000;
+    rot_msg.y = a.getY() * 1000;
+    rot_msg.z = a.getZ() * 1000;
+    rot_msg.w = q.getAngle() * 180 / 3.14159;
+    pub_tr.publish(tr_msg);
+    pub_rot.publish(rot_msg);
 
     return output;
 }
@@ -80,6 +96,8 @@ int main(int argc, char *argv[])
     // Initialize ROS
         ros::init(argc, argv, "histogram_printer_node");
         ros::NodeHandle nh;
+        pub_tr = nh.advertise<geometry_msgs::Vector3>("registration/translation", 10);
+        pub_rot = nh.advertise<geometry_msgs::Quaternion>("registration/rotation", 10);
 
     tf::TransformListener listener1;
     tf::TransformListener listener2;
