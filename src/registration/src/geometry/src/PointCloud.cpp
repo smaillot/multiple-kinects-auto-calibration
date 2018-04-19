@@ -105,8 +105,8 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
     /* process cloud */
     
-        cloudPtr = this->outliers_removal(cloudPtr);
         cloudPtr = this->subsample(cloudPtr);
+        cloudPtr = this->outliers_removal(cloudPtr);
         cloudPtr = this->cut(cloudPtr);
 
         pcl_conversions::fromPCL(*cloudPtr, msg);
