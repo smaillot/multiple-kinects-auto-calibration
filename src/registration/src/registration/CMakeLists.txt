@@ -33,6 +33,7 @@ generate_dynamic_reconfigure_options(
   cfg/RadiusFiltering.cfg
   cfg/OutliersRemoval.cfg
   cfg/Merging.cfg
+  cfg/ISS.cfg
 )
 
 ###################################
@@ -101,15 +102,6 @@ target_link_libraries(result_saving_node
   ${catkin_LIBRARIES}
 )
 add_dependencies(result_saving_node
-  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-  ${catkin_EXPORTED_TARGETS}
-)
-
-add_executable(rg_seg_node src/rg_seg_node.cpp)
-target_link_libraries(rg_seg_node 
-  ${catkin_LIBRARIES}
-)
-add_dependencies(rg_seg_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )

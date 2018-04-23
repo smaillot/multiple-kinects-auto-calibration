@@ -34,6 +34,7 @@ PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string p
     this->pc_sub = this->node.subscribe(this->sub_name, 1, &PointCloud::update, this);
     this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/preprocessed", 1);
     this->pc_pub_raw = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
+    this->kp_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/keypoints", 1);
     ROS_INFO_STREAM("Start publishing raw and preprocessed data from " + sub_name);
 }
 
@@ -64,6 +65,11 @@ void PointCloud::set_radius_filtering_params(radius_filtering_params_t radius_fi
 void PointCloud::set_outliers_removal_params(outliers_removal_params_t outliers_removal_params)
 {
     this->outliers_removal_params = outliers_removal_params;
+}
+
+void PointCloud::set_iss_params(iss_params_t iss_params)
+{
+    this->iss_params = iss_params;
 }
 
 void PointCloud::change_frame(std::string frame)
@@ -122,6 +128,17 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     else
     {
         ROS_DEBUG("Can't publish, preprocessed point cloud is empty");
+    }
+
+    pcl::PCLPointCloud2* keypoints = new pcl::PCLPointCloud2; 
+    pcl::PCLPointCloud2ConstPtr kpPtr = this->ISS_keypoints(cloudPtr);
+    ROS_INFO_STREAM(kpPtr->data.size() << " keypoints found !");
+    sensor_msgs::PointCloud2 kp_msg;
+    pcl_conversions::fromPCL(*kpPtr, kp_msg);
+    if (kp_msg.data.size() > 0)
+    {
+        pcl_ros::transformPointCloud("cam_center", kp_msg, kp_msg, *this->tf_listener);
+        this->kp_pub.publish(kp_msg);
     }
 }
 
@@ -232,19 +249,23 @@ pcl::PCLPointCloud2ConstPtr PointCloud::outliers_removal(pcl::PCLPointCloud2Cons
     return cloudPtr;
 }
 
-// void PointCloud::transform()
-// {
-//     if (this->tf_listener->waitForTransform(this->cloud->header.frame_id, this->frame, ros::Time::now(), ros::Duration(1.0)))
-//     {
-//         sensor_msgs::PointCloud2* input = this->get_pc();
-//         sensor_msgs::PointCloud2* msg;
-//         pcl_ros::transformPointCloud(this->frame, *input, *msg, *this->tf_listener);
-//         pcl::PCLPointCloud2* output;
-//         pcl_conversions::toPCL(*msg, *output);
-//         this->cloud = output;
-//     }
-//     else
-//     {
-//         ROS_ERROR_STREAM("No tf received from " + this->cloud->header.frame_id + " to " + this->frame + " in 1s. Abort point cloud transform.");
-//     }
-// }
+pcl::PCLPointCloud2ConstPtr PointCloud::ISS_keypoints(pcl::PCLPointCloud2ConstPtr cloudPtr)
+{
+    pcl::PCLPointCloud2ConstPtr temp;
+    if (this->iss_params.enable)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::fromPCLPointCloud2(*cloudPtr, *temp_cloud);
+        iss.setSalientRadius(this->iss_params.support_radius);
+        iss.setNonMaxRadius(this->iss_params.nms_radius);
+        iss.setInputCloud(temp_cloud);
+        iss.compute(*keypoints);
+
+        pcl::PCLPointCloud2* output(new pcl::PCLPointCloud2());
+        pcl::toPCLPointCloud2(*keypoints, *output);
+        temp = pcl::PCLPointCloud2ConstPtr (output);
+    }
+
+    return temp;
+}

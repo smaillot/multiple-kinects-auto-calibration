@@ -1,0 +1,8 @@
+<launch>
+
+    <arg name="f" default="0" />
+    <node name="preprocessing_cam1" pkg="registration" type="preprocessing_node" args="cam1 /cam1/qhd/points $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_cam2" pkg="registration" type="preprocessing_node" args="cam2 /cam2/qhd/points $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_cam3" pkg="registration" type="preprocessing_node" args="cam3 /cam3/qhd/points $(arg f)" output="screen" respawn="true" />
+
+</launch>

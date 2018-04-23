@@ -15,6 +15,7 @@
 	#include <registration/CuttingConfig.h>
 	#include <registration/RadiusFilteringConfig.h>
 	#include <registration/OutliersRemovalConfig.h>
+	#include <registration/ISSConfig.h>
 	
 
 // config callback
