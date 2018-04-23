@@ -10,6 +10,10 @@
  */
 Plane::Plane(tf::Vector3 normal, tf::Vector3 point)
 {
+    if (normal.getZ() < 0)
+    {
+        normal = -normal;
+    }
     this->normal = normal.normalized();
     this->point = point;
     this->d = -(normal.dot(point));
@@ -27,7 +31,11 @@ Plane::Plane(tf::Transform transform)
                                 transform.getOrigin().y(),
                                 transform.getOrigin().z());
     this->normal = transform.getBasis() * tf::Vector3(0,0,1);
-    this->d = -(normal.dot(point));
+    if (this->normal.getZ() < 0)
+    {
+        this->normal = -this->normal;
+    }
+    this->d = -(this->normal.dot(this->point));
 }
 
 /**
@@ -39,7 +47,12 @@ Plane::Plane(float* coef)
 {
     this->d = coef[3];
     this->normal = tf::Vector3(coef[0], coef[1], coef[2]).normalized();
-    this->point = normal * std::abs(d) / normal.length();
+    if (this->normal.getZ() < 0)
+    {
+        this->normal = -this->normal;
+        this->d = -this->d;
+    }
+    this->point = this->normal * std::abs(d) / normal.length();
 }
 
 /**

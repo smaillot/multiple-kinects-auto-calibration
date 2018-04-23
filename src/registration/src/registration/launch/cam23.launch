@@ -3,8 +3,8 @@
     <arg name="in2" default="cam2" />
     <arg name="in3" default="cam3" />
     <arg name="f" default="0" />
-    <arg name="filtering" default="-1" />
     <arg name="order" default="1 2 0" />
+    <arg name="filtering" default="0" />
     
     <arg name="pc_path" value="/qhd/points" />
     <arg name="out_path" default="/reconstruction/point_clouds" />

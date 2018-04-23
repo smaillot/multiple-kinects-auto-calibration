@@ -104,3 +104,12 @@ add_dependencies(result_saving_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(rg_seg_node src/rg_seg_node.cpp)
+target_link_libraries(rg_seg_node 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(rg_seg_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)

@@ -396,50 +396,48 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	
     tf::StampedTransform new_tf; 
 
-	if (outliers > 5)
-	{
-		outliers = 0;
-		it = 0;
-		ROS_WARN("Transform reinitialized after too many outliers.");
-	}
-	if (it > 0)
-	{
-		tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
-		if (!this->outlying(computed))
-		{
-			ROS_WARN_STREAM("Regular begin\tLast: " << this->last_tf.getOrigin().getX());
-			outliers = 0;
-			if (filter >= 0)
-			{
-				new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
-			}
-			else
-			{
-				new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it)), ros::Time::now(), "cam_center", "/" + new_frame);
-			}
-			this->last_tf = new_tf;
-			ROS_WARN_STREAM("Regular end\tLast: " << this->last_tf.getOrigin().getX());
-			this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
-			it++;
-		}
-		else
-		{
-			ROS_WARN_STREAM("Outlier begin\tLast: " << this->last_tf.getOrigin().getX());
-			outliers++;
-			new_tf = this->last_tf; 
-			ROS_WARN_STREAM("Outlier " + patch::to_string(outliers) + " !");
-			ROS_WARN_STREAM("Outlier end\tLast: " << this->last_tf.getOrigin().getX());
-			return;
-		}
-	}
-	else
-	{
-		ROS_WARN_STREAM("First begin\tLast: " << this->last_tf.getOrigin().getX());
-		new_tf = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/last_" + new_frame);
-		this->last_tf = new_tf;
-		it++;
-		ROS_WARN_STREAM("First end\tLast: " << this->last_tf.getOrigin().getX());
-	}
+	// if (outliers >= 5)
+	// {
+	// 	outliers = 0;
+	// 	it = 0;
+	// 	ROS_WARN("Transform reinitialized after too many outliers.");
+	// }
+	// if (it > 0)
+	// {
+	// 	tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
+	// 	if (!this->outlying(computed))
+	// 	{
+	// 		outliers = 0;
+	// 		if (filter >= 0)
+	// 		{
+	// 			new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
+	// 		}
+	// 		else
+	// 		{
+	// 			new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it)), ros::Time::now(), "cam_center", "/" + new_frame);
+	// 		}
+	// 		this->last_tf = new_tf;
+	// 		this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
+	// 		it++;
+	// 	}
+	// 	else
+	// 	{
+	// 		outliers++;
+	// 		new_tf = this->last_tf; 
+	// 		ROS_WARN_STREAM("Outlier " + patch::to_string(outliers) + " !");
+	// 		return;
+	// 	}
+	// }
+	// else
+	// {
+	// 	new_tf = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/last_" + new_frame);
+	// 	this->last_tf = new_tf;
+	// 	it++;
+	// }
+
+	tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
+	new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
+	this->last_tf = new_tf;
 
 	ROS_DEBUG_STREAM("Mean rotation error: " << accumulate(motion.residuals_angle.begin(), motion.residuals_angle.end(), 0.0) / motion.residuals_angle.size() * 100 << "%");
 	ROS_DEBUG_STREAM("Mean translation error: " << accumulate(motion.residuals_translation.begin(), motion.residuals_translation.end(), 0.0) / motion.residuals_translation.size() * 1000 << "mm");
@@ -451,7 +449,6 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	tf::vectorTFToEigen(new_tf.getOrigin(), T);
 	H.topLeftCorner(3, 3) = R;
 	H.topRightCorner(3, 1) = T;
-	ROS_WARN_STREAM("Transf begin\tLast: " << this->last_tf.getOrigin().getX() << " Computed: " << new_tf.getOrigin().getX());
 
 	sensor_msgs::PointCloud2 input = *pc;
 	pcl_ros::transformPointCloud(H.cast <float>(), input, input);
@@ -482,7 +479,7 @@ tf::Transform PCRegistered::filter_tf(tf::StampedTransform new_tf, float ratio)
 
 bool PCRegistered::outlying(tf::StampedTransform new_tf)
 {
-	double th = 0.05;
+	double th = 0.1;
 	if ((new_tf.getOrigin().getX() - this->last_tf.getOrigin().getX() > th) || (new_tf.getOrigin().getY() - this->last_tf.getOrigin().getY() > th) || (new_tf.getOrigin().getZ() - this->last_tf.getOrigin().getZ() > th))
 	{
 		return true;
