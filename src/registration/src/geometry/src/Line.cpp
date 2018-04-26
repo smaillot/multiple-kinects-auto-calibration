@@ -37,6 +37,7 @@ std::vector <geometry_msgs::Point> Line::get_points(float length)
 }
 
 
+
 /**
 * @brief Compute the transform between 2 frames given a identiaue line equation in each frame. 
 * One translation is still undetermine (in the direction of the current line), this is fixed by finding the transformatin that leads to the smallest translation.

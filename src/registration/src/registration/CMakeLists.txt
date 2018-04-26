@@ -18,7 +18,6 @@ find_package(catkin
     sensor_msgs
     pcl_ros
     geometry
-    # plane_detection
 )
 
 find_package(Eigen REQUIRED)
@@ -33,7 +32,7 @@ generate_dynamic_reconfigure_options(
   cfg/RadiusFiltering.cfg
   cfg/OutliersRemoval.cfg
   cfg/Merging.cfg
-  cfg/ISS.cfg
+  cfg/Keypoints.cfg
 )
 
 ###################################
@@ -43,6 +42,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    DEPENDS 
     Eigen
+    libpcl-all
 )
 
 ###########
@@ -102,6 +102,15 @@ target_link_libraries(result_saving_node
   ${catkin_LIBRARIES}
 )
 add_dependencies(result_saving_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+add_executable(correspondance src/correspondance.cpp)
+target_link_libraries(correspondance 
+  ${catkin_LIBRARIES}
+)
+add_dependencies(correspondance
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )

@@ -35,7 +35,7 @@ PointCloud::PointCloud(ros::NodeHandle nh, std::string topic_name, std::string p
     this->pc_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/preprocessed", 1);
     this->pc_pub_raw = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name, 1);
     this->kp_pub = this->node.advertise<sensor_msgs::PointCloud2>(this->pub_name + "/keypoints", 1);
-    ROS_INFO_STREAM("Start publishing raw and preprocessed data from " + sub_name);
+    ROS_INFO_STREAM("Start publishing raw and preprocessed data from " + this->sub_name);
 }
 
 /**
@@ -67,9 +67,9 @@ void PointCloud::set_outliers_removal_params(outliers_removal_params_t outliers_
     this->outliers_removal_params = outliers_removal_params;
 }
 
-void PointCloud::set_iss_params(iss_params_t iss_params)
+void PointCloud::set_kp_params(kp_params_t kp_params)
 {
-    this->iss_params = iss_params;
+    this->kp_params = kp_params;
 }
 
 void PointCloud::change_frame(std::string frame)
@@ -91,9 +91,10 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
         pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2; 
         pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
+        pcl::PCLPointCloud2* kp = new pcl::PCLPointCloud2; 
+        pcl::PCLPointCloud2ConstPtr kpPtr(kp);
         
         sensor_msgs::PointCloud2 msg = *cloud_msg; 
-        //ros::Time t = ros::Time(0);  
         pcl_ros::transformPointCloud("cam_center", msg, msg, *this->tf_listener);  
 
         if (msg.data.size() > 0 && this->sub_name != this->pub_name)
@@ -108,12 +109,18 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         }
         
         pcl_conversions::toPCL(msg, *cloud);
+        pcl_conversions::toPCL(msg, *kp);
 
     /* process cloud */
     
+        // main pc pipeline
         cloudPtr = this->subsample(cloudPtr);
-        cloudPtr = this->outliers_removal(cloudPtr);
-        cloudPtr = this->cut(cloudPtr);
+        cloudPtr = this->cut(cloudPtr, 0);
+
+        // keypoints pipeline
+        kpPtr = this->cut(kpPtr, 1);
+        kpPtr = this->keypoints(kpPtr);
+        kpPtr = this->outliers_removal(kpPtr);
 
         pcl_conversions::fromPCL(*cloudPtr, msg);
     
@@ -130,15 +137,16 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         ROS_DEBUG("Can't publish, preprocessed point cloud is empty");
     }
 
-    pcl::PCLPointCloud2* keypoints = new pcl::PCLPointCloud2; 
-    pcl::PCLPointCloud2ConstPtr kpPtr = this->ISS_keypoints(cloudPtr);
-    ROS_INFO_STREAM(kpPtr->data.size() << " keypoints found !");
-    sensor_msgs::PointCloud2 kp_msg;
-    pcl_conversions::fromPCL(*kpPtr, kp_msg);
-    if (kp_msg.data.size() > 0)
+    if (this->kp_params.method > 0)
     {
-        pcl_ros::transformPointCloud("cam_center", kp_msg, kp_msg, *this->tf_listener);
-        this->kp_pub.publish(kp_msg);
+        ROS_INFO_STREAM(kpPtr->data.size() << " keypoints found !");
+        sensor_msgs::PointCloud2 kp_msg;
+        pcl_conversions::fromPCL(*kpPtr, kp_msg);
+        if (kp_msg.data.size() > 0)
+        {
+            pcl_ros::transformPointCloud("cam_center", kp_msg, kp_msg, *this->tf_listener);
+            this->kp_pub.publish(kp_msg);
+        }
     }
 }
 
@@ -162,7 +170,7 @@ pcl::PCLPointCloud2ConstPtr PointCloud::subsample(pcl::PCLPointCloud2ConstPtr cl
 /**
  * @brief Perform cutting of the point cloud.
  */
-pcl::PCLPointCloud2ConstPtr PointCloud::cut(pcl::PCLPointCloud2ConstPtr cloudPtr)
+pcl::PCLPointCloud2ConstPtr PointCloud::cut(pcl::PCLPointCloud2ConstPtr cloudPtr, int kp)
 {
     if (this->cutting_params.x.enable || this->cutting_params.y.enable || this->cutting_params.z.enable)
     {
@@ -173,7 +181,7 @@ pcl::PCLPointCloud2ConstPtr PointCloud::cut(pcl::PCLPointCloud2ConstPtr cloudPtr
         {
             this->filter_cut.setInputCloud(temp_cloud); 
             this->filter_cut.setFilterFieldName("x"); 
-            this->filter_cut.setFilterLimits(this->cutting_params.x.bounds[0], this->cutting_params.x.bounds[1]); 
+            this->filter_cut.setFilterLimits(this->cutting_params.x.bounds[0] + kp * 0.2, this->cutting_params.x.bounds[1]); 
             this->filter_cut.filter(*filtered); 
             temp_cloud = filtered;
         } 
@@ -189,7 +197,7 @@ pcl::PCLPointCloud2ConstPtr PointCloud::cut(pcl::PCLPointCloud2ConstPtr cloudPtr
         { 
             this->filter_cut.setInputCloud(temp_cloud); 
             this->filter_cut.setFilterFieldName("z"); 
-            this->filter_cut.setFilterLimits(this->cutting_params.z.bounds[0], this->cutting_params.z.bounds[1]); 
+            this->filter_cut.setFilterLimits(this->cutting_params.z.bounds[0] + kp * 0.1, this->cutting_params.z.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp_cloud = filtered;
         }
@@ -249,19 +257,33 @@ pcl::PCLPointCloud2ConstPtr PointCloud::outliers_removal(pcl::PCLPointCloud2Cons
     return cloudPtr;
 }
 
-pcl::PCLPointCloud2ConstPtr PointCloud::ISS_keypoints(pcl::PCLPointCloud2ConstPtr cloudPtr)
+pcl::PCLPointCloud2ConstPtr PointCloud::keypoints(pcl::PCLPointCloud2ConstPtr cloudPtr)
 {
-    pcl::PCLPointCloud2ConstPtr temp;
-    if (this->iss_params.enable)
+    pcl::PCLPointCloud2ConstPtr temp = cloudPtr;
+    if (this->kp_params.method > 0)
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-        pcl::PointCloud<pcl::PointXYZ>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
         pcl::fromPCLPointCloud2(*cloudPtr, *temp_cloud);
-        iss.setSalientRadius(this->iss_params.support_radius);
-        iss.setNonMaxRadius(this->iss_params.nms_radius);
-        iss.setInputCloud(temp_cloud);
-        iss.compute(*keypoints);
-
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr keypoints(new pcl::PointCloud<pcl::PointXYZRGB>());
+        if (this->kp_params.method == 1)
+        {
+            this->iss.setSalientRadius(this->kp_params.support_radius);
+            this->iss.setNonMaxRadius(this->kp_params.nms_radius);
+            this->iss.setInputCloud(temp_cloud);
+            this->iss.compute(*keypoints);
+        }
+        // else if (this->kp_params.method == 2)
+        // {
+        //     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals = this->compute_normals(cloudPtr);
+        //     pcl::PointCloud<pcl::PointWithScale> result;
+        //     pcl::search::KdTree<pcl::PointNormal>::Ptr tree(new pcl::search::KdTree<pcl::PointNormal>(this->tree_n));
+        //     this->sift.setSearchMethod(tree);
+        //     this->sift.setScales(this->kp_params.min_scale, this->kp_params.nr_octave, this->kp_params.nr_scales_per_oct);
+        //     this->sift.setMinimumContrast(this->kp_params.min_contrast);
+        //     this->sift.setInputCloud(cloud_normals);
+        //     this->sift.compute(result);
+        //     pcl::copyPointCloud(result, *keypoints);
+        // }
         pcl::PCLPointCloud2* output(new pcl::PCLPointCloud2());
         pcl::toPCLPointCloud2(*keypoints, *output);
         temp = pcl::PCLPointCloud2ConstPtr (output);
@@ -269,3 +291,29 @@ pcl::PCLPointCloud2ConstPtr PointCloud::ISS_keypoints(pcl::PCLPointCloud2ConstPt
 
     return temp;
 }
+
+// pcl::PointCloud<pcl::PointNormal>::Ptr PointCloud::compute_normals(pcl::PCLPointCloud2ConstPtr cloudPtr)
+// {
+//     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_normals (new pcl::PointCloud<pcl::PointNormal>);
+//     pcl::PointCloud<pcl::PointXYZ> input_cloud; 
+//     pcl::fromPCLPointCloud2(*cloudPtr, input_cloud);
+//     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>); 
+//     *cloud = input_cloud;  
+
+//     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>(this->tree));
+
+//     this->ne.setInputCloud(cloud);
+//     this->ne.setSearchMethod(tree);
+//     this->ne.setRadiusSearch(this->kp_params.nrad);
+//     this->ne.compute(*cloud_normals);
+
+//     // Copy the xyz info from cloud_xyz and add it to cloud_normals as the xyz field in PointNormals estimation is zero
+//     // for(size_t i = 0; i<cloud_normals->points.size(); ++i)
+//     // {
+//     //     cloud_normals->points[i].x = cloud->points[i].x;
+//     //     cloud_normals->points[i].y = cloud->points[i].y;
+//     //     cloud_normals->points[i].z = cloud->points[i].z;
+//     // }
+
+//     return cloud_normals;
+// }

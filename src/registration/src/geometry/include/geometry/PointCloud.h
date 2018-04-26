@@ -20,7 +20,11 @@
 	#include <pcl/filters/radius_outlier_removal.h>
 	#include <pcl/filters/statistical_outlier_removal.h>
 	#include <pcl/keypoints/iss_3d.h>
+	#include <pcl/keypoints/sift_keypoint.h>
 	#include <sensor_msgs/PointCloud2.h>
+	#include <pcl/kdtree/kdtree_flann.h>
+	#include <pcl/features/normal_3d.h>
+	#include <pcl/registration/correspondence_estimation.h>
 // tf
 	#include <tf/LinearMath/Transform.h>
 	#include <tf_conversions/tf_eigen.h>
@@ -59,11 +63,16 @@ struct outliers_removal_params_t
 	int meank;
 	float std_mul;
 };
-struct iss_params_t
+struct kp_params_t
 {
-	bool enable;
+	int method;
 	float support_radius;
 	float nms_radius;
+	float min_scale;
+	int nr_octave;
+	int nr_scales_per_oct;
+	float min_contrast;
+	float nrad;
 };
 namespace patch
 {
@@ -98,14 +107,19 @@ namespace geometry
     			pcl::PassThrough<pcl::PointXYZRGB> filter_cut;
 				pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> filter_radius;
 				pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-				pcl::ISSKeypoint3D<pcl::PointXYZ, pcl::PointXYZ> iss;
+				pcl::ISSKeypoint3D<pcl::PointXYZRGB, pcl::PointXYZRGB> iss;
+				pcl::SIFTKeypoint<pcl::PointNormal, pcl::PointWithScale> sift;
+				pcl::NormalEstimation<pcl::PointXYZRGB, pcl::PointNormal> ne;
+				pcl::search::KdTree<pcl::PointNormal> tree_n;
+				pcl::search::KdTree<pcl::PointXYZRGB> tree;
+
 
 			// parameters
 				subsampling_params_t subsampling_params;
 				cutting_params_t cutting_params;
 				radius_filtering_params_t radius_filtering_params;
 				outliers_removal_params_t outliers_removal_params;
-				iss_params_t iss_params;
+				kp_params_t kp_params;
 
 		public:
 
@@ -117,7 +131,7 @@ namespace geometry
 				void set_cutting_params(cutting_params_t cutting_params);
 				void set_radius_filtering_params(radius_filtering_params_t radius_filtering_params);
 				void set_outliers_removal_params(outliers_removal_params_t outliers_removal_params);
-				void set_iss_params(iss_params_t iss_params);
+				void set_kp_params(kp_params_t kp_params);
 				void change_frame(std::string frame);
 
 			// update
@@ -125,12 +139,11 @@ namespace geometry
 
 			// processing
 				pcl::PCLPointCloud2ConstPtr subsample(pcl::PCLPointCloud2ConstPtr cloudPtr);
-				pcl::PCLPointCloud2ConstPtr cut(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr cut(pcl::PCLPointCloud2ConstPtr cloudPtr, int kp);
 				pcl::PCLPointCloud2ConstPtr radius_filter(pcl::PCLPointCloud2ConstPtr cloudPtr);
 				pcl::PCLPointCloud2ConstPtr outliers_removal(pcl::PCLPointCloud2ConstPtr cloudPtr);
-				
-				pcl::PCLPointCloud2ConstPtr ISS_keypoints(pcl::PCLPointCloud2ConstPtr cloudPtr);
-
+				pcl::PointCloud<pcl::PointNormal>::Ptr compute_normals(pcl::PCLPointCloud2ConstPtr cloudPtr);
+				pcl::PCLPointCloud2ConstPtr keypoints(pcl::PCLPointCloud2ConstPtr cloudPtr);
 	};
 }
 

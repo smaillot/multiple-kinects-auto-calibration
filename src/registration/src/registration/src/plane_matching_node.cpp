@@ -32,6 +32,7 @@ vector <int> force_match;
 int it = 0;
 float filter = 0; // 0 -> overhall mean tf
 int outliers;
+Vector3d Tkp;
 
 /**
  * @brief Returns the publishing topic of a given camera.
@@ -79,10 +80,10 @@ bool tf_exists(tf::TransformListener* tf_listener, tf::StampedTransform* transf,
 	return exists;
 }
 
-motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes, const vector <geometry::Plane*> &targetPlanes)
+motion_t motion_from_plane_planes(const vector <vector <geometry::Plane*> > &planes, tf::TransformListener* tf_listener)
 {
-	int n_planes_1 = sourcePlanes.size();
-	int n_planes_2 = targetPlanes.size();
+	int n_planes_1 = planes[0].size();
+	int n_planes_2 = planes[1].size();
 	motion_t motion;
 
 	if (n_planes_1 != n_planes_2)
@@ -90,11 +91,11 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 		ROS_ERROR("The number of planes detected in the 2 sets must be equal");
 		return motion;
 	}
-	if (n_planes_1 < 3)
-	{
-		ROS_ERROR("At least 3 planes are needed");
-		return motion;
-	}
+	// if (n_planes_1 < 3)
+	// {
+	// 	ROS_ERROR("At least 3 planes are needed");
+	// 	return motion;
+	// }
 
 	MatrixX3d Ns(n_planes_1, 3);
 	MatrixX3d Nt(n_planes_1, 3);
@@ -103,30 +104,35 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 	VectorXd d(n_planes_1);
 	for (int line = 0; line < n_planes_1; line++)
 	{
-		tf::Vector3 normal_1 = sourcePlanes[line]->normal;
-		tf::Vector3 normal_2 = targetPlanes[line]->normal;
+		tf::Vector3 normal_1 = planes[0][line]->normal;
+		tf::Vector3 normal_2 = planes[1][line]->normal;
+		ROS_INFO_STREAM("Plane " << line+1);
+		ROS_INFO_STREAM("\tNormal1: " << normal_1.getX() << " " << normal_1.getY() << " " << normal_1.getZ());
+		ROS_INFO_STREAM("\tNormal2: " << normal_2.getX() << " " << normal_2.getY() << " " << normal_2.getZ());
 		Ns(line, 0) = normal_1.getX();
 		Ns(line, 1) = normal_1.getY();
 		Ns(line, 2) = normal_1.getZ();
 		Nt(line, 0) = normal_2.getX();
 		Nt(line, 1) = normal_2.getY();
 		Nt(line, 2) = normal_2.getZ();
-		ds(line) = sourcePlanes[line]->d;
-		dt(line) = targetPlanes[line]->d;
+		ds(line) = planes[0][line]->d;
+		dt(line) = planes[1][line]->d;
 	}
 	d = dt - ds;
 	MatrixXd W = MatrixXd::Identity(n_planes_1, n_planes_1);
-	W(0,0) = 1;
-	W(1,1) = 1;
-	W(2,2) = 1;
-	
+	for (int i = 0; i < n_planes_1; i++)
+	{
+		W(i,i) = 1;
+	}
+
 	ROS_DEBUG_STREAM("Ns = \n" << Ns);
 	ROS_DEBUG_STREAM("Nt = \n" << Nt);
 	ROS_DEBUG_STREAM("d = \n" << d);
 	ROS_DEBUG_STREAM("W = \n" << W);
 
 	Matrix3d Rhat = (Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * Ns);
-	Vector3d T = -(Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
+	Vector3d T = Tkp;// = -(Nt.transpose() * W * Nt).inverse() * (Nt.transpose() * W * d);
+
 
 	ROS_DEBUG_STREAM("rotation estimate = \n" << Rhat);
 	ROS_DEBUG_STREAM("translation = \n" << T);
@@ -173,24 +179,6 @@ motion_t motion_from_plane_planes(const vector <geometry::Plane*> &sourcePlanes,
 
 	return motion;
 }
-
-// /**
-//  * @brief Callback for plane matching parameters dynamic reconfigure reconfigure.
-//  */
-// void plane_matching_conf_callback(plane_matching::PlaneMatchingConfig &config, uint32_t level)
-// {
-//     bool enabled = config.enabled;
-// 	int n_planes = config.n_planes;
-// 	float th_dist = config.th_dist / 1000;
-// 	int max_it = config.max_it;
-
-// 	for (int i = 0 ; i < n_inputs ; i++)
-// 	{
-// 		PD[i]->set_params(enabled, n_planes, th_dist, max_it);
-// 	}
-
-//     ROS_DEBUG("Plane detection parameters config updated");
-// }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr create_pc(vector <geometry::Plane*> planes)
 {
@@ -242,24 +230,24 @@ void debug_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc, string name)
 
 vector <vector <geometry::Plane*> > match_planes(vector <vector <geometry::Plane*> > planes, double th)
 {
-  	pcl::PointCloud<pcl::PointXYZ>::Ptr normals1(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr normals2(new pcl::PointCloud<pcl::PointXYZ>);
-	normals1 = create_pc(planes[0]);
-	normals2 = create_pc(planes[1]);
+  	// pcl::PointCloud<pcl::PointXYZ>::Ptr normals1(new pcl::PointCloud<pcl::PointXYZ>);
+	// pcl::PointCloud<pcl::PointXYZ>::Ptr normals2(new pcl::PointCloud<pcl::PointXYZ>);
+	// normals1 = create_pc(planes[0]);
+	// normals2 = create_pc(planes[1]);
 
-	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-	icp.setInputSource(normals1);
-	icp.setInputTarget(normals2);
+	// pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	// icp.setInputSource(normals1);
+	// icp.setInputTarget(normals2);
 
-  	pcl::PointCloud<pcl::PointXYZ>::Ptr res(new pcl::PointCloud<pcl::PointXYZ>);
-	icp.align(*res);
+  	// pcl::PointCloud<pcl::PointXYZ>::Ptr res(new pcl::PointCloud<pcl::PointXYZ>);
+	// icp.align(*res);
 
-	debug_pc(normals1, "planes1");
-	debug_pc(normals2, "planes2");
-	debug_pc(res, "planes1 after transform");
+	// debug_pc(normals1, "planes1");
+	// debug_pc(normals2, "planes2");
+	// debug_pc(res, "planes1 after transform");
 
-	MatrixXd dist_mat = compute_dist(res, normals2);
-	ROS_DEBUG_STREAM(dist_mat);
+	// MatrixXd dist_mat = compute_dist(res, normals2);
+	// ROS_DEBUG_STREAM(dist_mat);
 
 	vector <vector <int> > matches;
 	for (int i = 0; i < planes[0].size(); i++)
@@ -387,7 +375,26 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 
 	vector <vector <geometry::Plane*> > matched_planes = match_planes(planes, 0.2);
 	//vector <vector <geometry::Plane*> > matched_planes = match_planes_brute(planes, i);
-	motion_t motion = motion_from_plane_planes(matched_planes[0], matched_planes[1]);
+
+	string transl_tf = "/" + inputs[0] + "_" + inputs[1];
+	if (not tf_exists(&this->tf_listener, &transf, transl_tf))
+	{
+		ROS_WARN_STREAM("no translation found for " << transl_tf);
+		return;
+	}
+	// get translation from keypoint matching
+	try
+	{
+		this->tf_listener.lookupTransform("cam_center", transl_tf, ros::Time(0), transf);
+		tf::vectorTFToEigen(transf.getOrigin(), Tkp);
+	}
+	catch (...)
+	{
+
+	}
+
+	Vector3d T;
+	motion_t motion = motion_from_plane_planes(matched_planes, &this->tf_listener);
 	string new_frame = "registration";
 	for (int i=0; i < 2; i++)
 	{
@@ -395,45 +402,6 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 	}
 	
     tf::StampedTransform new_tf; 
-
-	// if (outliers >= 5)
-	// {
-	// 	outliers = 0;
-	// 	it = 0;
-	// 	ROS_WARN("Transform reinitialized after too many outliers.");
-	// }
-	// if (it > 0)
-	// {
-	// 	tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
-	// 	if (!this->outlying(computed))
-	// 	{
-	// 		outliers = 0;
-	// 		if (filter >= 0)
-	// 		{
-	// 			new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
-	// 		}
-	// 		else
-	// 		{
-	// 			new_tf = tf::StampedTransform(this->filter_tf(computed, 1/((float)it)), ros::Time::now(), "cam_center", "/" + new_frame);
-	// 		}
-	// 		this->last_tf = new_tf;
-	// 		this->br.sendTransform(tf::StampedTransform(new_tf, ros::Time::now(), "cam_center", "/" + new_frame));
-	// 		it++;
-	// 	}
-	// 	else
-	// 	{
-	// 		outliers++;
-	// 		new_tf = this->last_tf; 
-	// 		ROS_WARN_STREAM("Outlier " + patch::to_string(outliers) + " !");
-	// 		return;
-	// 	}
-	// }
-	// else
-	// {
-	// 	new_tf = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/last_" + new_frame);
-	// 	this->last_tf = new_tf;
-	// 	it++;
-	// }
 
 	tf::StampedTransform computed = tf::StampedTransform(motion.H, ros::Time::now(), "cam_center", "/" + new_frame);
 	new_tf = tf::StampedTransform(this->filter_tf(computed, filter), ros::Time::now(), "cam_center", "/" + new_frame);
@@ -444,7 +412,6 @@ void PCRegistered::pc_callback(const sensor_msgs::PointCloud2ConstPtr &pc)
 
 	Matrix4d H = Matrix4d::Identity();
 	Matrix3d R;
-	Vector3d T;
 	tf::matrixTFToEigen(new_tf.getBasis(), R);
 	tf::vectorTFToEigen(new_tf.getOrigin(), T);
 	H.topLeftCorner(3, 3) = R;

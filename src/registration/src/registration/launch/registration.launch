@@ -19,14 +19,14 @@
     <node name="plane_detection_$(arg in2)" pkg="plane_detection" type="plane_detection_node" args="$(arg in2) $(arg out_path)/$(arg in2)/preprocessed $(arg f)" output="screen" respawn="true" />
     <node name="plane_detection_$(arg in3)" pkg="plane_detection" type="plane_detection_node" args="$(arg in3) $(arg out_path)/$(arg in3)/preprocessed $(arg f)" output="screen" respawn="true" />
 
-    <node name="plane_matching_$(arg in1)_$(arg in2)" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) $(arg order1) $(arg f) $(arg filtering)" output="screen" respawn="true" />
-    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg out_path)/$(arg in1)/registered $(arg out_path)/$(arg in2) $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+    <!--<node name="plane_matching_$(arg in1)_$(arg in2)" pkg="registration" type="plane_matching_node" args="$(arg in1) $(arg in2) $(arg order1) $(arg f) $(arg filtering)" output="screen" respawn="true" />
+    <node name="merging_fix" pkg="registration" type="merging_node" args="fix $(arg out_path)/$(arg in1)/registered $(arg out_path)/$(arg in2) $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />-->
     
-    <node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
+    <!--<node name="preprocessing_fix" pkg="registration" type="preprocessing_node" args="fix $(arg out_path)/fix $(arg f)" output="screen" respawn="true" />
     <node name="plane_detection_fix" pkg="plane_detection" type="plane_detection_node" args="fix $(arg out_path)/fix/preprocessed $(arg f)" output="screen" respawn="true"  />
 
     <node name="plane_matching_$(arg in3)_fix" pkg="registration" type="plane_matching_node" args="$(arg in3) fix $(arg order2) $(arg f) $(arg filtering)" output="screen" respawn="true" />
     <node name="merging_scene" pkg="registration" type="merging_node" args="scene $(arg out_path)/$(arg in3)/registered $(arg out_path)/fix $(arg out_path)/scene $(arg f)" output="screen" respawn="true" />
 
-    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg out_path)/scene $(arg f)" output="screen" respawn="true" />
+    <node name="preprocessing_scene" pkg="registration" type="preprocessing_node" args="scene $(arg out_path)/scene $(arg f)" output="screen" respawn="true" />-->
 </launch>
