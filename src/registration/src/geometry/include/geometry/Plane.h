@@ -4,6 +4,7 @@
 // std
 	#include <cmath>
 	#include <iostream>
+	#include <vector>
 // ros
 	#include <ros/console.h>
 // tf
@@ -30,7 +31,7 @@ namespace geometry
 
 			Plane(tf::Vector3 normal, tf::Vector3 point);
 			Plane(tf::Transform transform);
-			Plane(float* coef);
+			Plane(vector<float> coef);
 			Line intersect(Plane P);
 	};
 }

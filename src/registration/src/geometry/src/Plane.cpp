@@ -43,7 +43,7 @@ Plane::Plane(tf::Transform transform)
  * 
  * @param coef Array of 4 coefficients defining the plane st. aX+bY+cZ+d=0
  */
-Plane::Plane(float* coef)
+Plane::Plane(vector<float> coef)
 {
     this->d = coef[3];
     this->normal = tf::Vector3(coef[0], coef[1], coef[2]).normalized();
