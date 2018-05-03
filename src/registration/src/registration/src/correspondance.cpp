@@ -42,6 +42,7 @@
 	#include <geometry/Line.h>
 	#include <geometry/Plane.h>
 	#include <geometry/PointCloud.h>
+	#include <registration/TransformEstimator.h>
 
 using namespace std;
 using namespace sensor_msgs;
@@ -181,11 +182,26 @@ pcl::CorrespondencesPtr compute_corresp(pcl::PointCloud<pcl::FPFHSignature33>::P
     return correspondences;
 }
 
+/////////// TODO: add planes !!!
 Eigen::Matrix<float, 4, 4> transform_est(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input1, pcl::PointCloud<pcl::PointXYZRGB>::Ptr input2, pcl::CorrespondencesPtr corr)
 {
-    pcl::registration::TransformationEstimationSVD <pcl::PointXYZRGB, pcl::PointXYZRGB> test;
+    // pcl::registration::TransformationEstimationSVD <pcl::PointXYZRGB, pcl::PointXYZRGB> test;
     Eigen::Matrix<float, 4, 4> transf;
-    test.estimateRigidTransformation(*input1, *input2, *corr, transf);
+    // test.estimateRigidTransformation(*input1, *input2, *corr, transf);
+    TransformEstimator* TE = new TransformEstimator();
+    vector<Eigen::Vector3f> vec3;
+    for (int i = 0; i < input1->points.size(); i++)
+    {
+        vec3.push_back(Eigen::Vector3f(input1->points[i].x, input1->points[i].y, input1->points[i].z));
+    }
+    TE->addPoints(vec3, true);
+    vec3.clear();
+    for (int i = 0; i < input2->points.size(); i++)
+    {
+        vec3.push_back(Eigen::Vector3f((float) input2->points[i].x, (float) input2->points[i].y, (float) input2->points[i].z));
+    }
+    TE->addPoints(vec3, false);
+    transf = TE->getTransform();
 
     return transf;
 }
@@ -222,8 +238,8 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
         feat1 = fpfh_est(input1, normals1);
         feat2 = fpfh_est(input2, normals2);
 
-        ROS_WARN_STREAM(feat1->points.size());
-        ROS_WARN_STREAM(feat2->points.size());
+        ROS_WARN_STREAM("n features 1: " << feat1->points.size());
+        ROS_WARN_STREAM("n features 1: " << feat2->points.size());
 
     // matching  
         pcl::CorrespondencesPtr corr;
@@ -251,6 +267,7 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
         // transf = rejector_sac.getBestTransformation();   // Transformation Estimation method 1
 
     Eigen::Matrix<float, 4, 4> transf;
+    ROS_INFO_STREAM(corr_dupl_rej->size() << " correspondances");
     transf = transform_est(input1, input2, corr_dupl_rej);
 
     // listener->lookupTransform("registration_" + inputs[0] + "_" + inputs[1], name, ros::Time(0), *transf);
@@ -260,7 +277,6 @@ void pc_callback(const PointCloud2ConstPtr& pc1, const PointCloud2ConstPtr& pc2)
     tf::Matrix3x3 tf3d;
     tf::Quaternion tfqt;
 
-    ROS_WARN_STREAM(transf(0,3) << " " << transf(1,3) << " " << transf(2,3));
     
     origin.setValue(static_cast<double>(transf(0,3)),static_cast<double>(transf(1,3)),static_cast<double>(transf(2,3)));
     tf3d.setValue(static_cast<double>(transf(0,0)), static_cast<double>(transf(0,1)), static_cast<double>(transf(0,2)), 

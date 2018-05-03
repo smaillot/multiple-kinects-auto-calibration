@@ -1,33 +1,36 @@
 #include <string>
+#include <iostream>
 #include <vector>
-#include <geometry/Plane>
+#include <geometry/Plane.h>
+#include <Eigen/SVD> 
 #include <Eigen/Core>
+#include <Eigen/LU>
+#include <ros/console.h>
 
 
 class TransformEstimator
 {
     private:
         
-        vector<int> planes_weights;
-        vector<Eigen::Vector3d> points_source;
-        vector<Eigen::Vector3d> points_target;
-        vector<Eigen::Vector4d> planes_source;
-        vector<Eigen::Vector4d> planes_target;
+        std::vector<float> planes_weights;
+        std::vector<Eigen::Vector3f> points_source;
+        std::vector<Eigen::Vector3f> points_target;
+        std::vector<Eigen::Vector4f> planes_source;
+        std::vector<Eigen::Vector4f> planes_target;
 
     protected:
 
         bool isValid();
-        Eigen::Matrix3d computeRotCorr();
+        Eigen::Matrix3f computeRotCorr();
+        Eigen::Vector3f computeCentroid(std::vector <Eigen::Vector3f> vec);
 
     public:
 
-        TransformEstimator();
-        void addPoints(vector<Eigen::Vector3d> points, bool source);
-        void addPlanes(vector<Eigen::Vector4d> planes, bool source);
-        void addPlanes(vector<geometry::Planes> planes, bool source);
+        void addPoints(std::vector<Eigen::Vector3f> points, bool source);
+        void addPlanes(std::vector<Eigen::Vector4f> planes, bool source);
+        void addPlanes(std::vector<geometry::Plane> planes, bool source);
         void reset();
-        void setWeights(vector <float> weights);
-        Eigen::Matrix3d getRotation();
-        Eigen::Vector3d getTranslation();
-        Eigen::Vector4d getTransform();
+        Eigen::Matrix3f getRotation();
+        Eigen::Vector3f getTranslation(Eigen::Matrix3f R);
+        Eigen::Matrix4f getTransform();
 };

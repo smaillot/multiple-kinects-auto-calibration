@@ -31,7 +31,7 @@ namespace geometry
 
 			Plane(tf::Vector3 normal, tf::Vector3 point);
 			Plane(tf::Transform transform);
-			Plane(vector<float> coef);
+			Plane(std::vector<float> coef);
 			Line intersect(Plane P);
 	};
 }

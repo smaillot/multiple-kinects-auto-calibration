@@ -1,5 +1,6 @@
 #include <geometry/Plane.h>
 
+ using namespace std;
  using namespace geometry;
 
 /**

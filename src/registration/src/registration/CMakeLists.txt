@@ -55,6 +55,19 @@ include_directories(
   include
 )
 
+add_library(TransformEstimator
+  src/TransformEstimator.cpp
+)
+add_dependencies(TransformEstimator 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  geometry
+)
+target_link_libraries(TransformEstimator
+  ${catkin_LIBRARIES}
+)
+
+
 add_executable(preprocessing_node src/preprocessing_node.cpp)
 target_link_libraries(preprocessing_node 
   ${catkin_LIBRARIES}
@@ -109,6 +122,7 @@ add_dependencies(result_saving_node
 add_executable(correspondance src/correspondance.cpp)
 target_link_libraries(correspondance 
   ${catkin_LIBRARIES}
+  TransformEstimator
 )
 add_dependencies(correspondance
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
