@@ -109,7 +109,9 @@ void PointCloud::update(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         }
         
         pcl_conversions::toPCL(msg, *cloud);
+        pcl_conversions::toPCL(cloud_msg->header, cloud->header);
         pcl_conversions::toPCL(msg, *kp);
+        pcl_conversions::toPCL(cloud_msg->header, kp->header);
 
     /* process cloud */
     

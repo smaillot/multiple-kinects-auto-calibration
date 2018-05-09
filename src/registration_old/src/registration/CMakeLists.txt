@@ -128,3 +128,13 @@ add_dependencies(correspondance
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(registration_node src/registration_node.cpp)
+target_link_libraries(registration_node 
+  ${catkin_LIBRARIES}
+  TransformEstimator
+)
+add_dependencies(registration_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)

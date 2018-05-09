@@ -20,12 +20,12 @@ class TransformEstimator
 
     protected:
 
-        bool isValid();
         Eigen::Matrix3f computeRotCorr();
         Eigen::Vector3f computeCentroid(std::vector <Eigen::Vector3f> vec);
 
     public:
 
+        bool isValid();
         void addPoints(std::vector<Eigen::Vector3f> points, bool source);
         void addPlanes(std::vector<Eigen::Vector4f> planes, bool source);
         void addPlanes(std::vector<geometry::Plane> planes, bool source);
