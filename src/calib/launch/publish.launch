@@ -1,0 +1,4 @@
+<launch>
+    <rosparam command="load" file="$(find calib)/config/default_transform.yaml" />
+    <node pkg="calib" name="point_cloud_publisher" type="registration_node" respawn="true" />
+</launch>

@@ -82,7 +82,7 @@ public:
 	void conf_callback(calib::CloudConfig &config, uint32_t level);
 	void update(const sensor_msgs::PointCloud2ConstPtr& input);
 
-	Eigen::Matrix4f get_transform(param_transform_t params);
+	Eigen::Matrix4f get_transform(param_transform_t params, bool rot, bool tr);
 	pcl::PCLPointCloud2Ptr subsample(const pcl::PCLPointCloud2Ptr& input, param_voxel_t params);
 	pcl::PCLPointCloud2Ptr cut(pcl::PCLPointCloud2Ptr input, param_cut_t params);
 	// vector <Eigen::Vector4f> detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr&);

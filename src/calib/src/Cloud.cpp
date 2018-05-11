@@ -147,13 +147,23 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     }
 
 
-Eigen::Matrix4f Cloud::get_transform(param_transform_t params)
+Eigen::Matrix4f Cloud::get_transform(param_transform_t params, bool rot, bool tr)
 {
     Transform<float, 3, Eigen::Affine> t;
-    t = Translation<float, 3>(params.tx, params.ty, params.tz);
-    t.rotate(AngleAxis<float>(params.rx, Vector3f::UnitX()));
-    t.rotate(AngleAxis<float>(params.ry, Vector3f::UnitY()));
-    t.rotate(AngleAxis<float>(params.rz, Vector3f::UnitZ()));
+    if (tr)
+    {
+        t = Translation<float, 3>(params.tx, params.ty, params.tz);
+    }
+    else
+    {
+        t = Translation<float, 3>(0, 0, 0);
+    }
+    if (rot)
+    {
+        t.rotate(AngleAxis<float>(params.rx, Vector3f::UnitX()));
+        t.rotate(AngleAxis<float>(params.ry, Vector3f::UnitY()));
+        t.rotate(AngleAxis<float>(params.rz, Vector3f::UnitZ()));
+    }
     return t.matrix();
 }
 
@@ -163,8 +173,9 @@ Eigen::Matrix4f Cloud::get_transform(param_transform_t params)
 void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
 {
     sensor_msgs::PointCloud2* msg(new sensor_msgs::PointCloud2(*input)); 
+    // pcl_ros::transformPointCloud(this->get_transform(this->param_transform, true, false), *msg, *msg);  
     pcl_ros::transformPointCloud("world", *msg, *msg, *this->tf_listener);  
-    pcl_ros::transformPointCloud(this->get_transform(this->param_transform), *msg, *msg);  
+    pcl_ros::transformPointCloud(this->get_transform(this->param_transform, true, true), *msg, *msg);  
     sensor_msgs::PointCloud2ConstPtr msg_ptr(msg);
     
     if (this->pub_raw.getTopic() != this->sub.getTopic())     
