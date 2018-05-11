@@ -7,7 +7,7 @@ calib:
     ry: -1.9
     rz: 0.0
     y_enable: true
-    y_min: 1100.0
+    y_min: 1170.0
     y_max: 4000.0
   cam2:
     tx: 0.0
@@ -18,7 +18,7 @@ calib:
     rz: 0.0
     y_enable: true
     y_min: 0.0
-    y_max: 1400.0
+    y_max: 1470.0
   scene:
     tx: 0.0
     ty: 0.0
@@ -30,5 +30,5 @@ calib:
     y_min: -100.0
     y_max: 2800.0
     z_enable: true
-    z_min: 750.0
+    z_min: 720.0
     z_max: 2000.0

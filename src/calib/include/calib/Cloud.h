@@ -17,6 +17,8 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
@@ -50,6 +52,13 @@ struct param_transform_t
 	float ry;
 	float rz;
 };
+struct param_plane_t
+{
+	int method;
+	int n_planes;
+	double th_dist;
+	int max_it;
+};
 
 class Cloud
 {
@@ -60,12 +69,20 @@ private:
 	ros::Subscriber sub;
 	ros::Publisher pub_raw;
 	ros::Publisher pub_preproc;
+	ros::Publisher pub_planes;
 
 	pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
-	param_voxel_t param_voxel;
     pcl::PassThrough<pcl::PointXYZRGB> filter_cut;
+	pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+
+	param_voxel_t param_voxel;
 	param_cut_t param_cut;
 	param_transform_t param_transform;
+	param_plane_t param_plane;
+
+	vector <Eigen::Vector4f> planes;
+	
 
 public:
 	Cloud(ros::NodeHandle* node, string sub_name, string pub_name);
@@ -74,8 +91,10 @@ public:
 	void convert(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, pcl::PCLPointCloud2Ptr& output);
 	void convert(const sensor_msgs::PointCloud2ConstPtr& input, pcl::PCLPointCloud2Ptr& output);
 	void convert(const pcl::PCLPointCloud2Ptr& input, sensor_msgs::PointCloud2ConstPtr& output);
+	void convert(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, sensor_msgs::PointCloud2& output);
 	void reset_params();
 
+	void publish(ros::Publisher& pub, sensor_msgs::PointCloud2& msg, string frame);
 	void publish(ros::Publisher& pub, const sensor_msgs::PointCloud2ConstPtr& msg_ptr, string frame);
 	void publish(ros::Publisher& pub, const pcl::PCLPointCloud2Ptr& msg_ptr, string frame);
 
@@ -85,7 +104,8 @@ public:
 	Eigen::Matrix4f get_transform(param_transform_t params, bool rot, bool tr);
 	pcl::PCLPointCloud2Ptr subsample(const pcl::PCLPointCloud2Ptr& input, param_voxel_t params);
 	pcl::PCLPointCloud2Ptr cut(pcl::PCLPointCloud2Ptr input, param_cut_t params);
-	// vector <Eigen::Vector4f> detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr&);
+	vector <Eigen::Vector4f> detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, param_plane_t params);
+	void colorize(pcl::PointCloud<pcl::PointXYZRGB> input, float ratio);
 };
 
 #endif
