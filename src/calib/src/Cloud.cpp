@@ -8,9 +8,11 @@ Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name)
     this->node = node;
 	this->tf_listener = new tf::TransformListener; 
     this->sub = this->node->subscribe(sub_name, 1, &Cloud::update, this);
-    this->pub_raw = this->node->advertise<sensor_msgs::PointCloud2>(pub_name, 1);
-    this->pub_preproc = this->node->advertise<sensor_msgs::PointCloud2>(pub_name + "/preproc", 1);
-    this->pub_planes = this->node->advertise<sensor_msgs::PointCloud2>(pub_name + "/planes", 1);
+    this->pub_raw = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name, 1);
+    this->pub_preproc = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name + "/preproc", 1);
+    this->pub_planes_pc_col = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name + "/planes_colored", 1);
+    this->pub_planes_pc = this->node->advertise<calib::PlaneClouds>("/calib/clouds/" + pub_name + "/planes", 1);
+    this->pub_planes = this->node->advertise<calib::Planes>("/calib/planes/" + pub_name, 1);
 
     this->seg.setOptimizeCoefficients(true);
     this->seg.setModelType(pcl::SACMODEL_PLANE);
@@ -210,19 +212,26 @@ void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
     sensor_msgs::PointCloud2* msg(new sensor_msgs::PointCloud2(*input)); 
     pcl_ros::transformPointCloud("world", *msg, *msg, *this->tf_listener);  
     pcl_ros::transformPointCloud(this->get_transform(this->param_transform, true, true), *msg, *msg);  
+
     sensor_msgs::PointCloud2ConstPtr msg_ptr(msg);
-    
+    pcl::PCLPointCloud2Ptr cloud2Ptr;
+    this->convert(msg_ptr, cloud2Ptr);
+
+    cloud2Ptr = this->cut(cloud2Ptr, this->param_cut);
+
+    this->convert(cloud2Ptr, msg_ptr);
     if (this->pub_raw.getTopic() != this->sub.getTopic())     
     {
         this->publish(this->pub_raw, msg_ptr, "world");
     }
 
-    pcl::PCLPointCloud2Ptr cloud2Ptr;
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    this->convert(msg_ptr, cloud2Ptr);
+/* to extract planes on full point cloud (slower)
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
+    this->convert(cloud2Ptr, cloudPtr);
+    this->planes = this->detect_plane(cloudPtr, this->param_plane);
+*/
 
     cloud2Ptr = this->subsample(cloud2Ptr, this->param_voxel);
-    cloud2Ptr = this->cut(cloud2Ptr, this->param_cut);
     this->publish(this->pub_preproc, cloud2Ptr, "world");
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
@@ -315,8 +324,8 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
     if (params.method >= 0 && params.n_planes && params.th_dist >= 0 && params.max_it > 0)
     {
         seg.setMethodType(params.method);
-        this->seg.setDistanceThreshold (params.th_dist);
         this->seg.setMaxIterations(params.max_it);
+        this->seg.setDistanceThreshold (params.th_dist);
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr remaining(new pcl::PointCloud<pcl::PointXYZRGB>);
         remaining = input;
@@ -324,7 +333,12 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
         sensor_msgs::PointCloud2 planes_msg;
         sensor_msgs::PointCloud2 plane_msg;
+        calib::PlaneClouds planes_sep;
+        calib::Planes coef_msg;
+        shape_msgs::Plane plane_eq;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::VFHSignature308>::Ptr desc1;
+        pcl::PointCloud<pcl::VFHSignature308>::Ptr desc2;
 
         for (int i = 0; i < params.n_planes; i++)
         {
@@ -336,8 +350,12 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
             this->extract.setNegative(false);
             this->extract.filter(*plane_cloud);
 
-            this->colorize(*plane_cloud, (float)i / (float)params.n_planes);
+            // desc1->points.push_back(this->descriptor(plane_cloud, this->normals(plane_cloud, 0.03)));
+            // desc2->points.push_back(this->descriptor(plane_cloud, this->normals(plane_cloud, 0.03)));
+
+            this->colorize(plane_cloud, (float)i / (float)params.n_planes);
             this->convert(plane_cloud, plane_msg);
+            planes_sep.planes.push_back(plane_msg);
             pcl::concatenatePointCloud(planes_msg, plane_msg, planes_msg);
 
             this->extract.setInputCloud(remaining);
@@ -346,13 +364,17 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
             this->extract.filter(*remaining);
 
             planes.push_back(Eigen::Vector4f(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]));
+            plane_eq.coef = {coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]};
+            coef_msg.planes.push_back(plane_eq);
         }  
-        this->publish(this->pub_planes, planes_msg, "world");    
+        this->publish(this->pub_planes_pc_col, planes_msg, "world");    
+        this->pub_planes.publish(coef_msg); 
+        this->pub_planes_pc.publish(planes_sep); 
     }
     return planes;
 }
 
-void Cloud::colorize(pcl::PointCloud<pcl::PointXYZRGB> input, float ratio)
+void Cloud::colorize(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float ratio)
 {
     int r;
     int g;
@@ -396,10 +418,10 @@ void Cloud::colorize(pcl::PointCloud<pcl::PointXYZRGB> input, float ratio)
             break;
     }
 
-    for (int i = 0; i < input.points.size(); i++)
+    for (int i = 0; i < input->points.size(); i++)
     {
-        input.points[i].r = r;
-        input.points[i].g = g;
-        input.points[i].b = b;
+        input->points[i].r = r;
+        input->points[i].g = g;
+        input->points[i].b = b;
     }
 }

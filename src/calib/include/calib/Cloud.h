@@ -4,6 +4,9 @@
 #include <string>
 #include <ros/console.h>
 
+#include <shape_msgs/Plane.h>
+#include <calib/Planes.h>
+#include <calib/PlaneClouds.h>
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 
@@ -19,9 +22,14 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/vfh.h>
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_one_to_one.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
+
 
 using namespace std;
 
@@ -69,6 +77,8 @@ private:
 	ros::Subscriber sub;
 	ros::Publisher pub_raw;
 	ros::Publisher pub_preproc;
+	ros::Publisher pub_planes_pc_col;
+	ros::Publisher pub_planes_pc;
 	ros::Publisher pub_planes;
 
 	pcl::VoxelGrid<pcl::PCLPointCloud2> filter_voxel;
@@ -105,7 +115,7 @@ public:
 	pcl::PCLPointCloud2Ptr subsample(const pcl::PCLPointCloud2Ptr& input, param_voxel_t params);
 	pcl::PCLPointCloud2Ptr cut(pcl::PCLPointCloud2Ptr input, param_cut_t params);
 	vector <Eigen::Vector4f> detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, param_plane_t params);
-	void colorize(pcl::PointCloud<pcl::PointXYZRGB> input, float ratio);
+	void colorize(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float ratio);
 };
 
 #endif

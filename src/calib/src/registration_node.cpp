@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 
 	pub = nh.advertise<sensor_msgs::PointCloud2>("/calib/clouds/scene", 1);
 
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cam1_sub(nh, "/calib/clouds/cam1/preproc", 1);
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cam2_sub(nh, "/calib/clouds/cam2/preproc", 1);
+	message_filters::Subscriber<sensor_msgs::PointCloud2> cam1_sub(nh, "/calib/clouds/cam1", 1);
+	message_filters::Subscriber<sensor_msgs::PointCloud2> cam2_sub(nh, "/calib/clouds/cam2", 1);
 	typedef sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::PointCloud2> KinectSync;
 	Synchronizer<KinectSync> sync(KinectSync(10), cam1_sub, cam2_sub);
 	sync.registerCallback(boost::bind(&pc_callback, _1, _2));
@@ -81,19 +81,19 @@ int main(int argc, char *argv[])
 ///////////
 // main code
 
-	Cloud cam1(&node_cam1, "/cam1/qhd/points", "/calib/clouds/cam1");
+	Cloud cam1(&node_cam1, "/cam1/qhd/points", "cam1");
 	dynamic_reconfigure::Server<calib::CloudConfig> server_cam1(node_cam1);
 	dynamic_reconfigure::Server<calib::CloudConfig>::CallbackType f_cam1;
 	f_cam1 = boost::bind(&Cloud::conf_callback, &cam1, _1, _2);
 	server_cam1.setCallback(f_cam1);
 
-	Cloud cam2(&node_cam2, "/cam2/qhd/points", "/calib/clouds/cam2");
+	Cloud cam2(&node_cam2, "/cam2/qhd/points", "cam2");
 	dynamic_reconfigure::Server<calib::CloudConfig> server_cam2(node_cam2);
 	dynamic_reconfigure::Server<calib::CloudConfig>::CallbackType f_cam2;
 	f_cam2 = boost::bind(&Cloud::conf_callback, &cam2, _1, _2);
 	server_cam2.setCallback(f_cam2);
 
-	Cloud scene(&node_cam2, "/calib/clouds/scene", "/calib/clouds/scene");
+	Cloud scene(&node_cam2, "/calib/clouds/scene", "scene");
 	dynamic_reconfigure::Server<calib::CloudConfig> server_scene(node_scene);
 	dynamic_reconfigure::Server<calib::CloudConfig>::CallbackType f_scene;
 	f_scene = boost::bind(&Cloud::conf_callback, &scene, _1, _2);
