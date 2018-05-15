@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh("/calib/registration");
     ros::NodeHandle node_cam1("/calib/cam1");
     ros::NodeHandle node_cam2("/calib/cam2");
+    ros::NodeHandle node_match("/calib/match");
     ros::NodeHandle node_scene("/calib/scene");
 	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info)) 
 	{
@@ -92,6 +93,8 @@ int main(int argc, char *argv[])
 	dynamic_reconfigure::Server<calib::CloudConfig>::CallbackType f_cam2;
 	f_cam2 = boost::bind(&Cloud::conf_callback, &cam2, _1, _2);
 	server_cam2.setCallback(f_cam2);
+
+	Merging match(&node_match, "cam1", "cam2");
 
 	Cloud scene(&node_cam2, "/calib/clouds/scene", "scene");
 	dynamic_reconfigure::Server<calib::CloudConfig> server_scene(node_scene);

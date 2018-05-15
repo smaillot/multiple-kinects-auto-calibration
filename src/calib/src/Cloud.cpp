@@ -33,7 +33,7 @@ void Cloud::reset_params()
 */
 void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
 {
-// transform
+    // transform
     this->param_transform.tx = config.tx / 1000;
     this->param_transform.ty = config.ty / 1000;
     this->param_transform.tz = config.tz / 1000;
@@ -41,7 +41,7 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     this->param_transform.ry = config.ry / 180 * 3.14159;
     this->param_transform.rz = config.rz / 180 * 3.14159;
 
-// subsampling
+    // subsampling
     this->param_voxel.enable = config.enable;
 	if (config.equal)
     {
@@ -55,7 +55,7 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
         this->param_voxel.y = config.y / 1000;
         this->param_voxel.z = config.z / 1000;
     }
-// cutting
+    // cutting
     this->param_cut.x.enable = config.x_enable;
     this->param_cut.x.bounds[0] = config.x_min / 1000;
     this->param_cut.x.bounds[1] = config.x_max / 1000;
@@ -65,80 +65,12 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     this->param_cut.z.enable = config.z_enable;
     this->param_cut.z.bounds[0] = config.z_min / 1000;
     this->param_cut.z.bounds[1] = config.z_max / 1000;
-// plane detection
+    // plane detection
     this->param_plane.method = config.method;
     this->param_plane.n_planes = config.n_planes;
     this->param_plane.th_dist = config.th_dist / 1000;
     this->param_plane.max_it = config.max_it;
 }
-
-// converters
-    /*
-    * @brief Convert point cloud between pcl and sensor_msg objects.
-    *
-    * @param input Input point cloud.
-    * @param output Output point cloud.
-    */
-    void Cloud::convert(const pcl::PCLPointCloud2Ptr& input, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& output)
-    {
-        pcl::fromPCLPointCloud2(*input, *output);    
-    }
-
-    /*
-    * @brief Convert point cloud between pcl and sensor_msg objects.
-    *
-    * @param input Input point cloud.
-    * @param output Output point cloud.
-    * */
-    void Cloud::convert(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, pcl::PCLPointCloud2Ptr& output)
-    {
-        pcl::PCLPointCloud2* temp(new pcl::PCLPointCloud2());
-        pcl::toPCLPointCloud2(*input, *temp);
-        output = pcl::PCLPointCloud2Ptr(temp);
-    }
-
-    /*
-    * @brief Convert point cloud between pcl and sensor_msg objects.
-    *
-    * @param input Input point cloud.
-    * @param output Output point cloud.
-    */
-    void Cloud::convert(const sensor_msgs::PointCloud2ConstPtr& input, pcl::PCLPointCloud2Ptr& output)
-    {
-        pcl::PCLPointCloud2* temp = new pcl::PCLPointCloud2; 
-        pcl_conversions::toPCL(*input, *temp);
-        pcl_conversions::toPCL(input->header, temp->header);
-        output = pcl::PCLPointCloud2Ptr(temp); 
-    } 
-
-    /*
-    * @brief Convert point cloud between pcl and sensor_msg objects.
-    *
-    * @param input Input point cloud.
-    * @param output Output point cloud.
-    */
-    void Cloud::convert(const pcl::PCLPointCloud2Ptr& input, sensor_msgs::PointCloud2ConstPtr& output)
-    {
-        sensor_msgs::PointCloud2* temp = new sensor_msgs::PointCloud2;
-        pcl_conversions::fromPCL(*input, *temp);
-        pcl_conversions::fromPCL(input->header, temp->header);
-        output = sensor_msgs::PointCloud2ConstPtr(temp);
-    }
-
-    /*
-    * @brief Convert point cloud between pcl and sensor_msg objects.
-    *
-    * @param input Input point cloud.
-    * @param output Output point cloud.
-    */
-    void Cloud::convert(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, sensor_msgs::PointCloud2& output)
-    {
-        pcl::PCLPointCloud2Ptr temp;
-        sensor_msgs::PointCloud2ConstPtr temp2;
-        this->convert(input, temp);
-        this->convert(temp, temp2);
-        output = *temp2;
-    }
 
 // publishers
     /*
@@ -179,7 +111,7 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     void Cloud::publish(ros::Publisher& pub, const pcl::PCLPointCloud2Ptr& msgPtr, string frame)
     {
         sensor_msgs::PointCloud2ConstPtr outPtr;
-        this->convert(msgPtr, outPtr);
+        convert(msgPtr, outPtr);
         this->publish(pub, outPtr, frame);
     }
 
@@ -215,11 +147,11 @@ void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
 
     sensor_msgs::PointCloud2ConstPtr msg_ptr(msg);
     pcl::PCLPointCloud2Ptr cloud2Ptr;
-    this->convert(msg_ptr, cloud2Ptr);
+    convert(msg_ptr, cloud2Ptr);
 
     cloud2Ptr = this->cut(cloud2Ptr, this->param_cut);
 
-    this->convert(cloud2Ptr, msg_ptr);
+    convert(cloud2Ptr, msg_ptr);
     if (this->pub_raw.getTopic() != this->sub.getTopic())     
     {
         this->publish(this->pub_raw, msg_ptr, "world");
@@ -227,7 +159,7 @@ void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
 
 /* to extract planes on full point cloud (slower)
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
-    this->convert(cloud2Ptr, cloudPtr);
+    convert(cloud2Ptr, cloudPtr);
     this->planes = this->detect_plane(cloudPtr, this->param_plane);
 */
 
@@ -235,7 +167,7 @@ void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
     this->publish(this->pub_preproc, cloud2Ptr, "world");
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
-    this->convert(cloud2Ptr, cloudPtr);
+    convert(cloud2Ptr, cloudPtr);
     this->planes = this->detect_plane(cloudPtr, this->param_plane);
 
     ROS_DEBUG_STREAM("End processing loop for " << this->sub.getTopic() << "\n");
@@ -277,7 +209,7 @@ pcl::PCLPointCloud2Ptr Cloud::cut(pcl::PCLPointCloud2Ptr input, param_cut_t para
     {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp(new pcl::PointCloud<pcl::PointXYZRGB>); 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>); 
-        this->convert(input, temp);
+        convert(input, temp);
         if (this->param_cut.x.enable) 
         {
             this->filter_cut.setInputCloud(temp); 
@@ -303,7 +235,7 @@ pcl::PCLPointCloud2Ptr Cloud::cut(pcl::PCLPointCloud2Ptr input, param_cut_t para
             temp = filtered;
         }
         pcl::PCLPointCloud2Ptr output;
-        this->convert(temp, output);
+        convert(temp, output);
         return output;
     }
     else
@@ -354,8 +286,9 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
             // desc2->points.push_back(this->descriptor(plane_cloud, this->normals(plane_cloud, 0.03)));
 
             this->colorize(plane_cloud, (float)i / (float)params.n_planes);
-            this->convert(plane_cloud, plane_msg);
+            convert(plane_cloud, plane_msg);
             planes_sep.planes.push_back(plane_msg);
+            planes_sep.header = planes_sep.planes[i].header;
             pcl::concatenatePointCloud(planes_msg, plane_msg, planes_msg);
 
             this->extract.setInputCloud(remaining);
@@ -366,6 +299,7 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
             planes.push_back(Eigen::Vector4f(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]));
             plane_eq.coef = {coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]};
             coef_msg.planes.push_back(plane_eq);
+            coef_msg.header = planes_sep.planes[i].header;
         }  
         this->publish(this->pub_planes_pc_col, planes_msg, "world");    
         this->pub_planes.publish(coef_msg); 

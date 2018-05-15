@@ -66,6 +66,18 @@ include_directories(
   include/calib
 )
 
+add_library(pc_conv
+  include/calib/pc_conv.h
+  src/pc_conv.cpp
+)
+add_dependencies(pc_conv 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(pc_conv
+  ${catkin_LIBRARIES}
+)
+
 add_library(Cloud
   include/calib/Cloud.h
   src/Cloud.cpp
@@ -77,24 +89,27 @@ add_dependencies(Cloud
 )
 target_link_libraries(Cloud
   ${catkin_LIBRARIES}
+  pc_conv
 )
 
-# add_library(Merging
-#   include/calib/Merging.h
-#   src/Merging.cpp
-# )
-# add_dependencies(Merging 
-#   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-#   ${catkin_EXPORTED_TARGETS}
-# )
-# target_link_libraries(Merging
-#   ${catkin_LIBRARIES}
-# )
+add_library(Merging
+  include/calib/Merging.h
+  src/Merging.cpp
+)
+add_dependencies(Merging 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(Merging
+  ${catkin_LIBRARIES}
+  pc_conv
+)
 
 add_executable(registration_node src/registration_node.cpp)
 target_link_libraries(registration_node 
   ${catkin_LIBRARIES}
   Cloud
+  Merging
 )
 add_dependencies(registration_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 

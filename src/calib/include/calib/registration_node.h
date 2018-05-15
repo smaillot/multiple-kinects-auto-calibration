@@ -1,6 +1,6 @@
 #include <string>
 #include "calib/Cloud.h"
-//#include "calib/Merging.h"
+#include "calib/Merging.h"
 #include "ros/ros.h"
 
 #include <dynamic_reconfigure/server.h>
