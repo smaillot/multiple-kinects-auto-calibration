@@ -3,14 +3,26 @@
 using namespace std;
 using namespace Eigen;
 
+void MSGtoPCL(const pc_msg_t& msg, pcPtr& cloud)
+{
+    if (msg.data.size() > 0)
+    {
+        pcl::PCLPointCloud2 pcl_pc2;
+        pcPtr temp(new pc_t);
+        pcl_conversions::toPCL(msg, pcl_pc2);
+        pcl::fromPCLPointCloud2(pcl_pc2, *temp);
+        cloud = temp;
+    }
+}
+
 Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name)
 {
     this->node = node;
 	this->tf_listener = new tf::TransformListener; 
     this->sub = this->node->subscribe(sub_name, 1, &Cloud::update, this);
-    this->pub_raw = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name, 1);
-    this->pub_preproc = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name + "/preproc", 1);
-    this->pub_planes_pc_col = this->node->advertise<sensor_msgs::PointCloud2>("/calib/clouds/" + pub_name + "/planes_colored", 1);
+    this->pub_raw = this->node->advertise<pc_t>("/calib/clouds/" + pub_name, 1);
+    this->pub_preproc = this->node->advertise<pc_msg_t>("/calib/clouds/" + pub_name + "/preproc", 1);
+    this->pub_planes_pc_col = this->node->advertise<pc_msg_t>("/calib/clouds/" + pub_name + "/planes_colored", 1);
     this->pub_planes_pc = this->node->advertise<calib::PlaneClouds>("/calib/clouds/" + pub_name + "/planes", 1);
     this->pub_planes = this->node->advertise<calib::Planes>("/calib/planes/" + pub_name, 1);
 
@@ -65,6 +77,7 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     this->param_cut.z.enable = config.z_enable;
     this->param_cut.z.bounds[0] = config.z_min / 1000;
     this->param_cut.z.bounds[1] = config.z_max / 1000;
+    
     // plane detection
     this->param_plane.method = config.method;
     this->param_plane.n_planes = config.n_planes;
@@ -77,28 +90,12 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     * @brief Publish point cloud.
     *
     * @param pub Ros message publisher.
-    * @param msg Point cloud message to publish.
+    * @param cloud Point cloud.
     */
-    void Cloud::publish(ros::Publisher& pub, sensor_msgs::PointCloud2& msg, string frame)
+    void Cloud::publish(ros::Publisher& pub, pc_t& cloud, string frame)
     {
-        pcl_ros::transformPointCloud(frame, msg, msg, *this->tf_listener);  
-
-        if (msg.data.size() > 0)
-        {
-            pub.publish(msg);
-            ROS_DEBUG_STREAM("Publishing\t" << msg.data.size() << " points on\t" << pub.getTopic());
-        }
-    }
-
-    /*
-    * @brief Publish point cloud.
-    *
-    * @param pub Ros message publisher.
-    * @param msgPtr Pointer to the message or point cloud.
-    */
-    void Cloud::publish(ros::Publisher& pub, const sensor_msgs::PointCloud2ConstPtr& msgPtr, string frame)
-    {
-        sensor_msgs::PointCloud2 msg = *msgPtr; 
+        pc_msg_t msg;
+        pcl::toROSMsg(cloud, msg);
         this->publish(pub, msg, frame);
     }
 
@@ -106,71 +103,66 @@ void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
     * @brief Publish point cloud.
     *
     * @param pub Ros message publisher.
-    * @param msgPtr Pointer to the message or point cloud.
+    * @param cloudPtr Pointer to the point cloud.
     */
-    void Cloud::publish(ros::Publisher& pub, const pcl::PCLPointCloud2Ptr& msgPtr, string frame)
+    void Cloud::publish(ros::Publisher& pub, const pcConstPtr& cloudPtr, string frame)
     {
-        sensor_msgs::PointCloud2ConstPtr outPtr;
-        convert(msgPtr, outPtr);
-        this->publish(pub, outPtr, frame);
+        pc_t cloud = *cloudPtr; 
+        this->publish(pub, cloud, frame);
     }
 
+    /*
+    * @brief Publish point cloud.
+    *
+    * @param pub Ros message publisher.
+    * @param input Point cloud pointer.
+    */
+    void Cloud::publish(ros::Publisher& pub, const pc_msg_t& input, string frame)
+    {
+        pc_msg_t msg = input;
+        pcl_ros::transformPointCloud(frame, msg, msg, *this->tf_listener);  
 
-Eigen::Matrix4f Cloud::get_transform(param_transform_t params, bool rot, bool tr)
+        if (msg.data.size() > 0)
+        {
+            pub.publish(msg);
+        }
+    }
+
+tf::Transform Cloud::get_transform(param_transform_t params, bool rot, bool tr)
 {
-    Transform<float, 3, Eigen::Affine> t;
+    Eigen::Affine3d t = Affine3d::Identity();
+    tf::Transform transform;
     if (tr)
     {
-        t = Translation<float, 3>(params.tx, params.ty, params.tz);
-    }
-    else
-    {
-        t = Translation<float, 3>(0, 0, 0);
+        t.translation() << params.tx, params.ty, params.tz;
     }
     if (rot)
     {
-        t.rotate(AngleAxis<float>(params.rx, Vector3f::UnitX()));
-        t.rotate(AngleAxis<float>(params.ry, Vector3f::UnitY()));
-        t.rotate(AngleAxis<float>(params.rz, Vector3f::UnitZ()));
+        t.rotate(AngleAxisd(params.rx, Vector3d::UnitX()));
+        t.rotate(AngleAxisd(params.ry, Vector3d::UnitY()));
+        t.rotate(AngleAxisd(params.rz, Vector3d::UnitZ()));
     }
-    return t.matrix();
+    tf::transformEigenToTF(t, transform);
+    return transform;
 }
 
 /*
 * @brief Subscriber callback containing processing loop
 */
-void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
+void Cloud::update(const pcConstPtr& input)
 {
-    sensor_msgs::PointCloud2* msg(new sensor_msgs::PointCloud2(*input)); 
-    pcl_ros::transformPointCloud("world", *msg, *msg, *this->tf_listener);  
-    pcl_ros::transformPointCloud(this->get_transform(this->param_transform, true, true), *msg, *msg);  
-
-    sensor_msgs::PointCloud2ConstPtr msg_ptr(msg);
-    pcl::PCLPointCloud2Ptr cloud2Ptr;
-    convert(msg_ptr, cloud2Ptr);
-
-    cloud2Ptr = this->cut(cloud2Ptr, this->param_cut);
-
-    convert(cloud2Ptr, msg_ptr);
+    pc_t* cloud(new pc_t(*input));
+    pcPtr cloudPtr(cloud); 
+    pcl_ros::transformPointCloud("world", *cloud, *cloud, *this->tf_listener);  
+    pcl_ros::transformPointCloud(*cloud, *cloud, this->get_transform(this->param_transform, true, true));  
+    cloudPtr = this->cut(cloudPtr, this->param_cut);
     if (this->pub_raw.getTopic() != this->sub.getTopic())     
     {
-        this->publish(this->pub_raw, msg_ptr, "world");
+        this->publish(this->pub_raw, cloudPtr, "world");
     }
-
-/* to extract planes on full point cloud (slower)
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
-    convert(cloud2Ptr, cloudPtr);
+    cloudPtr = this->subsample(cloudPtr, this->param_voxel);
+    this->publish(this->pub_preproc, cloudPtr, "world");
     this->planes = this->detect_plane(cloudPtr, this->param_plane);
-*/
-
-    cloud2Ptr = this->subsample(cloud2Ptr, this->param_voxel);
-    this->publish(this->pub_preproc, cloud2Ptr, "world");
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>); 
-    convert(cloud2Ptr, cloudPtr);
-    this->planes = this->detect_plane(cloudPtr, this->param_plane);
-
-    ROS_DEBUG_STREAM("End processing loop for " << this->sub.getTopic() << "\n");
 }
 
 /*
@@ -179,16 +171,15 @@ void Cloud::update(const sensor_msgs::PointCloud2ConstPtr& input)
  * @param input Input cloud.
  * @param params Filter parameters.
  */
-pcl::PCLPointCloud2Ptr Cloud::subsample(const pcl::PCLPointCloud2Ptr& input, param_voxel_t params)
+pcPtr Cloud::subsample(const pcPtr& input, param_voxel_t params)
 {
     if (params.enable)
     {
-        ROS_DEBUG_STREAM("Applying voxel filter with parameters: (" << params.x << ", " << params.y << ", " << params.z << ")");
         this->filter_voxel.setInputCloud(input);
         this->filter_voxel.setLeafSize(params.x, params.y, params.z);
-        pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2; 
+        pc_t* cloud = new pc_t; 
         this->filter_voxel.filter(*cloud);
-        pcl::PCLPointCloud2Ptr output(cloud);
+        pcPtr output(cloud);
         return output;
     }
     else
@@ -203,13 +194,12 @@ pcl::PCLPointCloud2Ptr Cloud::subsample(const pcl::PCLPointCloud2Ptr& input, par
  * @param input Input cloud.
  * @param params Filter parameters.
  */
-pcl::PCLPointCloud2Ptr Cloud::cut(pcl::PCLPointCloud2Ptr input, param_cut_t params)
+pcPtr Cloud::cut(pcPtr input, param_cut_t params)
 {
     if (this->param_cut.x.enable || this->param_cut.y.enable || this->param_cut.z.enable)
     {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp(new pcl::PointCloud<pcl::PointXYZRGB>); 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>); 
-        convert(input, temp);
+        pcPtr temp(new pc_t(*input)); 
+        pcPtr filtered(new pc_t); 
         if (this->param_cut.x.enable) 
         {
             this->filter_cut.setInputCloud(temp); 
@@ -234,9 +224,7 @@ pcl::PCLPointCloud2Ptr Cloud::cut(pcl::PCLPointCloud2Ptr input, param_cut_t para
             this->filter_cut.filter(*filtered);
             temp = filtered;
         }
-        pcl::PCLPointCloud2Ptr output;
-        convert(temp, output);
-        return output;
+        return temp;
     }
     else
     {
@@ -250,7 +238,7 @@ pcl::PCLPointCloud2Ptr Cloud::cut(pcl::PCLPointCloud2Ptr input, param_cut_t para
 * @param input Input point cloud.
 * @param params Plane detection parameters.
 */
-vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, param_plane_t params)
+vector <Eigen::Vector4f> Cloud::detect_plane(const pcPtr& input, param_plane_t params)
 {
     vector <Eigen::Vector4f> planes;
     if (params.method >= 0 && params.n_planes && params.th_dist >= 0 && params.max_it > 0)
@@ -258,19 +246,16 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
         seg.setMethodType(params.method);
         this->seg.setMaxIterations(params.max_it);
         this->seg.setDistanceThreshold (params.th_dist);
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr remaining(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcPtr remaining(new pc_t);
         remaining = input;
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-        sensor_msgs::PointCloud2 planes_msg;
-        sensor_msgs::PointCloud2 plane_msg;
         calib::PlaneClouds planes_sep;
         calib::Planes coef_msg;
         shape_msgs::Plane plane_eq;
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::PointCloud<pcl::VFHSignature308>::Ptr desc1;
-        pcl::PointCloud<pcl::VFHSignature308>::Ptr desc2;
+        pc_msg_t plane_msg;
+        pc_msg_t planes_cloud;
+        pcPtr plane_cloud(new pc_t);
 
         for (int i = 0; i < params.n_planes; i++)
         {
@@ -282,40 +267,35 @@ vector <Eigen::Vector4f> Cloud::detect_plane(pcl::PointCloud<pcl::PointXYZRGB>::
             this->extract.setNegative(false);
             this->extract.filter(*plane_cloud);
 
-            // desc1->points.push_back(this->descriptor(plane_cloud, this->normals(plane_cloud, 0.03)));
-            // desc2->points.push_back(this->descriptor(plane_cloud, this->normals(plane_cloud, 0.03)));
-
-            this->colorize(plane_cloud, (float)i / (float)params.n_planes);
-            convert(plane_cloud, plane_msg);
+            colorize(plane_cloud, (float)i / (float)params.n_planes);
+            pcl::toROSMsg(*plane_cloud, plane_msg); 
             planes_sep.planes.push_back(plane_msg);
             planes_sep.header = planes_sep.planes[i].header;
-            pcl::concatenatePointCloud(planes_msg, plane_msg, planes_msg);
-
+            pcl::concatenatePointCloud(planes_cloud, plane_msg, planes_cloud);
             this->extract.setInputCloud(remaining);
             this->extract.setIndices(inliers);
             this->extract.setNegative(true);
             this->extract.filter(*remaining);
-
             planes.push_back(Eigen::Vector4f(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]));
             plane_eq.coef = {coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]};
             coef_msg.planes.push_back(plane_eq);
             coef_msg.header = planes_sep.planes[i].header;
         }  
-        this->publish(this->pub_planes_pc_col, planes_msg, "world");    
+        this->publish(this->pub_planes_pc_col, planes_cloud, "world");    
         this->pub_planes.publish(coef_msg); 
         this->pub_planes_pc.publish(planes_sep); 
     }
     return planes;
 }
 
-void Cloud::colorize(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, float ratio)
+void colorize(pcPtr input, float ratio)
 {
     int r;
     int g;
     int b;
 
     int cycle = (int) (ratio * 6);
-    int up = (int) (6 * ratio - cycle) * 255;
+    int up = (int) ((6 * ratio - cycle) * 255);
     int down = 255 - up;
 
     switch(cycle)

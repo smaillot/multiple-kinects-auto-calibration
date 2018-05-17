@@ -37,16 +37,12 @@ void conf_callback(calib::RegistrationConfig &config, uint32_t level)
 	}
 }
 
-void pc_callback(const sensor_msgs::PointCloud2ConstPtr& pc1, const sensor_msgs::PointCloud2ConstPtr& pc2)
+void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
 {
-    sensor_msgs::PointCloud2 input1 = *pc1;
-    sensor_msgs::PointCloud2 input2 = *pc2;
-    sensor_msgs::PointCloud2 output1 = *pc1;
-    sensor_msgs::PointCloud2 output2 = *pc2;
-    sensor_msgs::PointCloud2 merged_pc;
-    pcl::concatenatePointCloud(output1, output2, merged_pc);
-
-    pub.publish(merged_pc);
+	pc_t input1 = *pc1;
+	pc_t input2 = *pc2;
+	pc_t merged = input1 + input2;
+    pub.publish(merged);
 }
 
 int main(int argc, char *argv[])
@@ -71,11 +67,11 @@ int main(int argc, char *argv[])
 	f = boost::bind(&conf_callback, _1, _2);
 	server.setCallback(f);
 
-	pub = nh.advertise<sensor_msgs::PointCloud2>("/calib/clouds/scene", 1);
+	pub = nh.advertise<pc_msg_t>("/calib/clouds/scene", 1);
 
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cam1_sub(nh, "/calib/clouds/cam1", 1);
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cam2_sub(nh, "/calib/clouds/cam2", 1);
-	typedef sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::PointCloud2> KinectSync;
+	message_filters::Subscriber<pc_t> cam1_sub(nh, "/calib/clouds/cam1", 1);
+	message_filters::Subscriber<pc_t> cam2_sub(nh, "/calib/clouds/cam2", 1);
+	typedef sync_policies::ApproximateTime<pc_t, pc_t> KinectSync;
 	Synchronizer<KinectSync> sync(KinectSync(10), cam1_sub, cam2_sub);
 	sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
@@ -95,6 +91,10 @@ int main(int argc, char *argv[])
 	server_cam2.setCallback(f_cam2);
 
 	Merging match(&node_match, "cam1", "cam2");
+	dynamic_reconfigure::Server<calib::MergingConfig> server_merging(node_match);
+	dynamic_reconfigure::Server<calib::MergingConfig>::CallbackType f_match;
+	f_match = boost::bind(&Merging::conf_callback, &match, _1, _2);
+	server_merging.setCallback(f_match);
 
 	Cloud scene(&node_cam2, "/calib/clouds/scene", "scene");
 	dynamic_reconfigure::Server<calib::CloudConfig> server_scene(node_scene);

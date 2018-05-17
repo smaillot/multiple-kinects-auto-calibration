@@ -6,7 +6,6 @@ calib:
     rx: 2.0
     ry: -1.9
     rz: 0.0
-    y_enable: true
     y_min: 1170.0
     y_max: 4000.0
   cam2:
@@ -16,7 +15,6 @@ calib:
     rx: 0.0
     ry: 0.0
     rz: 0.0
-    y_enable: true
     y_min: 0.0
     y_max: 1470.0
   scene:

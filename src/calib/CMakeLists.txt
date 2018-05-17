@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     shape_msgs
     pcl_ros
+    tf_conversions
     message_generation
 )
 
@@ -42,6 +43,7 @@ generate_messages(
 generate_dynamic_reconfigure_options(
   config/Registration.cfg
   config/Cloud.cfg
+  config/Merging.cfg
 )
 
 ###################################
@@ -66,18 +68,6 @@ include_directories(
   include/calib
 )
 
-add_library(pc_conv
-  include/calib/pc_conv.h
-  src/pc_conv.cpp
-)
-add_dependencies(pc_conv 
-  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(pc_conv
-  ${catkin_LIBRARIES}
-)
-
 add_library(Cloud
   include/calib/Cloud.h
   src/Cloud.cpp
@@ -89,7 +79,6 @@ add_dependencies(Cloud
 )
 target_link_libraries(Cloud
   ${catkin_LIBRARIES}
-  pc_conv
 )
 
 add_library(Merging
@@ -99,10 +88,11 @@ add_library(Merging
 add_dependencies(Merging 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
 target_link_libraries(Merging
   ${catkin_LIBRARIES}
-  pc_conv
+  Cloud
 )
 
 add_executable(registration_node src/registration_node.cpp)
