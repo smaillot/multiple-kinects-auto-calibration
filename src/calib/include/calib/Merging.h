@@ -3,12 +3,16 @@
 
 #include <string>
 #include <ros/console.h>
+#include <tf/transform_broadcaster.h>
 
 #include <shape_msgs/Plane.h>
 #include <calib/Cloud.h>
+#include <calib/TransformEstimator.h>
 #include <calib/Planes.h>
 #include <calib/PlaneClouds.h>
 #include <calib/MergingConfig.h>
+#include <Eigen/Geometry>
+#include <Eigen/Dense>
 
 #include <pcl/point_cloud.h>
 #include <pcl_ros/point_cloud.h>
@@ -52,6 +56,7 @@ class Merging
         calib::Planes coef2;
 	    ros::Publisher pub_color;
 	    ros::Publisher pub_kp;
+	    tf::TransformListener *tf_listener;
 
         float radius;
         bool kp_dupl_rej;
@@ -60,6 +65,12 @@ class Merging
         float iss_nms_radius;
 	    param_cut_t param_cut;
 	    float match_th;
+        float planes_weight;
+        bool plane_matching;
+        bool use_planes;
+        bool use_points;
+        bool get_tr;
+        bool get_rot;
 
         pcl::search::KdTree<Point>::Ptr kdtree;
         pcl::NormalEstimation<Point, pcl::Normal> norm;
@@ -95,6 +106,7 @@ class Merging
         pcPtr extract_kp(pcPtr cloudPtr);
         pcPtr cut(pcPtr input, param_cut_t params);
         pcPtr remove_nans(pcPtr cloudNans);
+        tf::Transform get_transform(pcl::CorrespondencesPtr planes_corr, pcl::CorrespondencesPtr points_corr);
 };
 
 #endif

@@ -86,6 +86,12 @@ Merging::Merging(ros::NodeHandle* node, string name1, string name2)
     this->radius = 0.01;    
     this->kp_dupl_rej = true;
     this->kp_est_radius = 200;
+    this->planes_weight = 1;
+    this->plane_matching = true;
+    this->use_planes = true;
+    this->use_points = true;
+    this->get_tr = true;
+    this->get_rot = true;
 
     for (int i = 0; i < 4; i++) this->callback[i] = false;
 
@@ -114,6 +120,10 @@ void Merging::conf_callback(calib::MergingConfig &config, uint32_t level)
     this->iss_support_radius = config.iss_support_radius / 1000;
     this->iss_nms_radius = config.iss_nms_radius / 1000;
     this->match_th = config.match_th;
+    this->planes_weight = config.planes_weight;
+    this->plane_matching = config.plane_matching;
+    this->use_planes = config.use_planes;
+    this->use_points = config.use_points;
 
     this->param_cut.x.enable = config.x_enable;
     this->param_cut.x.bounds[0] = config.x_min / 1000;
@@ -199,15 +209,33 @@ bool Merging::isSync()
 void Merging::callback_sync()
 {
     pcl::CorrespondencesPtr planes_corr(new pcl::Correspondences);
-    planes_corr = this->get_corr();
-    this->pub_color.publish(colorize(this->pc1, this->pc2, planes_corr));
-
-    this->keypoints1 = remove_nans(this->extract_kp(this->full_pc1));
-    this->keypoints2 = remove_nans(this->extract_kp(this->full_pc2));
+    if (this->use_planes)
+    {
+        pcl::Correspondences temp;
+        planes_corr = this->get_corr();
+        if (!this->plane_matching)
+        {
+            temp = *planes_corr;
+            for (int i = 0; i < planes_corr->size(); i++)
+            {
+                temp[i].index_query = i;
+                temp[i].index_match = i;
+            }
+            *planes_corr = temp;
+        }
+        this->pub_color.publish(colorize(this->pc1, this->pc2, planes_corr));
+    }
 
     pcl::CorrespondencesPtr kp_corr(new pcl::Correspondences);
-    kp_corr = this->get_kp_corr();
-    this->pub_kp.publish(colorize(this->keypoints1, this->keypoints2, kp_corr));  
+    if (this->use_points)
+    {
+        this->keypoints1 = remove_nans(this->extract_kp(this->full_pc1));
+        this->keypoints2 = remove_nans(this->extract_kp(this->full_pc2));
+        kp_corr = this->get_kp_corr();
+        this->pub_kp.publish(colorize(this->keypoints1, this->keypoints2, kp_corr));  
+    }
+
+    this->get_transform(planes_corr, kp_corr);
 }
 
 /*
@@ -442,4 +470,53 @@ pcPtr Merging::remove_nans(pcPtr cloudNans)
     rm_nan.filter(*cloud);
 
     return cloud; 
+}
+
+tf::Transform Merging::get_transform(pcl::CorrespondencesPtr planes_corr, pcl::CorrespondencesPtr points_corr)
+{
+    Eigen::Affine3d mat;
+    tf::Transform transf;
+    TransformEstimator* TE = new TransformEstimator();
+    vector<Eigen::Vector3f> vec1;
+    vector<Eigen::Vector3f> vec2;
+
+    for (int i = 0; i < points_corr->size(); i++)
+    {
+        Point p1 = this->keypoints1->points[(*points_corr)[i].index_query];
+        vec1.push_back(Eigen::Vector3f(p1.x, p1.y, p1.z));
+        Point p2 = this->keypoints2->points[(*points_corr)[i].index_match];
+        vec2.push_back(Eigen::Vector3f(p2.x, p2.y, p2.z));
+    }
+    if (vec1.size() > 0)
+    {
+        TE->addPoints(vec1, true);
+    }
+    if (vec2.size() > 0)
+    {
+        TE->addPoints(vec2, false);
+    }
+
+    vector<Eigen::Vector4f> pvec1;
+    vector<Eigen::Vector4f> pvec2;
+    for (int i = 0; i < planes_corr->size(); i++)
+    {
+        shape_msgs::Plane p1 = this->coef1.planes[(*planes_corr)[i].index_query];
+        pvec1.push_back(Eigen::Vector4f(p1.coef[0], p1.coef[1], p1.coef[2], p1.coef[3]));
+        shape_msgs::Plane p2 = this->coef2.planes[(*planes_corr)[i].index_match];
+        pvec2.push_back(Eigen::Vector4f(p2.coef[0], p2.coef[1], p2.coef[2], p2.coef[3]));
+    }
+    if (pvec1.size() > 0)
+    {
+        TE->addPlanes(pvec1, true, this->planes_weight);
+    }
+    if (pvec2.size() > 0)
+    {
+        TE->addPlanes(pvec2, false, this->planes_weight);
+    }
+
+    mat = TE->getTransform(this->get_tr, this->get_rot);
+    tf::transformEigenToTF(mat, transf);
+    static tf::TransformBroadcaster br;
+    br.sendTransform(tf::StampedTransform(transf, ros::Time::now(), "cam_center", "transform"));
+    return transf;
 }

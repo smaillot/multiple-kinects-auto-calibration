@@ -41,7 +41,8 @@ generate_messages(
 ################################################
 
 generate_dynamic_reconfigure_options(
-  config/Registration.cfg
+  config/Node.cfg
+  config/Preprocessing.cfg
   config/Cloud.cfg
   config/Merging.cfg
 )
@@ -81,27 +82,64 @@ target_link_libraries(Cloud
   ${catkin_LIBRARIES}
 )
 
-add_library(Merging
-  include/calib/Merging.h
-  src/Merging.cpp
+add_library(Preprocessing
+  include/calib/Preprocessing.h
+  src/Preprocessing.cpp
 )
-add_dependencies(Merging 
+add_dependencies(Preprocessing 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
-target_link_libraries(Merging
+target_link_libraries(Preprocessing
   ${catkin_LIBRARIES}
-  Cloud
 )
 
-add_executable(registration_node src/registration_node.cpp)
-target_link_libraries(registration_node 
+#add_library(Merging
+#  include/calib/Merging.h
+#  src/Merging.cpp
+#)
+#add_dependencies(Merging 
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#  ${catkin_EXPORTED_TARGETS}
+#  ${PROJECT_NAME}_gencfg
+#)
+#target_link_libraries(Merging
+#  ${catkin_LIBRARIES}
+#  Cloud
+#  TransformEstimator
+#)
+
+# add_library(TransformEstimator
+#   include/calib/TransformEstimator.h
+#   src/TransformEstimator.cpp
+# )
+# add_dependencies(TransformEstimator 
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(TransformEstimator
+#   ${catkin_LIBRARIES}
+# )
+
+# add_executable(registration_node src/registration_node.cpp)
+# target_link_libraries(registration_node 
+#   ${catkin_LIBRARIES}
+#   Cloud
+#   Merging
+# )
+# add_dependencies(registration_node
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#   ${catkin_EXPORTED_TARGETS}
+#   ${PROJECT_NAME}_gencfg
+# )
+
+add_executable(preprocessing_node src/preprocessing_node.cpp)
+target_link_libraries(preprocessing_node 
   ${catkin_LIBRARIES}
   Cloud
-  Merging
 )
-add_dependencies(registration_node
+add_dependencies(preprocessing_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg

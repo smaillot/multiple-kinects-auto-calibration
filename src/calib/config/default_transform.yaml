@@ -30,3 +30,13 @@ calib:
     z_enable: true
     z_min: 720.0
     z_max: 2000.0
+  match:
+    x_enable: true
+    x_min: 450.0
+    x_max: 1500.0
+    y_enable: true
+    y_min: 900.0
+    y_max: 1900.0
+    z_enable: true
+    z_min: 900.0
+    z_max: 1050.0

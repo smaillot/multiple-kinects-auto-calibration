@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 	message_filters::Subscriber<pc_t> cam1_sub(nh, "/calib/clouds/cam1", 1);
 	message_filters::Subscriber<pc_t> cam2_sub(nh, "/calib/clouds/cam2", 1);
 	typedef sync_policies::ApproximateTime<pc_t, pc_t> KinectSync;
-	Synchronizer<KinectSync> sync(KinectSync(10), cam1_sub, cam2_sub);
+	Synchronizer<KinectSync> sync(KinectSync(1), cam1_sub, cam2_sub);
 	sync.registerCallback(boost::bind(&pc_callback, _1, _2));
 
 ///////////
