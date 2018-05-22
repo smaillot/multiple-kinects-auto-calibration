@@ -41,12 +41,17 @@ class Preprocessing : public Cloud
 {
 private:
 
+	ros::NodeHandle* node;
+	tf::TransformListener *tf_listener;
+	string frame;
+	string frame_pub;
+
 	ros::Subscriber sub;
-	ros::Publisher pub_raw;
 	ros::Publisher pub_preproc;
-	ros::Publisher pub_planes_pc_col;
-	ros::Publisher pub_planes_pc;
-	ros::Publisher pub_planes;
+
+	void publish(ros::Publisher& pub, pc_t& msg);
+	void publish(ros::Publisher& pub, const pcConstPtr& msg_ptr);
+	void publish(ros::Publisher& pub, const pc_msg_t& msg);
 	
 	pcl::VoxelGrid<Point> filter_voxel;
     pcl::PassThrough<Point> filter_cut;

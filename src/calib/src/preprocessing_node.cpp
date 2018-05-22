@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
 	Preprocessing preproc(&node_preproc, &cloud);
 	dynamic_reconfigure::Server<calib::PreprocessingConfig> server_preproc(node_preproc);
 	dynamic_reconfigure::Server<calib::PreprocessingConfig>::CallbackType f_preproc;
-	f_preproc = boost::bind(&Preprocessing::conf_callback, &cloud, _1, _2);
-	server_preproc.setCallback(f_cloud);
+	f_preproc = boost::bind(&Preprocessing::conf_callback, &preproc, _1, _2);
+	server_preproc.setCallback(f_preproc);
 
 ////////////
 // ros loop

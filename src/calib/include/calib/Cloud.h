@@ -43,6 +43,7 @@ typedef pc_t::Ptr pcPtr;
 typedef pc_t::ConstPtr pcConstPtr;
 typedef sensor_msgs::PointCloud2 pc_msg_t;
 typedef pc_msg_t::Ptr pc_msgPtr;
+typedef pc_msg_t::ConstPtr pc_msgConstPtr;
 
 struct param_transform_t
 {
@@ -59,10 +60,9 @@ void colorize(pcPtr input, float ratio);
 
 class Cloud
 {
+	friend class Preprocessing;
 private:
 	param_transform_t param_transform;
-
-protected:
 	ros::NodeHandle* node;
 	tf::TransformListener *tf_listener;
 	string frame;
