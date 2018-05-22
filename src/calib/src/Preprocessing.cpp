@@ -5,21 +5,16 @@ using namespace Eigen;
 
 Preprocessing::Preprocessing(ros::NodeHandle* node, Cloud* cloud)
 {
-    // this->name = pub_name;
-    // string topic = "/calib/clouds/" + pub_name;
-    // ROS_DEBUG_STREAM("Init Cloud instance " << pub_name << ": " << sub_name);
-    // ROS_DEBUG_STREAM("\tpublish topic: " << topic);
-    // this->node = node;
-	// this->tf_listener = new tf::TransformListener; 
-    // this->frame = "world";
-    // this->sub = this->node->subscribe(sub_name, 1, &Cloud::update, this);
-    // this->pub_raw = this->node->advertise<pc_t>(topic, 1);
-
-    // this->node_preproc = node_preproc;
-    // this->pub_preproc = this->node->advertise<pc_msg_t>("/calib/clouds/" + pub_name + "/preproc", 1);
-    // this->pub_planes_pc_col = this->node->advertise<pc_msg_t>("/calib/clouds/" + pub_name + "/planes_colored", 1);
-    // this->pub_planes_pc = this->node->advertise<calib::PlaneClouds>("/calib/clouds/" + pub_name + "/planes", 1);
-    // this->pub_planes = this->node->advertise<calib::Planes>("/calib/planes/" + pub_name, 1);
+    this->name = cloud->name;
+	this->frame = cloud->frame;
+	this->frame_pub = cloud->frame_pub;
+    string topic = "/calib/clouds/" + this->name;
+    this->node = node;
+	this->tf_listener = new tf::TransformListener; 
+    this->frame = cloud->frame;
+    this->frame_pub = cloud->frame_pub;
+    this->sub = this->node->subscribe(topic, 1, &Preprocessing::update, this);
+    this->pub_preproc = this->node->advertise<pc_t>(topic + "/preproc", 1);
 }
 
 /*
@@ -54,6 +49,49 @@ void Preprocessing::conf_callback(calib::PreprocessingConfig &config, uint32_t l
     this->param_cut.z.bounds[1] = config.z_max / 1000;
 }
 
+// publishers
+    /*
+    * @brief Publish point cloud.
+    *
+    * @param pub Ros message publisher.
+    * @param cloud Point cloud.
+    */
+    void Preprocessing::publish(ros::Publisher& pub, pc_t& cloud)
+    {
+        pc_msg_t msg;
+        pcl::toROSMsg(cloud, msg);
+        this->publish(pub, msg);
+    }
+
+    /*
+    * @brief Publish point cloud.
+    *
+    * @param pub Ros message publisher.
+    * @param cloudPtr Pointer to the point cloud.
+    */
+    void Preprocessing::publish(ros::Publisher& pub, const pcConstPtr& cloudPtr)
+    {
+        pc_t cloud = *cloudPtr; 
+        this->publish(pub, cloud);
+    }
+
+    /*
+    * @brief Publish point cloud.
+    *
+    * @param pub Ros message publisher.
+    * @param input Point cloud pointer.
+    */
+    void Preprocessing::publish(ros::Publisher& pub, const pc_msg_t& input)
+    {
+        pc_msg_t msg = input;
+        pcl_ros::transformPointCloud(this->frame_pub, msg, msg, *this->tf_listener);  
+
+        if (msg.data.size() > 0)
+        {
+            pub.publish(msg);
+        }
+    }
+
 /*
  * @brief Apply a voxel filter to the point cloud. 
  * 
@@ -62,14 +100,21 @@ void Preprocessing::conf_callback(calib::PreprocessingConfig &config, uint32_t l
  */
 pcPtr Preprocessing::subsample(const pcPtr& input, param_voxel_t params)
 {
-    if (params.enable)
+    if (params.enable && input->points.size() > 0)
     {
         this->filter_voxel.setInputCloud(input);
         this->filter_voxel.setLeafSize(params.x, params.y, params.z);
         pc_t* cloud = new pc_t; 
         this->filter_voxel.filter(*cloud);
         pcPtr output(cloud);
-        return output;
+        if (output->points.size() > 0)
+        {
+            return output;
+        }
+        else
+        {
+            return input;
+        }
     }
     else
     {
@@ -85,12 +130,15 @@ pcPtr Preprocessing::subsample(const pcPtr& input, param_voxel_t params)
  */
 pcPtr Preprocessing::cut(pcPtr input, param_cut_t params)
 {
+    ROS_DEBUG("Cutting point cloud...");
     if (this->param_cut.x.enable || this->param_cut.y.enable || this->param_cut.z.enable)
     {
+        ROS_DEBUG("Cutting request found.");
         pcPtr temp(new pc_t(*input)); 
         pcPtr filtered(new pc_t); 
         if (this->param_cut.x.enable) 
         {
+            ROS_DEBUG("Cutting in X.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("x"); 
             this->filter_cut.setFilterLimits(this->param_cut.x.bounds[0], this->param_cut.x.bounds[1]); 
@@ -99,6 +147,7 @@ pcPtr Preprocessing::cut(pcPtr input, param_cut_t params)
         } 
         if (this->param_cut.y.enable) 
         { 
+            ROS_DEBUG("Cutting in Y.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("y"); 
             this->filter_cut.setFilterLimits(this->param_cut.y.bounds[0], this->param_cut.y.bounds[1]); 
@@ -107,16 +156,26 @@ pcPtr Preprocessing::cut(pcPtr input, param_cut_t params)
         } 
         if (this->param_cut.z.enable) 
         { 
+            ROS_DEBUG("Cutting in Z.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("z"); 
             this->filter_cut.setFilterLimits(this->param_cut.z.bounds[0], this->param_cut.z.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered;
         }
-        return temp;
+        if (temp->points.size() > 0)
+        {
+            return temp;
+        }
+        else
+        {
+            ROS_WARN("Point cloud empty after cutting, cancelling...");
+            return input;
+        }
     }
     else
     {
+        ROS_DEBUG("No cutting request detected.");
         return input;
     }
 }
@@ -126,8 +185,8 @@ pcPtr Preprocessing::cut(pcPtr input, param_cut_t params)
 */
 void Preprocessing::update(const pcConstPtr& input)
 {
-    Cloud::update(input); 
-    pcPtr cloudPtr = this->cloud;
+    pc_t* cloud(new pc_t(*input));
+    pcPtr cloudPtr(cloud);
     cloudPtr = this->cut(cloudPtr, this->param_cut);
     cloudPtr = this->subsample(cloudPtr, this->param_voxel);
     this->publish(this->pub_preproc, cloudPtr);

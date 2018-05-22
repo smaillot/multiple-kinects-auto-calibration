@@ -44,7 +44,6 @@ generate_dynamic_reconfigure_options(
   config/Node.cfg
   config/Preprocessing.cfg
   config/Cloud.cfg
-  config/Merging.cfg
 )
 
 ###################################
@@ -93,9 +92,10 @@ add_dependencies(Preprocessing
 )
 target_link_libraries(Preprocessing
   ${catkin_LIBRARIES}
+  Cloud
 )
 
-#add_library(Merging
+#add_library(merging_node
 #  include/calib/Merging.h
 #  src/Merging.cpp
 #)
@@ -138,9 +138,20 @@ add_executable(preprocessing_node src/preprocessing_node.cpp)
 target_link_libraries(preprocessing_node 
   ${catkin_LIBRARIES}
   Cloud
+  Preprocessing
 )
 add_dependencies(preprocessing_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
+)
+
+add_executable(merging_node src/merging_node.cpp)
+target_link_libraries(merging_node 
+  ${catkin_LIBRARIES}
+  Cloud
+)
+add_dependencies(merging_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
 )
