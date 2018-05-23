@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package>
   <name>calib</name>
   <version>0.0.0</version>
   <description>The calib package</description>
@@ -18,7 +18,14 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
+  
+  <build_depend>pcl_conversions</build_depend>
+  <run_depend>pcl_conversions</run_depend>
 
+  <build_depend>libpcl-all-dev</build_depend>
+  <run_depend>libpcl-all</run_depend>
+
+  <build_depend>sensor_msgs</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
