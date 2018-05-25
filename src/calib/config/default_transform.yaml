@@ -9,7 +9,7 @@ calib:
       rz: 0.0
     preproc:
       y_enable: true
-      y_min: 170.0
+      y_min: 1000.0
       y_max: 2700.0
   cam2:
     cloud:
@@ -21,7 +21,7 @@ calib:
       rz: 0.0
     preproc:
       y_min: 0.0
-      y_max: 2470.0
+      y_max: 1700.0
   scene:
     cloud:
       tx: 0.0

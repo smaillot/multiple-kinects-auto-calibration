@@ -116,6 +116,7 @@ add_dependencies(PlaneDetector
 target_link_libraries(PlaneDetector
   ${catkin_LIBRARIES}
   Cloud
+  Preprocessing
   ${PCL_LIBRARIES}
 )
 

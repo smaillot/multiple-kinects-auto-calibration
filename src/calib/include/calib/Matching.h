@@ -23,6 +23,9 @@
 #include <pcl/features/vfh.h>
 #include <pcl/features/fpfh.h>
 #include <pcl/features/shot.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/kdtree/impl/kdtree_flann.hpp>
+#include <pcl/features/shot_omp.h>
 
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_one_to_one.h>
@@ -38,12 +41,12 @@ typedef pcl::VFHSignature308 global_desc_t;
 typedef pcl::PointCloud<global_desc_t> plane_feat_t;
 typedef plane_feat_t::Ptr pc_featPtr;
 
-/**/typedef pcl::FPFHSignature33 kp_t;
+/*/typedef pcl::FPFHSignature33 kp_t;
     typedef pcl::FPFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
 /*/ typedef pcl::VFHSignature308 kp_t;
     typedef pcl::VFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
-/*/ typedef pcl::SHOT352 kp_t;
-typedef pcl::SHOTEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
+/**/ typedef pcl::SHOT352 kp_t;
+typedef pcl::SHOTEstimationOMP<Point, pcl::Normal, kp_t> kp_est_t; /**/
 
 typedef pcl::PointCloud<kp_t> kp_feat_t;
 typedef kp_feat_t::Ptr kp_featPtr;
@@ -69,7 +72,9 @@ class Matching
         std::string name2;
         ros::NodeHandle* node;
         pcPtr keypoints1;
-        pcPtr keypoints2;      
+        pcPtr keypoints2; 
+        pcPtr cloud1;
+        pcPtr cloud2;      
         calib::Planes planes1;
         calib::Planes planes2;
 	    ros::Publisher pub_color;
@@ -85,6 +90,7 @@ class Matching
 	    float match_th;
 
         pcl::search::KdTree<Point>::Ptr kdtree;
+        pcl::KdTreeFLANN<kp_t> match_search;
         pcl::NormalEstimation<Point, pcl::Normal> norm;
         pcl::VFHEstimation<Point, pcl::Normal, global_desc_t> global_est;
         /**/kp_est_t kp_feat_est;/**/
@@ -105,7 +111,7 @@ class Matching
         pc_featPtr descriptor(pcPtr input, pc_nPtr normals);
         pcl::CorrespondencesPtr match_planes(pc_featPtr desc1, pc_featPtr desc2);
         pcl::CorrespondencesPtr get_corr();
-        kp_featPtr feat_est(pcPtr cloudPtr, pc_nPtr normalsPtr);
+        kp_featPtr feat_est(pcPtr& cloudPtr, pc_nPtr& normalsPtr, pcPtr& surfacePtr);
         pcl::CorrespondencesPtr compute_kp_corr(kp_featPtr feat1, kp_featPtr feat2);
         pcl::CorrespondencesPtr get_kp_corr();
         pcPtr extract_kp(pcPtr cloudPtr);

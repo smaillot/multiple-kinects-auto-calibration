@@ -8,7 +8,6 @@ void convert(pc_msg_t input, sensor_msgs::PointCloud2ConstPtr output)
 {
     sensor_msgs::PointCloud2ConstPtr temp(new pc_msg_t(input));
     output = temp;
-    ROS_DEBUG_STREAM("Conversion to msgPtr, " << output->data.size() << " points.");
 }
 
 /*
@@ -254,6 +253,8 @@ void Matching::callback_sync()
     ROS_DEBUG_STREAM(cloudPtr1->points.size() << " points");
     ROS_DEBUG_STREAM(cloudPtr2->points.size() << " points");
 
+    this->cloud1 = cloudPtr1;
+    this->cloud2 = cloudPtr2;
     this->keypoints1 = remove_nans(this->extract_kp(cloudPtr1));
     this->keypoints2 = remove_nans(this->extract_kp(cloudPtr2));
 
@@ -373,13 +374,14 @@ pcl::CorrespondencesPtr Matching::get_corr()
     return corr;
 }
 
-kp_featPtr Matching::feat_est(pcPtr cloudPtr, pc_nPtr normalsPtr)
+kp_featPtr Matching::feat_est(pcPtr& cloudPtr, pc_nPtr& normalsPtr, pcPtr& surfacePtr)
 {
     kp_featPtr feat(new kp_feat_t);
 
     this->kp_feat_est.setSearchMethod(this->kdtree);
     this->kp_feat_est.setInputCloud(cloudPtr);
     this->kp_feat_est.setInputNormals(normalsPtr);
+    this->kp_feat_est.setSearchSurface(surfacePtr);
     this->kp_feat_est.setRadiusSearch(this->kp_est_radius);
     this->kp_feat_est.compute(*feat);
 
@@ -388,11 +390,29 @@ kp_featPtr Matching::feat_est(pcPtr cloudPtr, pc_nPtr normalsPtr)
 
 pcl::CorrespondencesPtr Matching::compute_kp_corr(kp_featPtr feat1, kp_featPtr feat2)
 {
-    pcl::registration::CorrespondenceEstimation<kp_t, kp_t> est;
     pcl::CorrespondencesPtr corr(new pcl::Correspondences());
-    est.setInputSource(feat1);
-    est.setInputTarget(feat2);
-    est.determineCorrespondences(*corr);
+    // pcl::registration::CorrespondenceEstimation<kp_t, kp_t> est;
+    // est.setInputSource(feat1);
+    // est.setInputTarget(feat2);
+    // est.determineCorrespondences(*corr);
+    
+    this->match_search.setInputCloud(feat1);
+    for (size_t i = 0; i < feat2->size(); ++i)
+    {
+        std::vector<int> neigh_indices (1);
+        std::vector<float> neigh_sqr_dists (1);
+        if (!pcl_isfinite (feat2->at(i).descriptor[0])) //skipping NaNs
+        {
+            continue;
+        }
+        int found_neighs = this->match_search.nearestKSearch(feat2->at(i), 1, neigh_indices, neigh_sqr_dists);
+        if(found_neighs == 1) 
+        {
+            pcl::Correspondence c (neigh_indices[0], static_cast<int> (i), neigh_sqr_dists[0]);
+            corr->push_back(c);
+        }
+    }
+    std::cout << "Correspondences found: " << corr->size () << std::endl;
 
     if (this->kp_dupl_rej)
     {
@@ -416,10 +436,10 @@ pcl::CorrespondencesPtr Matching::get_kp_corr()
     kp_featPtr kp2(new kp_feat_t);
     pc_nPtr normals1(new pc_n_t);
     pc_nPtr normals2(new pc_n_t);
-    normals1 = this->normals(this->keypoints1, this->radius);
-    normals2 = this->normals(this->keypoints2, this->radius);
-    kp1 = feat_est(this->keypoints1, normals1);
-    kp2 = feat_est(this->keypoints2, normals2);
+    normals1 = this->normals(this->cloud1, this->radius);
+    normals2 = this->normals(this->cloud2, this->radius);
+    kp1 = feat_est(this->keypoints1, normals1, this->cloud1);
+    kp2 = feat_est(this->keypoints2, normals2, this->cloud2);
     pcl::CorrespondencesPtr kp_corr;
     kp_corr = this->compute_kp_corr(kp1, kp2);
 
@@ -438,15 +458,23 @@ pcl::CorrespondencesPtr Matching::get_kp_corr()
 pcPtr Matching::extract_kp(pcPtr cloudPtr)
 {
     pcPtr cutted(new pc_t);
+    pcPtr sampled(new pc_t);
     pcPtr kp(new pc_t);
 
     cutted = this->cut(cloudPtr, this->param_cut);
 
-    this->iss.setSalientRadius(this->iss_support_radius);
-    this->iss.setNonMaxRadius(this->iss_nms_radius);
-    this->iss.setInputCloud(cutted);
-    this->iss.compute(*kp);
-    ROS_DEBUG_STREAM(kp->points.size() << " remaining points after cutting to extract keypoints");
+    if (this->iss_support_radius * this->iss_nms_radius != 0)
+    {
+        this->iss.setSalientRadius(this->iss_support_radius);
+        this->iss.setNonMaxRadius(this->iss_nms_radius);
+        this->iss.setInputCloud(cutted);
+        this->iss.compute(*kp);
+        ROS_DEBUG_STREAM(kp->points.size() << " remaining points after cutting to extract keypoints");
+    }
+    else
+    {
+        kp = cutted;
+    }
     return kp;
 }
 
