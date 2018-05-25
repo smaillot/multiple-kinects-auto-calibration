@@ -9,21 +9,6 @@ ros::Publisher pub_pc;
 string output;
 
 /**
- * @brief Returns the publishing topic of a given camera.
- *
- * @params input_number Camera ID in the input list.
- */
-std::string get_topic_name(int input_number)
-{
-    return "/calib/clouds/" + inputs[input_number];
-}
-
-std::string get_publish_name()
-{
-	return "calib/clouds/" + output;
-}
-
-/**
  * @brief Callback from kinects synchronization.
  */
 void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
@@ -50,11 +35,11 @@ int main(int argc, char *argv[])
         ros::init(argc, argv, node_name);
         ros::NodeHandle nh;
 
-        pub_pc = nh.advertise<pc_msg_t>(get_publish_name(), 1);
+        pub_pc = nh.advertise<pc_msg_t>("/calib/clouds/" + output, 1);
 
     // Synchronize both kinects messages
-        message_filters::Subscriber<pc_t> cam1_sub(nh, "/calib/clouds/cam1", 1);
-        message_filters::Subscriber<pc_t> cam2_sub(nh, "/calib/clouds/cam2", 1);
+        message_filters::Subscriber<pc_t> cam1_sub(nh, inputs[0], 1);
+        message_filters::Subscriber<pc_t> cam2_sub(nh, inputs[1], 1);
         typedef sync_policies::ApproximateTime<pc_t, pc_t> KinectSync;
         Synchronizer<KinectSync> sync(KinectSync(10), cam1_sub, cam2_sub);
         sync.registerCallback(boost::bind(&pc_callback, _1, _2));

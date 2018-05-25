@@ -10,21 +10,12 @@
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 
-#include <calib/Planes.h>
-#include <calib/PlaneClouds.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_msgs/Header.h>
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/passthrough.h>
-#include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/vfh.h>
-#include <pcl/features/fpfh.h>
-#include <pcl/features/shot.h>
-#include <pcl/registration/correspondence_estimation.h>
-#include <pcl/registration/correspondence_rejection_one_to_one.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl_ros/point_cloud.h>

@@ -7,17 +7,6 @@
 
 using namespace std;
 
-typedef pcl::PointCloud<pcl::Normal> pc_n_t;
-typedef pc_n_t::Ptr pc_nPtr;
-typedef pcl::VFHSignature308 global_desc_t;
-typedef pcl::PointCloud<global_desc_t> plane_feat_t;
-typedef plane_feat_t::Ptr pc_featPtr;
-/**/typedef pcl::FPFHSignature33 kp_t;/**/
-/*/ typedef pcl::VFHSignature308 kp_t; /**/
-/*/ typedef pcl::SHOT352 kp_t; /**/
-typedef pcl::PointCloud<kp_t> kp_feat_t;
-typedef kp_feat_t::Ptr kp_featPtr;
-
 struct param_voxel_t
 {
 	bool enable;
