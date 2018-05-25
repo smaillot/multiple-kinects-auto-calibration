@@ -9,15 +9,31 @@ find_package(catkin REQUIRED
     cmake_modules
 )
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     pcl_conversions
     sensor_msgs
+    shape_msgs
     pcl_ros
+    tf_conversions
+    message_generation
+)
+
+################################################
+## Declare ROS messages, services and actions ##
+################################################
+
+add_message_files(
+  FILES
+  Planes.msg
+  PlaneClouds.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  shape_msgs
+  sensor_msgs
 )
 
 ################################################
@@ -25,7 +41,8 @@ find_package(catkin REQUIRED COMPONENTS
 ################################################
 
 generate_dynamic_reconfigure_options(
-  config/Registration.cfg
+  config/Node.cfg
+  config/Preprocessing.cfg
   config/Cloud.cfg
 )
 
@@ -37,6 +54,8 @@ catkin_package(
    DEPENDS 
     Eigen
     libpcl-all
+  CATKIN_DEPENDS
+    message_runtime
 )
 
 ###########
@@ -62,13 +81,77 @@ target_link_libraries(Cloud
   ${catkin_LIBRARIES}
 )
 
-add_executable(registration_node src/registration_node.cpp)
-target_link_libraries(registration_node 
-  ${catkin_LIBRARIES}
-  Cloud
+add_library(Preprocessing
+  include/calib/Preprocessing.h
+  src/Preprocessing.cpp
 )
-add_dependencies(registration_node
+add_dependencies(Preprocessing 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
+)
+target_link_libraries(Preprocessing
+  ${catkin_LIBRARIES}
+  Cloud
+)
+
+#add_library(merging_node
+#  include/calib/Merging.h
+#  src/Merging.cpp
+#)
+#add_dependencies(Merging 
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#  ${catkin_EXPORTED_TARGETS}
+#  ${PROJECT_NAME}_gencfg
+#)
+#target_link_libraries(Merging
+#  ${catkin_LIBRARIES}
+#  Cloud
+#  TransformEstimator
+#)
+
+# add_library(TransformEstimator
+#   include/calib/TransformEstimator.h
+#   src/TransformEstimator.cpp
+# )
+# add_dependencies(TransformEstimator 
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(TransformEstimator
+#   ${catkin_LIBRARIES}
+# )
+
+# add_executable(registration_node src/registration_node.cpp)
+# target_link_libraries(registration_node 
+#   ${catkin_LIBRARIES}
+#   Cloud
+#   Merging
+# )
+# add_dependencies(registration_node
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+#   ${catkin_EXPORTED_TARGETS}
+#   ${PROJECT_NAME}_gencfg
+# )
+
+add_executable(preprocessing_node src/preprocessing_node.cpp)
+target_link_libraries(preprocessing_node 
+  ${catkin_LIBRARIES}
+  Cloud
+  Preprocessing
+)
+add_dependencies(preprocessing_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+
+add_executable(merging_node src/merging_node.cpp)
+target_link_libraries(merging_node 
+  ${catkin_LIBRARIES}
+  Cloud
+)
+add_dependencies(merging_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
 )

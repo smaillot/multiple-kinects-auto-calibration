@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_tf" args="0.745 1.305 0.8 0 0 0 world cam_center" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam1_tf" args="0.676 0.744 1.354 -0.660, 0.672, 0.212, -0.261 cam_center cam1_link" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam1_rgb_tf" args="0 0 0 0 0 0 cam1_link cam1_rgb_optical_frame" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam2_tf" args="0.597 -0.693 1.299 0.692 -0.670 -0.200 0.180 cam_center cam2_link" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam2_rgb_tf" args="0 0 0 0 0 0 cam2_link cam2_rgb_optical_frame" />
+</launch>
