@@ -20,6 +20,7 @@ void PlaneDetector::conf_callback(calib::PlaneConfig &config, uint32_t level)
     this->param_plane.n_planes = config.n_planes;
     this->param_plane.th_dist = config.th_dist / 1000;
     this->param_plane.max_it = config.max_it;
+    this->subsize = config.subsize / 1000;
 }
 
 void PlaneDetector::update(const pcConstPtr& input)
@@ -27,6 +28,36 @@ void PlaneDetector::update(const pcConstPtr& input)
     pc_t* cloud(new pc_t(*input));
     pcPtr cloudPtr(cloud); 
     this->detect_plane(cloudPtr, this->param_plane);
+}
+
+/*
+ * @brief Apply a voxel filter to the point cloud. 
+ * 
+ * @param input Input cloud.
+ * @param params Filter parameters.
+ */
+pcPtr PlaneDetector::subsample(const pcPtr& input, param_voxel_t params)
+{
+    if (params.enable && input->points.size() > 0)
+    {
+        this->filter_voxel.setInputCloud(input);
+        this->filter_voxel.setLeafSize(params.x, params.y, params.z);
+        pc_t* cloud = new pc_t; 
+        this->filter_voxel.filter(*cloud);
+        pcPtr output(cloud);
+        if (output->points.size() > 0)
+        {
+            return output;
+        }
+        else
+        {
+            return input;
+        }
+    }
+    else
+    {
+        return input;
+    }
 }
 
 /*
@@ -43,7 +74,8 @@ void PlaneDetector::detect_plane(const pcPtr& input, param_plane_t params)
         this->seg.setMaxIterations(params.max_it);
         this->seg.setDistanceThreshold (params.th_dist);
         pcPtr remaining(new pc_t);
-        remaining = input;
+        remaining = this->subsample(input, {true, this->subsize, this->subsize, this->subsize});
+        ROS_DEBUG_STREAM(remaining->points.size() << " points remaining after downsampling");
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
         calib::Planes msg;

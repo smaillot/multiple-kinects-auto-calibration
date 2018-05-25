@@ -4,6 +4,7 @@
 #include <string>
 #include <ros/console.h>
 #include "Cloud.h"
+#include "Preprocessing.h"
 #include "PlaneDetector.h"
  
 #include <shape_msgs/Plane.h>
@@ -55,9 +56,11 @@ private:
   ros::Subscriber sub;
   ros::Publisher pub_planes_col;
   ros::Publisher pub_planes;
+  float subsize;
 
   pcl::SACSegmentation<Point> seg;
   pcl::ExtractIndices<Point> extract;
+	pcl::VoxelGrid<Point> filter_voxel;
 
   param_plane_t param_plane;
   vector <Eigen::Vector4f> planes;
@@ -69,6 +72,7 @@ public:
   void conf_callback(calib::PlaneConfig &config, uint32_t level);
   void update(const pcConstPtr& input);
 
+  pcPtr subsample(const pcPtr& input, param_voxel_t params);
   void detect_plane(const pcPtr& input, param_plane_t params);
 };
 
