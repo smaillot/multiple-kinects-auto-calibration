@@ -16,6 +16,7 @@ void TransformEstimator::addPoints(vector<Eigen::Vector3f> points, bool source)
     {
         for (int i = 0; i < points.size(); i++)
         {
+            ROS_DEBUG_STREAM("Adding point: " << points[i].transpose());
             this->points_source.push_back(points[i]);
         }
     }
@@ -23,6 +24,7 @@ void TransformEstimator::addPoints(vector<Eigen::Vector3f> points, bool source)
     {
         for (int i = 0; i < points.size(); i++)
         {
+            ROS_DEBUG_STREAM("Adding point: " << points[i].transpose());
             this->points_target.push_back(points[i]);
         }
     }
@@ -47,6 +49,7 @@ void TransformEstimator::addPlanes(vector<Eigen::Vector4f> planes, bool source)
     }
     for (int i = 0; i < planes.size(); i++)
     {
+        ROS_DEBUG_STREAM("Adding plane: " << planes[i].transpose() << " with weight " << 1);
         p->push_back(planes[i]);
     }
     while (this->planes_weights.size() < p->size())
@@ -68,6 +71,7 @@ void TransformEstimator::addPlanes(vector<Eigen::Vector4f> planes, bool source, 
     }
     for (int i = 0; i < planes.size(); i++)
     {
+        ROS_DEBUG_STREAM("Adding plane: " << planes[i].transpose() << " with weight " << w);
         p->push_back(planes[i]);
     }
     while (this->planes_weights.size() < p->size())
@@ -81,6 +85,7 @@ void TransformEstimator::addPlanes(vector<Eigen::Vector4f> planes, bool source, 
 */
 void TransformEstimator::reset()
 {
+    ROS_DEBUG("Reset matches");
     this->planes_weights.clear();
     this->points_source.clear();
     this->points_target.clear();
@@ -96,8 +101,10 @@ Eigen::Matrix3f TransformEstimator::getRotation()
     Eigen::Matrix3f K = this->computeRotCorr();
     Eigen::JacobiSVD<Eigen::Matrix3f> svd(K, Eigen::ComputeFullV | Eigen::ComputeFullU);
 	Eigen::Matrix3f R = svd.matrixU() * svd.matrixV().transpose();
+    ROS_DEBUG_STREAM("Rotation:" << endl << R);
     Eigen::DiagonalMatrix<float, 3> D(1, 1, R.determinant());
 	R = svd.matrixU() * D * svd.matrixV().transpose();
+    ROS_DEBUG_STREAM("Regularized rotation:" << endl << R);
 
     return R;
 }
@@ -148,18 +155,26 @@ Eigen::Vector3f TransformEstimator::getTranslation(Eigen::Matrix3f R)
                 Eigen::VectorXf b(N+3);
                 A << A1, A2;
                 b << b1, b2;
+                ROS_DEBUG_STREAM("A =" << endl << A);
+                ROS_DEBUG_STREAM("b =" << endl << b);
 
                 t = (A.transpose() * A).inverse() * A.transpose() * b;
             }
             else // only planes
             {
+                ROS_DEBUG_STREAM("A =" << endl << A2);
+                ROS_DEBUG_STREAM("b =" << endl << b2);
                 t = (A2.transpose() * A2).inverse() * A2.transpose() * b2;
             }
         }
         else // only points
         {
+            ROS_DEBUG_STREAM("A =" << endl << A1);
+            ROS_DEBUG_STREAM("b =" << endl << b1);
             t = (A1.transpose() * A1).inverse() * A1.transpose() * b1;
         }
+
+        ROS_DEBUG_STREAM("t =" << endl << t);
         return t;
     }
 }
@@ -187,6 +202,7 @@ Eigen::Affine3d TransformEstimator::getTransform(bool transl, bool rot)
     ROS_INFO_STREAM("transform =" << endl << H);
     Eigen::Affine3d T;
     T.matrix() = H.cast<double>();
+    ROS_DEBUG_STREAM("H =" << endl << H);    
     return T;
 }
 
@@ -205,13 +221,16 @@ Eigen::Affine3d TransformEstimator::getTransform()
 */
 Eigen::Vector3f TransformEstimator::computeCentroid(vector <Eigen::Vector3f> vec)
 {
-    Eigen::Vector3f centroid;
+    Eigen::Vector3f centroid(0, 0, 0);
     int n = vec.size();
     for (int i = 0; i < n; i++)
     {
+        ROS_DEBUG_STREAM("\tAdding\t" << vec[i].transpose());
+        ROS_DEBUG_STREAM("\t\tCurrent centroid\t" << centroid.transpose());
         centroid += vec[i];
     }
     centroid /= (float) n;
+    ROS_DEBUG_STREAM("Points centroid: " << centroid.transpose());
     return centroid;
 }
 
@@ -244,6 +263,7 @@ Eigen::Matrix3f TransformEstimator::computeRotCorr()
             }
         }
     }
+    ROS_DEBUG_STREAM("rotation correlation =" << endl << K);
     return K;
 }
 
@@ -252,11 +272,23 @@ Eigen::Matrix3f TransformEstimator::computeRotCorr()
 */
 bool TransformEstimator::isValid()
 {
-    if (points_source.size() != points_target.size()) {return false;};
-    if (planes_source.size() != planes_target.size()) {return false;};
-    if (planes_source.size() != planes_weights.size()) {return false;};
-    if (planes_source.size() + points_source.size() < 3) {return false;};
-    return true;
+    bool valid = true;
+    if (points_source.size() != points_target.size()) {valid = false;};
+    if (planes_source.size() != planes_target.size()) {valid = false;};
+    if (planes_source.size() != planes_weights.size()) {valid = false;};
+    if (planes_source.size() + points_source.size() < 3) {valid = false;};
+    if (valid)
+    {
+        ROS_DEBUG("Valid inputs !");
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Invalid input for transform estimation:");
+        ROS_ERROR_STREAM("\tPoints: " << points_source.size() << ", " << points_target.size());
+        ROS_ERROR_STREAM("\tPlanes: " << planes_source.size() << ", " << planes_target.size());
+        ROS_ERROR_STREAM("\tWeights: " << planes_weights.size());
+    }
+    return valid;
 }
 
 // int main(int argc, char *argv[])

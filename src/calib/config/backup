@@ -1,0 +1,108 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        dictitems:
+          Cutting: !!python/object/new:dynamic_reconfigure.encoding.Config
+            dictitems:
+              groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              id: 5
+              name: Cutting
+              parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              parent: 0
+              state: true
+              type: ''
+              x_enable: true
+              x_max: 5000.0
+              x_min: -265.0
+              y_enable: false
+              y_max: 395.0
+              y_min: -505.0
+              z_enable: true
+              z_max: 800.0
+              z_min: 30.0
+            state: []
+          Feature_computation: !!python/object/new:dynamic_reconfigure.encoding.Config
+            dictitems:
+              groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              id: 3
+              kp_dupl_rej: false
+              kp_est_radius: 20.0
+              match_th: 2.0
+              match_th_dist: 100.0
+              name: Feature_computation
+              parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              parent: 0
+              state: true
+              type: ''
+            state: []
+          Features_matching: !!python/object/new:dynamic_reconfigure.encoding.Config
+            dictitems:
+              groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              id: 4
+              name: Features_matching
+              parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              parent: 0
+              state: true
+              type: ''
+            state: []
+          Keypoints_extraction: !!python/object/new:dynamic_reconfigure.encoding.Config
+            dictitems:
+              groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              id: 2
+              iss_nms_radius: 15.0
+              iss_support_radius: 15.0
+              name: Keypoints_extraction
+              parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              parent: 0
+              state: true
+              type: ''
+            state: []
+          Normal_Estimation: !!python/object/new:dynamic_reconfigure.encoding.Config
+            dictitems:
+              groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              id: 1
+              name: Normal_Estimation
+              normal_radius: 50.0
+              parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+                state: []
+              parent: 0
+              state: true
+              type: ''
+            state: []
+        state: []
+      id: 0
+      name: Default
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      state: true
+      type: ''
+    state: []
+  iss_nms_radius: 15.0
+  iss_support_radius: 15.0
+  kp_dupl_rej: false
+  kp_est_radius: 20.0
+  match_th: 2.0
+  match_th_dist: 100.0
+  normal_radius: 50.0
+  x_enable: true
+  x_max: 5000.0
+  x_min: -265.0
+  y_enable: false
+  y_max: 395.0
+  y_min: -505.0
+  z_enable: true
+  z_max: 800.0
+  z_min: 30.0
+state: []
