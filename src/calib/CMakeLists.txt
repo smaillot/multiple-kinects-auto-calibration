@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Planes.msg
+  Matches.msg
 )
 
 generate_messages(
@@ -46,6 +47,7 @@ generate_dynamic_reconfigure_options(
   config/Cloud.cfg
   config/Plane.cfg
   config/Matching.cfg
+  config/TransformEstimation.cfg
 )
 
 ###################################
@@ -168,6 +170,7 @@ target_link_libraries(merging_node
 add_dependencies(merging_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )
 
 add_executable(plane_detection_node src/plane_detection_node.cpp)
@@ -180,6 +183,19 @@ target_link_libraries(plane_detection_node
 add_dependencies(plane_detection_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+
+add_executable(matching_node src/matching_node.cpp)
+target_link_libraries(matching_node 
+  ${catkin_LIBRARIES}
+  Cloud
+  Matching
+  ${PCL_LIBRARIES}
+)
+add_dependencies(matching_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
 )
 
 add_executable(transform_estimation_node src/transform_estimation_node.cpp)
@@ -187,9 +203,11 @@ target_link_libraries(transform_estimation_node
   ${catkin_LIBRARIES}
   Cloud
   Matching
+  TransformEstimator
   ${PCL_LIBRARIES}
 )
 add_dependencies(transform_estimation_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
 )

@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <ros/console.h>
+#include <tf_conversions/tf_eigen.h>
 
 
 class TransformEstimator

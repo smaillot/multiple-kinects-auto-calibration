@@ -11,6 +11,7 @@
 #include <shape_msgs/Plane.h>
 #include <calib/Cloud.h>
 #include <calib/Planes.h>
+#include <calib/Matches.h>
 #include <calib/MatchingConfig.h>
 
 #include <pcl/point_cloud.h>
@@ -80,6 +81,7 @@ class Matching
 	    ros::Publisher pub_color;
 	    ros::Publisher pub_kp;
 	    ros::Publisher pub_all_kp;
+	    ros::Publisher pub_matches;
 
         float radius;
         bool kp_dupl_rej;
@@ -88,6 +90,7 @@ class Matching
         float iss_nms_radius;
 	    param_cut_t param_cut;
 	    float match_th;
+        float match_th_dist;
 
         pcl::search::KdTree<Point>::Ptr kdtree;
         pcl::KdTreeFLANN<kp_t> match_search;

@@ -122,9 +122,10 @@ void colorize(calib::Planes input1, calib::Planes input2, pcl::CorrespondencesPt
 /*
 * @bief Merge and colorize a set of keypoints given their correspondences.
 */
-void colorize(pcPtr& input1, pcPtr& input2, pcl::CorrespondencesPtr& matches, pcPtr& output)
+void colorize(pcPtr& input1, pcPtr& input2, pcl::CorrespondencesPtr& matches, pcPtr& output1, pcPtr& output2)
 {
-    pc_t cloud;
+    pc_t cloud1;
+    pc_t cloud2;
     vector<int> current_index;
     ROS_DEBUG_STREAM("Colorizing " << matches->size() << " matching pairs.");
     for (int i = 0; i < matches->size(); i++)
@@ -133,16 +134,20 @@ void colorize(pcPtr& input1, pcPtr& input2, pcl::CorrespondencesPtr& matches, pc
         current_index.push_back((*matches)[i].index_query);
         pcPtr kp1(new pc_t(*input1, current_index));
         colorize(kp1, (float)i / (float)matches->size());
-        if (i == 0) cloud = *kp1;
-        else cloud += *kp1; 
+        // colorize(kp1, 0);
+        if (i == 0) cloud1 = *kp1;
+        else cloud1 += *kp1; 
 
         current_index.clear();
         current_index.push_back((*matches)[i].index_match);
         pcPtr kp2(new pc_t(*input2, current_index));
         colorize(kp2, (float)i / (float)matches->size());
-        cloud += *kp2; 
+        // colorize(kp2, 0.5);
+        if (i == 0) cloud2 = *kp1;
+        else cloud2 += *kp2; 
     }
-    *output = cloud;
+    *output1 = cloud1;
+    *output2 = cloud2;
 }
 
 int* range(int n)
@@ -199,6 +204,7 @@ Matching::Matching(ros::NodeHandle* node, std::string name1, std::string name2)
     this->pub_color = this->node->advertise<pc_t>("/calib/planes/" + name1 + "_" + name2 + "/planes_color", 1);
     this->pub_kp = this->node->advertise<pc_t>("/calib/clouds/" + name1 + "_" + name2 + "/keypoints_matches", 1);
     this->pub_all_kp = this->node->advertise<pc_t>("/calib/clouds/" + name1 + "_" + name2 + "/keypoints", 1);
+    this->pub_matches = this->node->advertise<calib::Matches>("/calib/" + name1 + "_" + name2 + "/matches", 1);
 
 	pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
     this->kdtree = tree;
@@ -223,6 +229,7 @@ void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
     this->iss_support_radius = config.iss_support_radius / 1000;
     this->iss_nms_radius = config.iss_nms_radius / 1000;
     this->match_th = config.match_th;
+    this->match_th_dist = config.match_th_dist / 1000;
 
     this->param_cut.x.enable = config.x_enable;
     this->param_cut.x.bounds[0] = config.x_min / 1000;
@@ -258,20 +265,35 @@ void Matching::callback_sync()
     this->keypoints1 = remove_nans(this->extract_kp(cloudPtr1));
     this->keypoints2 = remove_nans(this->extract_kp(cloudPtr2));
 
-    pcPtr kp(this->keypoints1);
-    pcPtr kp2(this->keypoints2);
+    pcPtr kp(new pc_t(*this->keypoints1));
+    pcPtr kp2(new pc_t(*this->keypoints2));
     colorize(kp, 0.25);
     colorize(kp2, 0.75);
     *kp += *kp2;
-    publish(pub_all_kp, *kp);
+    publish(this->pub_all_kp, *kp);
 
     pcl::CorrespondencesPtr kp_corr(new pcl::Correspondences);
     // n = min(this->keypoints1->size(), this->keypoints2->size());
     //kp_corr = array2corr(range(n), n);
     kp_corr = this->get_kp_corr();
-    pcPtr msg2(new pc_t);
-    colorize(this->keypoints1, this->keypoints2, kp_corr, msg2);
-    publish(pub_kp, *msg2);
+    pcPtr msg2_1(new pc_t);
+    pcPtr msg2_2(new pc_t);
+    colorize(this->keypoints1, this->keypoints2, kp_corr, msg2_1, msg2_2);
+    pc_t pc = *msg2_1 + *msg2_2;
+    publish(this->pub_kp, pc);
+
+    calib::Matches matches;
+    matches.header = this->planes1.header;
+    matches.planes1 = this->planes1.planes;
+    matches.planes2 = this->planes2.planes;
+    pc_msg_t points_msg1;
+    pc_msg_t points_msg2;
+    pcl::toROSMsg(*msg2_1, points_msg1);
+    pcl::toROSMsg(*msg2_2, points_msg2);
+    matches.points1 = points_msg1;
+    matches.points2 = points_msg2;
+
+    this->pub_matches.publish(matches);
 }
 
 /*
@@ -378,7 +400,7 @@ kp_featPtr Matching::feat_est(pcPtr& cloudPtr, pc_nPtr& normalsPtr, pcPtr& surfa
 {
     kp_featPtr feat(new kp_feat_t);
 
-    this->kp_feat_est.setSearchMethod(this->kdtree);
+    // this->kp_feat_est.setSearchMethod(this->kdtree);
     this->kp_feat_est.setInputCloud(cloudPtr);
     this->kp_feat_est.setInputNormals(normalsPtr);
     this->kp_feat_est.setSearchSurface(surfacePtr);
@@ -395,12 +417,13 @@ pcl::CorrespondencesPtr Matching::compute_kp_corr(kp_featPtr feat1, kp_featPtr f
     // est.setInputSource(feat1);
     // est.setInputTarget(feat2);
     // est.determineCorrespondences(*corr);
+
     
     this->match_search.setInputCloud(feat1);
     for (size_t i = 0; i < feat2->size(); ++i)
     {
-        std::vector<int> neigh_indices (1);
-        std::vector<float> neigh_sqr_dists (1);
+        std::vector<int> neigh_indices(1);
+        std::vector<float> neigh_sqr_dists(1);
         if (!pcl_isfinite (feat2->at(i).descriptor[0])) //skipping NaNs
         {
             continue;
@@ -448,7 +471,20 @@ pcl::CorrespondencesPtr Matching::get_kp_corr()
     {
         if ((*kp_corr)[i].distance <= this->match_th)
         {
-            kp_corr_filt->push_back((*kp_corr)[i]);
+            int a = (*kp_corr)[i].index_query;
+            int b = (*kp_corr)[i].index_match;
+            Eigen::Vector3f v(this->keypoints1->points[a].x, this->keypoints1->points[a].y, this->keypoints1->points[a].z);
+            Eigen::Vector3f w(this->keypoints2->points[b].x, this->keypoints2->points[b].y, this->keypoints2->points[b].z);
+            float dist = sqrt((v - w).squaredNorm());
+            if (dist <= this->match_th_dist)
+            {
+                ROS_DEBUG_STREAM("Keeping match with distance " << dist << "m (" << v[0] << ", " << v[1] << ", " << v[2] << " - " << w[0] << ", " << w[1] << ", " << w[2] << ")");
+                kp_corr_filt->push_back((*kp_corr)[i]);
+            }
+            else
+            {
+                ROS_DEBUG_STREAM("Reject match with distance " << dist << "m (" << v[0] << ", " << v[1] << ", " << v[2] << " - " << w[0] << ", " << w[1] << ", " << w[2] << ")");
+            }
         }
     }
 
