@@ -16,6 +16,7 @@ PlaneDetector::PlaneDetector(ros::NodeHandle* node, string name, string topic_in
  
 void PlaneDetector::conf_callback(calib::PlaneConfig &config, uint32_t level)
 {
+    this->frame = config.frame;
     this->param_plane.method = config.method;
     this->param_plane.n_planes = config.n_planes;
     this->param_plane.th_dist = config.th_dist / 1000;
@@ -27,6 +28,7 @@ void PlaneDetector::update(const pcConstPtr& input)
 {
     pc_t* cloud(new pc_t(*input));
     pcPtr cloudPtr(cloud); 
+    pcl_ros::transformPointCloud(this->frame, *cloud, *cloud, *this->tf_listener); 
     this->detect_plane(cloudPtr, this->param_plane);
 }
 
@@ -108,7 +110,11 @@ void PlaneDetector::detect_plane(const pcPtr& input, param_plane_t params)
             msg.planes.push_back(plane_eq);
         }  
     ROS_DEBUG_STREAM("Publishing " << msg.clouds.size() << " planes.");
-    ROS_DEBUG_STREAM("Publishing colored point cloud (" << color_cloud.data.size() << " points).");   
+    ROS_DEBUG_STREAM("Publishing colored point cloud (" << color_cloud.data.size() << " points).");
+    
+    string pub_frame;
+    ros::param::param<string>("/calib/" + this->name + "/cloud/frame_pub", pub_frame, "world");
+    pcl_ros::transformPointCloud(pub_frame, color_cloud, color_cloud, *this->tf_listener); 
     this->pub_planes_col.publish(color_cloud); 
     this->pub_planes.publish(msg); 
     }

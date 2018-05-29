@@ -52,6 +52,7 @@ private:
   ros::NodeHandle* node;
   tf::TransformListener *tf_listener;
   string name;
+  string frame;
 
   ros::Subscriber sub;
   ros::Publisher pub_planes_col;

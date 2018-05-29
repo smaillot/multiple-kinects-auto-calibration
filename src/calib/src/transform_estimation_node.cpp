@@ -6,6 +6,8 @@ float freq = 0;
 TransformEstimator te;
 string name;
 float weight;
+bool inverse;
+string frame;
 
 void callback(const calib::MatchesConstPtr& matches)
 {
@@ -23,6 +25,7 @@ void callback(const calib::MatchesConstPtr& matches)
     convert(matches->points1, keypoints1);
     pcPtr keypoints2(new pc_t);
     convert(matches->points2, keypoints2);
+
     for (int i = 0; i < keypoints1->points.size(); i++)
     {
       points1.push_back(Eigen::Vector3f(keypoints1->points[i].x, keypoints1->points[i].y, keypoints1->points[i].z));
@@ -37,14 +40,23 @@ void callback(const calib::MatchesConstPtr& matches)
     Eigen::Affine3d T(te.getTransform());
 
     tf::Transform transform;
-    tf::transformEigenToTF(T, transform);
+    if (!inverse)
+    {
+      tf::transformEigenToTF(T.inverse(), transform);
+    }
+    else
+    {
+      tf::transformEigenToTF(T, transform);
+    }
     static tf::TransformBroadcaster br;
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "cam_center", name));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), frame, name));
 }
 
 void conf_callback(calib::TransformEstimationConfig &config, uint32_t level)
 {
   weight = config.planes_weight;
+  inverse = config.inverse;
+  frame = config.frame;
 }
 
 int main(int argc, char *argv[])

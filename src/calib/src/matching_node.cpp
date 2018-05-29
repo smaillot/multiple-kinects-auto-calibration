@@ -49,7 +49,9 @@ int main(int argc, char *argv[])
 {
 ///////////
 // init
- 
+    std::ofstream nullstream;
+    std::clog.rdbuf(nullstream.rdbuf());
+
     string name1 = argv[1];
     string name2 = argv[2];
     string topic = "/calib/planes/";

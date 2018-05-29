@@ -82,6 +82,7 @@ class Matching
 	    ros::Publisher pub_kp;
 	    ros::Publisher pub_all_kp;
 	    ros::Publisher pub_matches;
+        string frame;
 
         float radius;
         bool kp_dupl_rej;

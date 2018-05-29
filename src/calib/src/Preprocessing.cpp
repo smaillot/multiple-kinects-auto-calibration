@@ -22,7 +22,7 @@ Preprocessing::Preprocessing(ros::NodeHandle* node, Cloud* cloud)
 */
 void Preprocessing::conf_callback(calib::PreprocessingConfig &config, uint32_t level)
 {
-
+    this->frame = config.frame;
     // subsampling
     this->param_voxel.enable = config.enable;
 	if (config.equal)
@@ -187,6 +187,7 @@ void Preprocessing::update(const pcConstPtr& input)
 {
     pc_t* cloud(new pc_t(*input));
     pcPtr cloudPtr(cloud);
+    pcl_ros::transformPointCloud(this->frame, *cloud, *cloud, *this->tf_listener); 
     cloudPtr = this->cut(cloudPtr, this->param_cut);
     cloudPtr = this->subsample(cloudPtr, this->param_voxel);
     this->publish(this->pub_preproc, cloudPtr);
