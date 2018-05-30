@@ -1,5 +1,7 @@
 <launch>
     <rosparam command="load" file="$(find calib)/config/default_transform.yaml" />
+    <rosparam command="load" file="$(find calib)/config/default_preproc.yaml" />
+    <rosparam command="load" file="$(find calib)/config/default_planes.yaml" />
     <rosparam command="load" file="$(find calib)/config/default_match.yaml" />
 
     <node pkg="calib" name="preproc_cam1" type="preprocessing_node" respawn="true" output="screen" args="/cam1/qhd/points cam1" />

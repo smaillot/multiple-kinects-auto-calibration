@@ -1,16 +1,14 @@
 calib:
   cam1:
     cloud:
+      frame: cam_center
+      frame_pub: world
       tx: -12.0
       ty: 30.0
       tz: -40.0
       rx: 3.0
       ry: -1.9
       rz: 0.0
-    preproc:
-      y_enable: true
-      y_min: 1000.0
-      y_max: 2700.0
   cam2:
     cloud:
       tx: 0.0
@@ -19,9 +17,6 @@ calib:
       rx: -0.3
       ry: -1.0
       rz: 0.0
-    preproc:
-      y_min: 0.0
-      y_max: 1700.0
   scene:
     cloud:
       tx: 0.0
@@ -30,10 +25,3 @@ calib:
       rx: 0.0
       ry: 0.0
       rz: 0.0
-    preproc:
-      y_enable: true
-      y_min: -100.0
-      y_max: 2800.0
-      z_enable: true
-      z_min: 720.0
-      z_max: 2000.0

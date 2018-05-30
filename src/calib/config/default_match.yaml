@@ -4,8 +4,8 @@ calib:
       iss_nms_radius: 15.0
       iss_support_radius: 15.0
       kp_dupl_rej: true
-      kp_est_radius: 20.0
-      match_th: 1.0
+      kp_est_radius: 50.0
+      match_th: 0.9
       match_th_dist: 100.0
       normal_radius: 50.0
       x_enable: true
@@ -17,3 +17,17 @@ calib:
       z_enable: true
       z_min: 30.0
       z_max: 800.0
+    transform_estimation:
+      frame: cam_center
+      use_points: true
+      use_planes: true
+      compute_rotation: true
+      compute_translation: true
+      project_points: true
+      inverse: false
+      planes_weight: 1.0
+    merging:
+      frame: cam_center
+      enable_cutting: true
+      y_pose: 40.0
+      width: 720.0
