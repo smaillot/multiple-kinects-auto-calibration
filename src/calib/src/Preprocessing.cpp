@@ -22,7 +22,7 @@ Preprocessing::Preprocessing(ros::NodeHandle* node, Cloud* cloud)
 */
 void Preprocessing::conf_callback(calib::PreprocessingConfig &config, uint32_t level)
 {
-
+    this->frame = config.frame;
     // subsampling
     this->param_voxel.enable = config.enable;
 	if (config.equal)
@@ -131,35 +131,35 @@ pcPtr Preprocessing::subsample(const pcPtr& input, param_voxel_t params)
 pcPtr Preprocessing::cut(pcPtr input, param_cut_t params)
 {
     ROS_DEBUG("Cutting point cloud...");
-    if (this->param_cut.x.enable || this->param_cut.y.enable || this->param_cut.z.enable)
+    if (params.x.enable || params.y.enable || params.z.enable)
     {
         ROS_DEBUG("Cutting request found.");
         pcPtr temp(new pc_t(*input)); 
         pcPtr filtered(new pc_t); 
-        if (this->param_cut.x.enable) 
+        if (params.x.enable) 
         {
             ROS_DEBUG("Cutting in X.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("x"); 
-            this->filter_cut.setFilterLimits(this->param_cut.x.bounds[0], this->param_cut.x.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.x.bounds[0], params.x.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered; 
         } 
-        if (this->param_cut.y.enable) 
+        if (params.y.enable) 
         { 
             ROS_DEBUG("Cutting in Y.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("y"); 
-            this->filter_cut.setFilterLimits(this->param_cut.y.bounds[0], this->param_cut.y.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.y.bounds[0], params.y.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered; 
         } 
-        if (this->param_cut.z.enable) 
+        if (params.z.enable) 
         { 
             ROS_DEBUG("Cutting in Z.");
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("z"); 
-            this->filter_cut.setFilterLimits(this->param_cut.z.bounds[0], this->param_cut.z.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.z.bounds[0], params.z.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered;
         }
@@ -187,6 +187,7 @@ void Preprocessing::update(const pcConstPtr& input)
 {
     pc_t* cloud(new pc_t(*input));
     pcPtr cloudPtr(cloud);
+    pcl_ros::transformPointCloud(this->frame, *cloud, *cloud, *this->tf_listener); 
     cloudPtr = this->cut(cloudPtr, this->param_cut);
     cloudPtr = this->subsample(cloudPtr, this->param_voxel);
     this->publish(this->pub_preproc, cloudPtr);

@@ -1,7 +1,16 @@
 <launch>
     <rosparam command="load" file="$(find calib)/config/default_transform.yaml" />
+    <rosparam command="load" file="$(find calib)/config/default_match.yaml" />
+
     <node pkg="calib" name="preproc_cam1" type="preprocessing_node" respawn="true" output="screen" args="/cam1/qhd/points cam1" />
     <node pkg="calib" name="preproc_cam2" type="preprocessing_node" respawn="true" output="screen" args="/cam2/qhd/points cam2" />
+
+    <node pkg="calib" name="plane_detection_cam1" type="plane_detection_node" respawn="true" output="screen" args="cam1" />
+    <node pkg="calib" name="plane_detection_cam2" type="plane_detection_node" respawn="true" output="screen" args="cam2" />
+    
+    <node pkg="calib" name="matching_cam1_cam2" type="matching_node" respawn="true" output="screen" args="cam1 cam2" />
+    <node pkg="calib" name="transform_estimation_cam1_cam2" type="transform_estimation_node" respawn="true" output="screen" args="cam1 cam2" />
+    
     <node pkg="calib" name="merging_cam1_cam2" type="merging_node" respawn="true" output="screen" args="cam1 cam2 scene" />
     <node pkg="calib" name="preproc_scene" type="preprocessing_node" respawn="true" output="screen" args="/calib/clouds/scene scene" />
 </launch>

@@ -17,9 +17,9 @@ int main(int argc, char *argv[])
 ///////////
 // main code
 
-	PlaneDetector planes(&node_planes, name);
-	dynamic_reconfigure::Server<calib::PlanesConfig> server_planes(node_planes);
-	dynamic_reconfigure::Server<calib::PlanesConfig>::CallbackType f_planes;
+	PlaneDetector planes(&node_planes, name, "/calib/clouds/" + name + "/preproc");
+	dynamic_reconfigure::Server<calib::PlaneConfig> server_planes(node_planes);
+	dynamic_reconfigure::Server<calib::PlaneConfig>::CallbackType f_planes;
 	f_planes = boost::bind(&PlaneDetector::conf_callback, &planes, _1, _2);
 	server_planes.setCallback(f_planes);
 
