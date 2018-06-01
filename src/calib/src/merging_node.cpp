@@ -18,7 +18,7 @@ float width;
  */
 void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
 {
-    string frame = inputs[0] + "_" + inputs[1];
+    string frame = inputs[0] + "_" + inputs[1] + "_filtered";
     string pub_frame;
     tf::StampedTransform transform;
     tf::TransformListener tf_listener;

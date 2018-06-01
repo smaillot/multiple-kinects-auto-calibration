@@ -5,6 +5,7 @@
 #include <calib/Matching.h>
 #include <calib/TransformEstimationConfig.h>
 #include <dynamic_reconfigure/server.h>
+#include <calib/TF.h>
 
 #include <string>
 #include <vector>

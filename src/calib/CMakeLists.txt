@@ -28,6 +28,7 @@ add_message_files(
   FILES
   Planes.msg
   Matches.msg
+  TF.msg
 )
 
 generate_messages(
@@ -49,6 +50,7 @@ generate_dynamic_reconfigure_options(
   config/Matching.cfg
   config/Merging.cfg
   config/TransformEstimation.cfg
+  config/TF.cfg
 )
 
 ###################################
@@ -210,6 +212,17 @@ target_link_libraries(transform_estimation_node
   ${PCL_LIBRARIES}
 )
 add_dependencies(transform_estimation_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+
+add_executable(tf_node src/tf_node.cpp)
+target_link_libraries(tf_node 
+  ${catkin_LIBRARIES}
+  Cloud
+)
+add_dependencies(tf_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
