@@ -5,6 +5,7 @@ using namespace std;
 float freq = 0;
 TransformEstimator te;
 string name;
+ros::Publisher pub;
 
 void callback(const calib::MatchesConstPtr& matches)
 {
@@ -56,6 +57,20 @@ void callback(const calib::MatchesConstPtr& matches)
     }
     static tf::TransformBroadcaster br;
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), te.frame, name));
+    
+    calib::TF msg;
+    double rx, ry, rz;
+    msg.tx = transform.getOrigin().getX();
+    msg.ty = transform.getOrigin().getY();
+    msg.tz = transform.getOrigin().getZ();
+    msg.it_transl = 0;
+    tf::Matrix3x3 mat(transform.getRotation());
+    mat.getEulerYPR(rx, ry, rz);
+    msg.rx = (float) 180 / 3.14159 * rx;
+    msg.ry = (float) 180 / 3.14159 * ry;
+    msg.rz = (float) 180 / 3.14159 * rz;
+    msg.it_rot = 0;
+    pub.publish(msg);
 }
 
 int main(int argc, char *argv[])
@@ -72,6 +87,7 @@ int main(int argc, char *argv[])
     ros::NodeHandle node_te("/calib/" + name + "/transform_estimation");
 
     ros::Subscriber sub = nh.subscribe(topic, 1, &callback);
+    pub = nh.advertise<calib::TF>("/calib/tf/" + name, 1);
 
     dynamic_reconfigure::Server<calib::TransformEstimationConfig> server(node_te);
     dynamic_reconfigure::Server<calib::TransformEstimationConfig>::CallbackType f;

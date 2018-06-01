@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find kinect2_bridge)/launch/inhands_kinects.launch" />
+	<include file="$(find kinect2_pose)/launch/publish.launch" />
+</launch>

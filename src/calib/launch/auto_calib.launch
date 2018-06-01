@@ -15,4 +15,6 @@
     
     <node pkg="calib" name="merging_cam1_cam2" type="merging_node" respawn="true" output="screen" args="cam1 cam2 scene" />
     <node pkg="calib" name="preproc_scene" type="preprocessing_node" respawn="true" output="screen" args="/calib/clouds/scene scene" />
+
+    <node pkg="calib" name="tf_filter_cam1_cam2" type="tf_node" respawn="true" output="screen" args="cam_center cam1_cam2" />
 </launch>

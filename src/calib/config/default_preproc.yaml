@@ -1,6 +1,8 @@
 calib:
   cam1:
     preproc:
+      equal: true
+      x: 15.0
       frame: world
       enable: true
       equal: true
@@ -12,6 +14,8 @@ calib:
       z_max: 1600.0
   cam2:
     preproc:
+      equal: true
+      x: 15.0
       frame: world
       enable: true
       equal: true

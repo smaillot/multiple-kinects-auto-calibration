@@ -31,3 +31,10 @@ calib:
       enable_cutting: true
       y_pose: 40.0
       width: 720.0
+    tf:
+      cam1_cam2:
+        freq: 10
+        rot_filter_type: 2
+        rot_filter_weight: 2.0
+        transl_filter_type: 2
+        transl_filter_weight: 2.0
