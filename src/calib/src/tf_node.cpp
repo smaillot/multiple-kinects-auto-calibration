@@ -69,11 +69,14 @@ tf::Transform filter_tf(tf::Transform mem, tf::StampedTransform new_tf, float ra
 
 bool valid(tf::Transform mem, tf::Transform transform)
 {
-    if (mem.getOrigin().length() > max_translation) return false;
-    double rx, ry, rz;
-    tf::Matrix3x3 mat(transform.getRotation());
-    mat.getEulerYPR(rx, ry, rz);
-    if (rx > max_rotation || ry > max_rotation || rz > max_rotation) return false;
+    if (mem.getOrigin().distance(transform.getOrigin()) > max_translation) return false;
+    double rx1, ry1, rz1;
+    double rx2, ry2, rz2;
+    tf::Matrix3x3 mat1(mem.getRotation());
+    mat1.getEulerYPR(rx1, ry1, rz1);
+    tf::Matrix3x3 mat2(transform.getRotation());
+    mat2.getEulerYPR(rx2, ry2, rz2);
+    if (abs(rx1 - rx2) > max_rotation || abs(ry1 - ry2) > max_rotation || abs(rz1 - rz2) > max_rotation) return false;
     return true;
 }
 

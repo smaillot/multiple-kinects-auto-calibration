@@ -4,5 +4,5 @@ float32 tz
 float32 rx
 float32 ry
 float32 rz
-int8 it_transl
-int8 it_rot
+uint16 it_transl
+uint16 it_rot
