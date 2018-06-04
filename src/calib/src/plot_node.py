@@ -46,35 +46,61 @@ class Plotter():
         self.data_time = []
         self.data_filt_time = []
 
+        # plt.figure(figsize=[15, 5])
         plt.ion()
         plt.show()
 
-    def display_time(self):
+    def display(self):
         try:
             with self.mutex:
                 plt.clf()
-                global var
-                if len(self.data_time) > 0:
-                    mat = np.array(self.data_time)
-                    plt.plot(mat[:, 0], mat[:, 1], label="raw")
-                if len(self.data_filt_time) > 0:
-                    mat_filt = np.array(self.data_filt_time)
-                    plt.plot(mat_filt[:, 0], mat_filt[:, 1], "-r", label="filtered")   
+                global var, plot_type
+                if not plot_type:
+                    if len(self.data_time) > 0:
+                        mat = np.array(self.data_time)
+                        plt.plot(mat[:, 0], mat[:, 1 + (var > 2)], label="raw")
+                        if len(self.data_filt_time) > 0:
+                            mat_filt = np.array(self.data_filt_time)
+                            plt.plot(mat_filt[:, 0], mat_filt[:, 1 + (var % 3)], "-r", label="filtered")   
 
-                    for x in [0.68, 0.9, 0.95]:
-                        col = (1, x**6, 0)
-                        plt.plot(mat_filt[:, 0], self.interval(mat[:, :2], mat_filt[:, :2], mat_filt[:, 2 + (var > 2)], x)[:,0], "--", c=col, label=r'{:.0f}% conf'.format(100*x))
-                        plt.plot(mat_filt[:, 0], self.interval(mat[:, :2], mat_filt[:, :2], mat_filt[:, 2 + (var > 2)], x)[:,1], "--", c=col, label='_nolegend_')
+                            for x in [0.68, 0.9, 0.95]:
+                                col = (1, x**6, 0)
+                                plt.plot(mat_filt[:, 0], self.interval(mat[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,0], "--", c=col, label=r'{:.0f}% conf'.format(100*x))
+                                plt.plot(mat_filt[:, 0], self.interval(mat[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,1], "--", c=col, label='_nolegend_')
 
-                plt.title("Evolution of " + ('tx','ty','tz','rx','ry','rz')[var])
-                plt.xlabel("time (in s)")
-                if var < 3:
-                    plt.ylabel("Distance error (in mm)")
+                    plt.title("Evolution of " + ('tx','ty','tz','rx','ry','rz')[var])
+                    plt.xlabel("time (in s)")
+                    if var < 3:
+                        plt.ylabel("Distance error (in mm)")
+                    else:
+                        plt.ylabel("Angle error (in deg)")
                 else:
-                    plt.ylabel("Angle error (in deg)")
+                    mat = []
+                    mat_filt = []
+                    if len(self.data_time) > 0:
+                        for i in range(3):
+                            vari = 3 * (var > 2) + i
+                            mat = np.array(self.data_time)[:,1 + i]
+                            bins = 5+int(len(mat)/10)
+                            m, s = Plot.get_stat(mat)
+                            _ = plt.hist(mat, bins=bins, normed=1, color=[0.5 + 0.3 * (i == 0),0.5 + 0.3 * (i == 1),0.5 + 0.3 * (i == 2),0.6], linewidth=0, label='raw ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                        
+                    if len(self.data_filt_time) > 0:
+                        for i in range(3):
+                            vari = 3 * (var > 2) + i
+                            mat_filt = np.array(self.data_filt_time)[:,1 + i]
+                            bins = 5+int(len(mat_filt)/10)
+                            m, s = Plot.get_stat(mat_filt)
+                            _ = plt.hist(mat_filt, bins=bins, normed=1, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),0.8], linewidth=0, label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                    
+                    plt.title(("Translation", "Rotation")[var > 2] + ' error, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
+                    plt.xlabel(("Distance (in mm)", "Angle (in deg)")[var > 2])
+                    plt.ylabel("Samples (normed)")
+                
                 plt.legend()
                 plt.draw()
                 plt.pause(1e-9)
+
         except RuntimeError:
             pass
         else:
@@ -83,7 +109,7 @@ class Plotter():
 
     def get_stat(self, serie):
         return np.mean(serie), np.std(serie)
-    
+
     def interval(self, data, mean, it, conf):
         output = np.zeros([len(mean[:, 1]), 2])
         for i in range(len(mean[:, 1])):
@@ -101,14 +127,16 @@ def callback_tf(data):
     tf.update(data.tx, data.ty, data.tz, data.rx, data.ry, data.rz)
     # rospy.loginfo(tf)
     
-    global Plot, var
-    x = tf.get(var)
+    global Plot, var, plot_type
+    x = tf.get(0 + 3 * (var > 2))
+    y = tf.get(1 + 3 * (var > 2))
+    z = tf.get(2 + 3 * (var > 2))
     if var < 3:
         it = data.it_transl
     else:
         it = data.it_rot
-    Plot.data_time.append([time() - start, x, it])
-    Plot.display_time()
+    Plot.data_time.append([time() - start, x, y, z, it])
+    Plot.display()
         
 def callback_tf_filt(data):
     global tf, start
@@ -116,14 +144,16 @@ def callback_tf_filt(data):
     # rospy.loginfo(tf)
 
     global Plot, var
-    x = tf.get(var)
+    x = tf.get(0 + 3 * (var > 2))
+    y = tf.get(1 + 3 * (var > 2))
+    z = tf.get(2 + 3 * (var > 2))
     if var < 3:
         it = data.it_transl
     else:
         it = data.it_rot
-    Plot.data_filt_time.append([time() - start, x, it])
-    Plot.display_time()
-        
+    Plot.data_filt_time.append([time() - start, x, y, z, it])
+    Plot.display()
+
 def listener(topic):
 
     rospy.init_node('plot_node', anonymous=True)
@@ -138,4 +168,5 @@ if __name__ == '__main__':
     tf = TF_msg()
     start = time()
     var = int(sys.argv[2])
+    plot_type = int(sys.argv[3])
     listener(sys.argv[1])
