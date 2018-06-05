@@ -22,6 +22,8 @@ ros::Publisher pub;
 
 tf::Vector3 origin(0, 0, 0);
 tf::Quaternion identity_quat(0, 0, 0, 1);
+YAML::Node config;
+string file;
 
 void conf_callback(calib::TFConfig &config, uint32_t level)
 {
@@ -80,6 +82,45 @@ bool valid(tf::Transform mem, tf::Transform transform)
     return true;
 }
 
+YAML::Node load_config(string file)
+{
+    YAML::Node config;
+    try 
+    {
+        config = YAML::LoadFile(file); // gets the root node
+    }
+    catch (YAML::BadFile bf) 
+    {
+        ROS_WARN("No configuration file found, a new one will be created");
+        config = YAML::Load("");
+    }
+    return config;
+}
+
+void save_tf(string frame, tf::Transform transform)
+{
+    config[frame]["tx"] = transform.getOrigin().getX();
+    config[frame]["ty"] = transform.getOrigin().getY();
+    config[frame]["tz"] = transform.getOrigin().getZ();
+    double rx, ry, rz;
+    tf::Matrix3x3 mat(transform.getRotation());
+    mat.getEulerYPR(rx, ry, rz);
+    config[frame]["rx"] = rx;
+    config[frame]["ry"] = ry;
+    config[frame]["rz"] = rz;
+
+    std::ofstream fout(file.c_str());
+    fout << config << endl;
+    ROS_INFO_STREAM_ONCE("Saving tf in: " + file);
+    fout.close();
+}
+
+bool no_nans(tf::Transform transform)
+{
+    float ty = transform.getOrigin().getY();
+    return !isnan(ty);
+}
+
 int main(int argc, char *argv[])
 {
         ref = argv[1];
@@ -99,6 +140,10 @@ int main(int argc, char *argv[])
         server.setCallback(f);
 
     tf::TransformListener listener;
+    
+    std::string path = ros::package::getPath("calib");
+    file = path + "/config/transform.yaml";
+    config = load_config(file);
 
     // ROS loop
     static tf::TransformBroadcaster br;
@@ -149,14 +194,22 @@ int main(int argc, char *argv[])
         ROS_INFO_STREAM("Ratio at it (" << it_transl << " - " << it_rot << ") : " << ratio_transl << ", " << ratio_rot);
         
         tf::Transform new_tf = filter_tf(mem, transform, ratio_transl, ratio_rot);
-        if (valid(mem, new_tf) || !rejection)
+        if (no_nans(new_tf))
         {
-            mem = new_tf; 
-            br.sendTransform(tf::StampedTransform(mem, ros::Time::now(), ref, frame + "_filtered"));
+            if (valid(mem, new_tf) || !rejection)
+            {
+                mem = new_tf; 
+                br.sendTransform(tf::StampedTransform(mem, ros::Time::now(), ref, frame + "_filtered"));
+                save_tf(frame, mem);
+            }
+            else
+            {
+                ROS_ERROR("Outlying transform rejected !");
+            }
         }
         else
         {
-            ROS_ERROR("Outlying transform rejected !");
+            ROS_ERROR("NaN value detected in tf");
         }
 
         calib::TF msg;

@@ -9,3 +9,8 @@
 #include <tf/LinearMath/Matrix3x3.h>
 #include <tf/LinearMath/Quaternion.h>
 #include <tf_conversions/tf_eigen.h>
+
+#include <fstream>
+#include "yaml-cpp/yaml.h"
+#include <ros/ros.h>
+#include <ros/package.h>

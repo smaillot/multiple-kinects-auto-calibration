@@ -109,6 +109,33 @@ int main(int argc, char *argv[])
         f = boost::bind(&conf_callback, _1, _2);
         server.setCallback(f);
 
+    // try to load yaml
+        // std::string path = ros::package::getPath("calib");
+        // string file = path + "/config/" + name + ".yaml";
+        // YAML::Node config;
+        // try 
+        // {
+        //     config = YAML::LoadFile(file); // gets the root node
+        //     float tx = config[name]["tx"]
+        //     float ty = config[name]["ty"]
+        //     float tz = config[name]["tz"]
+        //     float rx = config[name]["rx"]
+        //     float ry = config[name]["ry"]
+        //     float rz = config[name]["rz"]
+        //     config.close();
+        // }
+        // catch (YAML::BadFile bf) 
+        // {
+        //     ROS_WARN("No configuration file found, a new one will be created");
+        //     float tx = 0;
+        //     float ty = 0;
+        //     float tz = 0;
+        //     float rx = 0;
+        //     float ry = 0;
+        //     float rz = 0;
+        // }
+        
+
     // Synchronize both kinects messages
         message_filters::Subscriber<pc_t> cam1_sub(nh, "/calib/clouds/" + inputs[0], 1);
         message_filters::Subscriber<pc_t> cam2_sub(nh, "/calib/clouds/" + inputs[1], 1);

@@ -82,6 +82,8 @@ class Matching
 	    ros::Publisher pub_kp;
 	    ros::Publisher pub_all_kp;
 	    ros::Publisher pub_matches;
+	    ros::Publisher pub_objects1;
+	    ros::Publisher pub_objects2;
         string frame;
 
         float radius;
@@ -118,8 +120,9 @@ class Matching
         kp_featPtr feat_est(pcPtr& cloudPtr, pc_nPtr& normalsPtr, pcPtr& surfacePtr);
         pcl::CorrespondencesPtr compute_kp_corr(kp_featPtr feat1, kp_featPtr feat2);
         pcl::CorrespondencesPtr get_kp_corr();
-        pcPtr extract_kp(pcPtr cloudPtr);
+        pcPtr extract_kp(pcPtr cloudPtr, calib::Planes planes, ros::Publisher pub);
         pcPtr cut(pcPtr input, param_cut_t params);
+        pcPtr cut_plane(pcPtr input, calib::Planes plane);
         pcPtr remove_nans(pcPtr cloudNans);
 };
 

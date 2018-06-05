@@ -205,6 +205,8 @@ Matching::Matching(ros::NodeHandle* node, std::string name1, std::string name2)
     this->pub_kp = this->node->advertise<pc_t>("/calib/clouds/" + name1 + "_" + name2 + "/keypoints_matches", 1);
     this->pub_all_kp = this->node->advertise<pc_t>("/calib/clouds/" + name1 + "_" + name2 + "/keypoints", 1);
     this->pub_matches = this->node->advertise<calib::Matches>("/calib/" + name1 + "_" + name2 + "/matches", 1);
+    this->pub_objects1 = this->node->advertise<pc_t>("/calib/clouds/" + name1 + "/objects", 1);
+    this->pub_objects2 = this->node->advertise<pc_t>("/calib/clouds/" + name2 + "/objects", 1);
 
 	pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
     this->kdtree = tree;
@@ -262,8 +264,8 @@ void Matching::callback_sync()
 
     this->cloud1 = cloudPtr1;
     this->cloud2 = cloudPtr2;
-    this->keypoints1 = remove_nans(this->extract_kp(cloudPtr1));
-    this->keypoints2 = remove_nans(this->extract_kp(cloudPtr2));
+    this->keypoints1 = remove_nans(this->extract_kp(cloudPtr1, this->planes1, this->pub_objects1));
+    this->keypoints2 = remove_nans(this->extract_kp(cloudPtr2, this->planes2, this->pub_objects2));
 
     pcPtr kp(new pc_t(*this->keypoints1));
     pcPtr kp2(new pc_t(*this->keypoints2));
@@ -491,13 +493,15 @@ pcl::CorrespondencesPtr Matching::get_kp_corr()
     return kp_corr_filt;
 }
 
-pcPtr Matching::extract_kp(pcPtr cloudPtr)
+pcPtr Matching::extract_kp(pcPtr cloudPtr, calib::Planes planes, ros::Publisher pub)
 {
     pcPtr cutted(new pc_t);
     pcPtr sampled(new pc_t);
     pcPtr kp(new pc_t);
 
-    cutted = this->cut(cloudPtr, this->param_cut);
+    cutted = this->cut_plane(cloudPtr, planes);
+    pub.publish(*cutted);
+    // cutted = this->cut(cloudPtr, this->param_cut);
 
     if (this->iss_support_radius * this->iss_nms_radius != 0)
     {
@@ -522,31 +526,31 @@ pcPtr Matching::extract_kp(pcPtr cloudPtr)
  */
 pcPtr Matching::cut(pcPtr input, param_cut_t params)
 {
-    if (this->param_cut.x.enable || this->param_cut.y.enable || this->param_cut.z.enable)
+    if (params.x.enable || params.y.enable || params.z.enable)
     {
         pcPtr temp(new pc_t(*input)); 
         pcPtr filtered(new pc_t); 
-        if (this->param_cut.x.enable) 
+        if (params.x.enable) 
         {
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("x"); 
-            this->filter_cut.setFilterLimits(this->param_cut.x.bounds[0], this->param_cut.x.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.x.bounds[0], params.x.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered; 
         } 
-        if (this->param_cut.y.enable) 
+        if (params.y.enable) 
         { 
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("y"); 
-            this->filter_cut.setFilterLimits(this->param_cut.y.bounds[0], this->param_cut.y.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.y.bounds[0], params.y.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered; 
         } 
-        if (this->param_cut.z.enable) 
+        if (params.z.enable) 
         { 
             this->filter_cut.setInputCloud(temp); 
             this->filter_cut.setFilterFieldName("z"); 
-            this->filter_cut.setFilterLimits(this->param_cut.z.bounds[0], this->param_cut.z.bounds[1]); 
+            this->filter_cut.setFilterLimits(params.z.bounds[0], params.z.bounds[1]); 
             this->filter_cut.filter(*filtered);
             temp = filtered;
         }
@@ -556,6 +560,60 @@ pcPtr Matching::cut(pcPtr input, param_cut_t params)
     {
         return input;
     }
+}
+
+/**
+ * @brief Perform cutting of the point cloud given a plane equation.
+ * 
+ * @param input Input cloud.
+ * @param params Filter parameters.
+ */
+pcPtr Matching::cut_plane(pcPtr input, calib::Planes planes)
+{
+    pcPtr cloudPtr(new pc_t(*input));
+
+    for (int i = 0; i < planes.planes.size(); i++)
+    {
+        shape_msgs::Plane plane = planes.planes[i];
+        ROS_DEBUG_STREAM("Cutting in normal direction: " << plane.coef[0] << ", " << plane.coef[1] << ", " << plane.coef[2] << ", " << plane.coef[3]);
+        // build a tf which z axis is the plane normal
+            tf::Vector3 normal;                   
+            tf::Vector3 point;
+            tf::Vector3 z(0,0,1);
+            tf::Vector3 axis;
+            tf::Transform transform;
+            normal = tf::Vector3(plane.coef[0], plane.coef[1], plane.coef[2]).normalized();
+            point = - normal * std::abs(plane.coef[3]) / normal.length();
+            ROS_DEBUG_STREAM("from: " << point.getX() << ", " << point.getY() << ", " << point.getZ());
+            transform.setOrigin(point);
+            axis = z.cross(normal);
+            float w = sqrt(((pow(z.length(), 2)) * (pow(normal.length(), 2))) + z.dot(normal));
+            transform.setRotation(tf::Quaternion(axis.getX(), axis.getY(), axis.getZ(), w));
+            if (this->param_cut.y.enable)
+            {
+                transform = transform.inverse();
+            }
+
+        // transform point cloud and cut in the z direction
+            pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform);  
+
+            param_cut_t params;
+            params.x.enable = false;
+            params.x.bounds[0] = 0;
+            params.x.bounds[1] = 0;
+            params.y.enable = false;
+            params.y.bounds[0] = 0;
+            params.y.bounds[1] = 0;
+            params.z.enable = true;
+            params.z.bounds[0] = this->param_cut.y.bounds[0];
+            params.z.bounds[1] = this->param_cut.y.bounds[1];
+            cloudPtr = this->cut(cloudPtr, params);
+
+        // get back to the initial frame
+            pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform.inverse());  
+    }
+
+    return cloudPtr;
 }
 
 pcPtr Matching::remove_nans(pcPtr cloudNans)

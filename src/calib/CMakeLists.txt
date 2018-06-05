@@ -3,6 +3,7 @@ project(calib)
 
 #add_compile_options(-std=c++11)
 #set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+#CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 
 
 find_package(catkin REQUIRED
@@ -221,6 +222,7 @@ add_executable(tf_node src/tf_node.cpp)
 target_link_libraries(tf_node 
   ${catkin_LIBRARIES}
   Cloud
+  -lyaml-cpp
 )
 add_dependencies(tf_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 

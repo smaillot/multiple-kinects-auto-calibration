@@ -12,4 +12,9 @@
 #include <dynamic_reconfigure/server.h>
 #include <calib/MergingConfig.h>
 
+#include <fstream>
+#include "yaml-cpp/yaml.h"
+#include <ros/ros.h>
+#include <ros/package.h>
+
 void cut(pc_t& input, float ymin, float ymax);

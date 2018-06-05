@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from time import time, sleep
 from multiprocessing import Lock
 import scipy.stats as st
+from statsmodels import robust
 
 class TF_msg():
 
@@ -46,7 +47,6 @@ class Plotter():
         self.data_time = []
         self.data_filt_time = []
 
-        # plt.figure(figsize=[15, 5])
         plt.ion()
         plt.show()
 
@@ -55,18 +55,18 @@ class Plotter():
             with self.mutex:
                 plt.clf()
                 global var, plot_type
-                if not plot_type:
+                if plot_type == 0:
                     if len(self.data_time) > 0:
                         mat = np.array(self.data_time)
-                        plt.plot(mat[:, 0], mat[:, 1 + (var > 2)], label="raw")
+                        plt.plot(mat[:, 0], mat[:, 1 + (var % 3)], label="raw")
                         if len(self.data_filt_time) > 0:
                             mat_filt = np.array(self.data_filt_time)
                             plt.plot(mat_filt[:, 0], mat_filt[:, 1 + (var % 3)], "-r", label="filtered")   
 
                             for x in [0.68, 0.9, 0.95]:
                                 col = (1, x**6, 0)
-                                plt.plot(mat_filt[:, 0], self.interval(mat[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,0], "--", c=col, label=r'{:.0f}% conf'.format(100*x))
-                                plt.plot(mat_filt[:, 0], self.interval(mat[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,1], "--", c=col, label='_nolegend_')
+                                plt.plot(mat_filt[:, 0], self.interval(mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,0], "--", c=col, label=r'{:.0f}% conf'.format(100*x))
+                                plt.plot(mat_filt[:, 0], self.interval(mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, [0, 1 + (var%3)]], mat_filt[:, 4], x)[:,1], "--", c=col, label='_nolegend_')
 
                     plt.title("Evolution of " + ('tx','ty','tz','rx','ry','rz')[var])
                     plt.xlabel("time (in s)")
@@ -74,7 +74,7 @@ class Plotter():
                         plt.ylabel("Distance error (in mm)")
                     else:
                         plt.ylabel("Angle error (in deg)")
-                else:
+                elif plot_type == 1:
                     mat = []
                     mat_filt = []
                     if len(self.data_time) > 0:
@@ -92,12 +92,33 @@ class Plotter():
                             bins = 5+int(len(mat_filt)/10)
                             m, s = Plot.get_stat(mat_filt)
                             _ = plt.hist(mat_filt, bins=bins, normed=1, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),0.8], linewidth=0, label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
-                    
+                    plt.xlim(([-20, 20], [-10, 10])[var > 2])
                     plt.title(("Translation", "Rotation")[var > 2] + ' error, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
                     plt.xlabel(("Distance (in mm)", "Angle (in deg)")[var > 2])
                     plt.ylabel("Samples (normed)")
+
+                elif plot_type == 2:
+                    mat = []
+                    mat_filt = []
+                    ind = range(3)
+                    if len(self.data_filt_time) > 0:
+                        for i in ind:
+                            vari = 3 * (var > 2) + i
+                            mat = np.array(self.data_filt_time)[:,1 + i]
+                            bins = 5+int(len(mat)/10)
+                            m, s = Plot.get_stat(mat)
+                            mad = robust.mad(mat)
+                            _ = plt.bar(i, s, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                            # _ = plt.bar(3*i+1, mad, color=[0.25+0.3 * (i == 0),0.25+0.3 * (i == 1),0.25+0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                            # _ = plt.bar(3*i+2, m, color=[0.5+0.3 * (i == 0),0.5+0.3 * (i == 1),0.5+0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                    
+                    # plt.yscale("log")
+                    plt.title(("Translation", "Rotation")[var > 2] + ' standard deviation, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
+                    plt.ylabel("mean absolute deviation (in mm)")
+                    plt.ylim([0, 30])
+                    
                 
-                plt.legend()
+                # plt.legend()
                 plt.draw()
                 plt.pause(1e-9)
 
