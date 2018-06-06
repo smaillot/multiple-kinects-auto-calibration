@@ -108,13 +108,13 @@ class Plotter():
                             bins = 5+int(len(mat)/10)
                             m, s = Plot.get_stat(mat)
                             mad = robust.mad(mat)
-                            _ = plt.bar(i, s, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
-                            # _ = plt.bar(3*i+1, mad, color=[0.25+0.3 * (i == 0),0.25+0.3 * (i == 1),0.25+0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
-                            # _ = plt.bar(3*i+2, m, color=[0.5+0.3 * (i == 0),0.5+0.3 * (i == 1),0.5+0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                            _ = plt.bar(mad, s, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                            # i
+                            # m
                     
                     # plt.yscale("log")
                     plt.title(("Translation", "Rotation")[var > 2] + ' standard deviation, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
-                    plt.ylabel("mean absolute deviation (in mm)")
+                    plt.ylabel("Mean absolute deviation (in mm)")
                     plt.ylim([0, 30])
                     
                 

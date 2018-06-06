@@ -229,3 +229,12 @@ add_dependencies(tf_node
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
+
+add_executable(tf_publisher_node
+  src/tf_publisher_node.cpp
+)
+add_dependencies(tf_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(tf_publisher_node
+  ${catkin_LIBRARIES}
+  -lyaml-cpp
+)

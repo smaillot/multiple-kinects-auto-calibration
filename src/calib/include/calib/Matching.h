@@ -91,7 +91,8 @@ class Matching
         float kp_est_radius;
         float iss_support_radius;
         float iss_nms_radius;
-	    param_cut_t param_cut;
+        float cut_reverse;
+	    float cut_th;
 	    float match_th;
         float match_th_dist;
 

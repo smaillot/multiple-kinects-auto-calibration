@@ -5,13 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Cam21/Cam2_Planes1
-        - /Cam31
-        - /Cam31/Cam3_Planes1/Status1
-        - /Scene1
-        - /Full1
-        - /Full1/Full_Raw1/Status1
         - /Full1/Full_Raw1/Autocompute Value Bounds1
         - /Full1/Full_Preproc1/Autocompute Value Bounds1
+        - /Full1/transform1
       Splitter Ratio: 0.594444454
     Tree Height: 625
   - Class: rviz/Selection
@@ -182,6 +178,36 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
+        - Alpha: 0.100000001
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 0; 0; 255
+          Color Transformer: FlatColor
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Cam1_Objects
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.0500000007
+          Style: Spheres
+          Topic: /calib/clouds/cam1/objects
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
       Enabled: false
       Name: Cam1
     - Class: rviz/Group
@@ -276,6 +302,36 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
+        - Alpha: 0.100000001
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 0; 34; 255
+          Color Transformer: FlatColor
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Cam2_Objects
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.0500000007
+          Style: Spheres
+          Topic: /calib/clouds/cam2/objects
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
       Enabled: false
       Name: Cam2
     - Class: rviz/Group
@@ -292,7 +348,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: RGB8
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -309,7 +365,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -322,7 +378,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: RGB8
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -339,7 +395,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 0.5
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -370,6 +426,36 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
+        - Alpha: 0.100000001
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 0; 34; 255
+          Color Transformer: FlatColor
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Cam3_Objects
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.0500000007
+          Style: Spheres
+          Topic: /calib/clouds/cam3/objects
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
       Enabled: false
       Name: Cam3
     - Class: rviz/Group
@@ -386,7 +472,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: RGB8
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -403,7 +489,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -464,7 +550,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-        - Alpha: 0.200000003
+        - Alpha: 0.400000006
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
             Max Value: 10
@@ -536,7 +622,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: RGB8
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -553,22 +639,52 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Class: rviz/Axes
-          Enabled: false
+          Enabled: true
           Length: 0.25
           Name: transform
           Radius: 0.0199999996
           Reference Frame: cam1_cam2
-          Value: false
+          Value: true
         - Class: rviz/Axes
-          Enabled: false
+          Enabled: true
           Length: 0.300000012
           Name: filtered_transform
           Radius: 0.00999999978
           Reference Frame: cam1_cam2_filtered
+          Value: true
+        - Alpha: 0.100000001
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 0; 34; 255
+          Color Transformer: FlatColor
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Scene_Objects
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.0500000007
+          Style: Spheres
+          Topic: /calib/clouds/scene/objects
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
           Value: false
-      Enabled: true
+      Enabled: false
       Name: Scene
     - Class: rviz/Group
       Displays:
@@ -716,7 +832,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.0500000007
-          Style: Spheres
+          Style: Boxes
           Topic: /calib/clouds/cam3_scene/keypoints_matches
           Unreliable: false
           Use Fixed Frame: true
@@ -763,25 +879,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.28936148
+      Distance: 2.9477284
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.675636232
-        Y: 1.11826801
-        Z: 1.08133924
+        X: -0.218555346
+        Y: 1.35837889
+        Z: 0.800976872
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.399797022
+      Pitch: 0.474797308
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.056918785
+      Yaw: 0.0139579913
     Saved: ~
 Window Geometry:
   Displays:

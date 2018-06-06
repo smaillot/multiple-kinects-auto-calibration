@@ -20,6 +20,13 @@ int it_rot = 1;
 tf::Transform mem;
 ros::Publisher pub;
 
+float init_tx;
+float init_ty;
+float init_tz;
+float init_rx;
+float init_ry;
+float init_rz;
+
 tf::Vector3 origin(0, 0, 0);
 tf::Quaternion identity_quat(0, 0, 0, 1);
 YAML::Node config;
@@ -99,15 +106,15 @@ YAML::Node load_config(string file)
 
 void save_tf(string frame, tf::Transform transform)
 {
-    config[frame]["tx"] = transform.getOrigin().getX();
-    config[frame]["ty"] = transform.getOrigin().getY();
-    config[frame]["tz"] = transform.getOrigin().getZ();
+    config[frame]["tx"] = transform.getOrigin().getX();// + init_tx;
+    config[frame]["ty"] = transform.getOrigin().getY();// + init_ty;
+    config[frame]["tz"] = transform.getOrigin().getZ();// + init_tz;
     double rx, ry, rz;
     tf::Matrix3x3 mat(transform.getRotation());
     mat.getEulerYPR(rx, ry, rz);
-    config[frame]["rx"] = rx;
-    config[frame]["ry"] = ry;
-    config[frame]["rz"] = rz;
+    config[frame]["rx"] = rx;// + init_rx;
+    config[frame]["ry"] = ry;// + init_ry;
+    config[frame]["rz"] = rz;// + init_rz;
 
     std::ofstream fout(file.c_str());
     fout << config << endl;
@@ -124,13 +131,29 @@ bool no_nans(tf::Transform transform)
 int main(int argc, char *argv[])
 {
         ref = argv[1];
-        frame = argv[2];
+        string cam1 = argv[2];
+        string cam2 = argv[3];
+        frame = cam1 + "_" + cam2;
         string node_name = "tf_smoothing_" + frame;
 
     // Initialize ROS
         ros::init(argc, argv, node_name);
         ros::NodeHandle nh;
         ros::NodeHandle node_tf("/calib/tf/" + frame);
+
+        ros::param::get("/calib/" + cam1 + "/cloud/tx", init_tx);
+        ros::param::get("/calib/" + cam1 + "/cloud/ty", init_ty);
+        ros::param::get("/calib/" + cam1 + "/cloud/tz", init_tz);
+        ros::param::get("/calib/" + cam1 + "/cloud/rx", init_rx);
+        ros::param::get("/calib/" + cam1 + "/cloud/ry", init_ry);
+        ros::param::get("/calib/" + cam1 + "/cloud/rz", init_rz);
+
+        init_tx /= 1000;
+        init_ty /= 1000;
+        init_tz /= 1000;
+        init_rx /= 180 * 3.14159;
+        init_ry /= 180 * 3.14159;
+        init_rz /= 180 * 3.14159;
 
         pub = nh.advertise<calib::TF>("/calib/tf/" + frame + "_filtered", 1);
 
@@ -156,6 +179,9 @@ int main(int argc, char *argv[])
         }
         catch (tf::TransformException ex)
         {
+            tf::Transform tr;
+            tr.setIdentity();
+            br.sendTransform(tf::StampedTransform(tr, ros::Time::now(), ref, frame));
             ROS_ERROR("%s",ex.what());
             ros::Duration(1.0).sleep();
         }

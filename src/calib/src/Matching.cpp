@@ -82,7 +82,7 @@ void colorize(vector<pcPtr> input, pcl::CorrespondencesPtr matches, bool match, 
         else current_index = (*matches)[i].index_query;
         plane = *input[current_index];
         pcPtr planePtr(new pc_t(plane));
-        colorize(planePtr, (float)i / (float)matches->size());
+        colorize(planePtr, (float)current_index / (float)matches->size());
         if (i == 0) cloud = plane;
         else cloud += plane;
         ROS_DEBUG_STREAM("Total points: " << cloud.points.size());
@@ -233,22 +233,16 @@ void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
     this->match_th = config.match_th;
     this->match_th_dist = config.match_th_dist / 1000;
 
-    this->param_cut.x.enable = config.x_enable;
-    this->param_cut.x.bounds[0] = config.x_min / 1000;
-    this->param_cut.x.bounds[1] = config.x_max / 1000;
-    this->param_cut.y.enable = config.y_enable;
-    this->param_cut.y.bounds[0] = config.y_min / 1000;
-    this->param_cut.y.bounds[1] = config.y_max / 1000;
-    this->param_cut.z.enable = config.z_enable;
-    this->param_cut.z.bounds[0] = config.z_min / 1000;
-    this->param_cut.z.bounds[1] = config.z_max / 1000;
+    this->cut_reverse = config.cut_reverse;
+    this->cut_th = config.cut_th / 1000;
 }
 
 void Matching::callback_sync()
 {
     pcl::CorrespondencesPtr planes_corr(new pcl::Correspondences);
     int n = this->planes1.clouds.size();
-    planes_corr = array2corr(range(n), n);//this->get_corr();
+    planes_corr = this->get_corr();
+    // planes_corr = array2corr(range(n), n);
     pcPtr msg(new pc_t);
     colorize(this->planes1, this->planes2, planes_corr, msg);
     publish(pub_color, *msg);
@@ -286,8 +280,16 @@ void Matching::callback_sync()
 
     calib::Matches matches;
     matches.header = this->planes1.header;
-    matches.planes1 = this->planes1.planes;
-    matches.planes2 = this->planes2.planes;
+    shape_msgs::Plane p1;
+    shape_msgs::Plane p2;
+    for (int i = 0; i < planes_corr->size(); i++)
+    {
+        p1 = this->planes1.planes[(*planes_corr)[i].index_query];
+        p2 = this->planes2.planes[(*planes_corr)[i].index_match];
+        matches.planes1.push_back(p1);
+        matches.planes2.push_back(p2);
+    }
+
     pc_msg_t points_msg1;
     pc_msg_t points_msg2;
     pcl::toROSMsg(*msg2_1, points_msg1);
@@ -306,11 +308,13 @@ void Matching::callback_sync()
 */
 pc_nPtr Matching::normals(pcPtr input, float radius)
 {
+    ROS_DEBUG_STREAM("Compute normals of " << input->points.size() << " points.");
     pc_nPtr normals(new pc_n_t);
     this->norm.setInputCloud(input);
     this->norm.setRadiusSearch(radius);
     this->norm.setSearchMethod(this->kdtree);
     this->norm.compute(*normals);
+    ROS_DEBUG_STREAM("\t-> " << normals->points.size() << " normals.");
     return normals;
 }
 
@@ -362,39 +366,74 @@ pcl::CorrespondencesPtr Matching::match_planes(pc_featPtr desc1, pc_featPtr desc
 
 pcl::CorrespondencesPtr Matching::get_corr()
 {
-    pc_featPtr desc1(new plane_feat_t);
-    pc_featPtr desc2(new plane_feat_t);
-    pcPtr cloud(new pc_t);
-    for (int i = 0; i < this->planes1.clouds.size(); i++)
-    {
-        pc_msg_t plane_msg = this->planes1.clouds[i];
-        MSGtoPCL(plane_msg, cloud);
-        pc_featPtr featPtr = this->descriptor(cloud, this->normals(cloud, this->radius));
-        if (i == 0)
-        {
-            *desc1 = *featPtr;
-        }
-        else
-        {
-            *desc1 += *featPtr;
-        }
-    }
-    for (int i = 0; i < this->planes2.clouds.size(); i++)
-    {
-        pc_msg_t plane_msg = this->planes2.clouds[i];
-        MSGtoPCL(plane_msg, cloud);
-        pc_featPtr featPtr = this->descriptor(cloud, this->normals(cloud, this->radius));
-        if (i == 0)
-        {
-            *desc2 = *featPtr;
-        }
-        else
-        {
-            *desc2 += *featPtr;
-        }
-    }
+    // Global plane descriptor to match planes
+    ///////////////////////
+    // pc_featPtr desc1(new plane_feat_t);
+    // pc_featPtr desc2(new plane_feat_t);
+    // pcPtr cloud(new pc_t);
+    // for (int i = 0; i < this->planes1.clouds.size(); i++)
+    // {
+    //     pc_msg_t plane_msg = this->planes1.clouds[i];
+    //     MSGtoPCL(plane_msg, cloud);
+    //     pc_featPtr featPtr = this->descriptor(cloud, this->normals(cloud, this->radius));
+    //     if (i == 0)
+    //     {
+    //         *desc1 = *featPtr;
+    //     }
+    //     else
+    //     {
+    //         *desc1 += *featPtr;
+    //     }
+    // }
+    // for (int i = 0; i < this->planes2.clouds.size(); i++)
+    // {
+    //     pc_msg_t plane_msg = this->planes2.clouds[i];
+    //     MSGtoPCL(plane_msg, cloud);
+    //     pc_featPtr featPtr = this->descriptor(cloud, this->normals(cloud, this->radius));
+    //     if (i == 0)
+    //     {
+    //         *desc2 = *featPtr;
+    //     }
+    //     else
+    //     {
+    //         *desc2 += *featPtr;
+    //     }
+    // }
+    // pcl::CorrespondencesPtr corr(new pcl::Correspondences);
+    // corr = match_planes(desc1, desc2);
+    // return corr;
+
+    // Match by normals similarity (assume pc orientations are similar)
+    //////////////////////
     pcl::CorrespondencesPtr corr(new pcl::Correspondences);
-    corr = match_planes(desc1, desc2);
+    for (int i = 0; i < this->planes1.planes.size(); i++)
+    {
+        pcl::Correspondence c;
+        int best = -1;
+        float best_score = -99;
+        c.index_query = i;
+        shape_msgs::Plane p1 = this->planes1.planes[i];
+
+        for (int j = 0; j < this->planes2.planes.size(); j++)
+        {
+            shape_msgs::Plane p2 = this->planes2.planes[j];
+            float score = p1.coef[0] * p2.coef[0] + p1.coef[1] * p2.coef[1] + p1.coef[2] * p2.coef[2] - abs(p1.coef[3] - p2.coef[3]);
+            ROS_DEBUG_STREAM("Match plane " << i+1 << ":" << p1.coef[0] << ", " << p1.coef[1] << ", " << p1.coef[2] << " with plane " << j+1 << ": " << p2.coef[0] << ", " << p2.coef[1] << ", " << p2.coef[2] << "\n\tcost = " << score);
+            if (score > best_score && score > -99)
+            {
+                best_score = score;
+                best = j;
+                ROS_DEBUG_STREAM("new best !");
+            }
+        }
+        if (best != -1)
+        {
+            ROS_INFO_STREAM("Matching plane: " << i+1 << " -> " << best+1);
+            c.index_match = best;
+            corr->push_back(c);
+        }
+    }
+
     return corr;
 }
 
@@ -589,7 +628,8 @@ pcPtr Matching::cut_plane(pcPtr input, calib::Planes planes)
             axis = z.cross(normal);
             float w = sqrt(((pow(z.length(), 2)) * (pow(normal.length(), 2))) + z.dot(normal));
             transform.setRotation(tf::Quaternion(axis.getX(), axis.getY(), axis.getZ(), w));
-            if (this->param_cut.y.enable)
+            transform = transform.inverse();
+            if (this->cut_reverse)
             {
                 transform = transform.inverse();
             }
@@ -605,8 +645,8 @@ pcPtr Matching::cut_plane(pcPtr input, calib::Planes planes)
             params.y.bounds[0] = 0;
             params.y.bounds[1] = 0;
             params.z.enable = true;
-            params.z.bounds[0] = this->param_cut.y.bounds[0];
-            params.z.bounds[1] = this->param_cut.y.bounds[1];
+            params.z.bounds[0] = this->cut_th;
+            params.z.bounds[1] = 5;
             cloudPtr = this->cut(cloudPtr, params);
 
         // get back to the initial frame
