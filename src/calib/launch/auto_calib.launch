@@ -5,9 +5,9 @@
     <rosparam command="load" file="$(find calib)/config/default_planes.yaml" />
     <rosparam command="load" file="$(find calib)/config/default_match.yaml" />
 
-    <param name="cam_source" value="cam1" />
-    <param name="cam_target" value="cam2" />
-    <param name="merged_name" value="scene" />
+    <arg name="cam_source" default="cam1" />
+    <arg name="cam_target" default="cam2" />
+    <arg name="merged_name" default="scene" />
 
     <node pkg="calib" name="preproc_$(arg cam_source)" type="preprocessing_node" respawn="true" output="screen" args="/$(arg cam_source)/qhd/points $(arg cam_source)" />
     <node pkg="calib" name="preproc_$(arg cam_target)" type="preprocessing_node" respawn="true" output="screen" args="/$(arg cam_target)/qhd/points $(arg cam_target)" />

@@ -46,6 +46,7 @@ class Plotter():
 
         self.data_time = []
         self.data_filt_time = []
+        self.ymax = 0
 
         plt.ion()
         plt.show()
@@ -77,13 +78,14 @@ class Plotter():
                 elif plot_type == 1:
                     mat = []
                     mat_filt = []
-                    if len(self.data_time) > 0:
-                        for i in range(3):
-                            vari = 3 * (var > 2) + i
-                            mat = np.array(self.data_time)[:,1 + i]
-                            bins = 5+int(len(mat)/10)
-                            m, s = Plot.get_stat(mat)
-                            _ = plt.hist(mat, bins=bins, normed=1, color=[0.5 + 0.3 * (i == 0),0.5 + 0.3 * (i == 1),0.5 + 0.3 * (i == 2),0.6], linewidth=0, label='raw ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+
+                    # if len(self.data_time) > 0:
+                    #     for i in range(3):
+                    #         vari = 3 * (var > 2) + i
+                    #         mat = np.array(self.data_time)[:,1 + i]
+                    #         bins = 5+int(len(mat)/10)
+                    #         m, s = Plot.get_stat(mat)
+                    #         _ = plt.hist(mat, bins=bins, normed=1, color=[0.5 + 0.3 * (i == 0),0.5 + 0.3 * (i == 1),0.5 + 0.3 * (i == 2),0.6], linewidth=0, label='raw ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
                         
                     if len(self.data_filt_time) > 0:
                         for i in range(3):
@@ -92,7 +94,8 @@ class Plotter():
                             bins = 5+int(len(mat_filt)/10)
                             m, s = Plot.get_stat(mat_filt)
                             _ = plt.hist(mat_filt, bins=bins, normed=1, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),0.8], linewidth=0, label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
-                    plt.xlim(([-20, 20], [-10, 10])[var > 2])
+
+                    # plt.xlim(([-20, 20], [-10, 10])[var > 2])
                     plt.title(("Translation", "Rotation")[var > 2] + ' error, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
                     plt.xlabel(("Distance (in mm)", "Angle (in deg)")[var > 2])
                     plt.ylabel("Samples (normed)")
@@ -101,21 +104,22 @@ class Plotter():
                     mat = []
                     mat_filt = []
                     ind = range(3)
-                    if len(self.data_filt_time) > 0:
-                        for i in ind:
-                            vari = 3 * (var > 2) + i
-                            mat = np.array(self.data_filt_time)[:,1 + i]
-                            bins = 5+int(len(mat)/10)
-                            m, s = Plot.get_stat(mat)
-                            mad = robust.mad(mat)
-                            _ = plt.bar(mad, s, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
-                            # i
-                            # m
+                    for i in ind:
+                        vari = 3 * (var > 2) + i
+                        mat = np.array(self.data_filt_time)[:,1 + i]
+                        m, s = Plot.get_stat(mat)
+                        mad = robust.mad(mat)
+                        bins = 5+int(len(mat)/10)
+                        _ = plt.bar(i, mad, color=[0.3 * (i == 0),0.3 * (i == 1),0.3 * (i == 2),1], label='filtered ' + ('tx','ty','tz','rx','ry','rz')[vari] + ' (mean: {:.2f}, std: {:.2f})'.format(m, s))
+                        # i
+                        # m
+                        if mad > self.ymax:
+                            self.ymax = mad
                     
                     # plt.yscale("log")
-                    plt.title(("Translation", "Rotation")[var > 2] + ' standard deviation, it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
+                    plt.title(("Translation", "Rotation")[var > 2])# + ' , it: ' + str(len(mat)) + ', ' + str(len(mat_filt)))
                     plt.ylabel("Mean absolute deviation (in mm)")
-                    plt.ylim([0, 30])
+                    plt.ylim([0, self.ymax])
                     
                 
                 # plt.legend()

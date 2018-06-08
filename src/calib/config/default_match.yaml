@@ -1,11 +1,11 @@
 calib:
   cam1_cam2:
     matching:
-      iss_nms_radius: 15.0
-      iss_support_radius: 15.0
+      iss_nms_radius: 25.0
+      iss_support_radius: 25.0
       kp_dupl_rej: true
       kp_est_radius: 50.0
-      match_th: 0.9
+      match_th: 10.0
       match_th_dist: 100.0
       normal_radius: 50.0
       x_enable: true

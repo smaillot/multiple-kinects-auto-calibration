@@ -20,12 +20,12 @@ int it_rot = 1;
 tf::Transform mem;
 ros::Publisher pub;
 
-float init_tx;
-float init_ty;
-float init_tz;
-float init_rx;
-float init_ry;
-float init_rz;
+// float init_tx;
+// float init_ty;
+// float init_tz;
+// float init_rx;
+// float init_ry;
+// float init_rz;
 
 tf::Vector3 origin(0, 0, 0);
 tf::Quaternion identity_quat(0, 0, 0, 1);
@@ -111,14 +111,14 @@ void save_tf(string frame, tf::Transform transform)
     config[frame]["tz"] = transform.getOrigin().getZ();// + init_tz;
     double rx, ry, rz;
     tf::Matrix3x3 mat(transform.getRotation());
-    mat.getEulerYPR(rx, ry, rz);
+    mat.getEulerYPR(rz, ry, rx);
     config[frame]["rx"] = rx;// + init_rx;
     config[frame]["ry"] = ry;// + init_ry;
     config[frame]["rz"] = rz;// + init_rz;
 
     std::ofstream fout(file.c_str());
     fout << config << endl;
-    ROS_INFO_STREAM_ONCE("Saving tf in: " + file);
+    ROS_DEBUG_STREAM_ONCE("Saving tf in: " + file);
     fout.close();
 }
 
@@ -141,19 +141,19 @@ int main(int argc, char *argv[])
         ros::NodeHandle nh;
         ros::NodeHandle node_tf("/calib/tf/" + frame);
 
-        ros::param::get("/calib/" + cam1 + "/cloud/tx", init_tx);
-        ros::param::get("/calib/" + cam1 + "/cloud/ty", init_ty);
-        ros::param::get("/calib/" + cam1 + "/cloud/tz", init_tz);
-        ros::param::get("/calib/" + cam1 + "/cloud/rx", init_rx);
-        ros::param::get("/calib/" + cam1 + "/cloud/ry", init_ry);
-        ros::param::get("/calib/" + cam1 + "/cloud/rz", init_rz);
+        // ros::param::get("/calib/" + cam1 + "/cloud/tx", init_tx);
+        // ros::param::get("/calib/" + cam1 + "/cloud/ty", init_ty);
+        // ros::param::get("/calib/" + cam1 + "/cloud/tz", init_tz);
+        // ros::param::get("/calib/" + cam1 + "/cloud/rx", init_rx);
+        // ros::param::get("/calib/" + cam1 + "/cloud/ry", init_ry);
+        // ros::param::get("/calib/" + cam1 + "/cloud/rz", init_rz);
 
-        init_tx /= 1000;
-        init_ty /= 1000;
-        init_tz /= 1000;
-        init_rx /= 180 * 3.14159;
-        init_ry /= 180 * 3.14159;
-        init_rz /= 180 * 3.14159;
+        // init_tx /= 1000;
+        // init_ty /= 1000;
+        // init_tz /= 1000;
+        // init_rx /= 180 * 3.14159;
+        // init_ry /= 180 * 3.14159;
+        // init_rz /= 180 * 3.14159;
 
         pub = nh.advertise<calib::TF>("/calib/tf/" + frame + "_filtered", 1);
 
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
                 ratio_rot = 1 / (float)it_rot;
                 break;
         }
-        ROS_INFO_STREAM("Ratio at it (" << it_transl << " - " << it_rot << ") : " << ratio_transl << ", " << ratio_rot);
+        ROS_DEBUG_STREAM("Ratio at it (" << it_transl << " - " << it_rot << ") : " << ratio_transl << ", " << ratio_rot);
         
         tf::Transform new_tf = filter_tf(mem, transform, ratio_transl, ratio_rot);
         if (no_nans(new_tf))

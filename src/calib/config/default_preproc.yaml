@@ -2,7 +2,7 @@ calib:
   cam1:
     preproc:
       equal: true
-      x: 15.0
+      x: 25.0
       frame: world
       enable: true
       equal: true
@@ -15,7 +15,7 @@ calib:
   cam2:
     preproc:
       equal: true
-      x: 15.0
+      x: 25.0
       frame: world
       enable: true
       equal: true

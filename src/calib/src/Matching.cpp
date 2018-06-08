@@ -19,7 +19,6 @@ void convert(pc_msg_t input, sensor_msgs::PointCloud2ConstPtr output)
 void convert(const pc_msgPtr& input, pcl::PCLPointCloud2Ptr& output)
 {
     pcl::PCLPointCloud2 temp;
-    ROS_INFO_STREAM(input->data.size() << " input points"); 
     pcl_conversions::toPCL(*input, temp);
     // pcl_conversions::toPCL(input->header, temp.header);
     ROS_DEBUG_STREAM("Conversion to pclPC2, " << temp.data.size() << " points.");
@@ -72,7 +71,7 @@ void convert(pc_msg_t input, pc_msgPtr output)
 */
 void colorize(vector<pcPtr> input, pcl::CorrespondencesPtr matches, bool match, pcPtr output)
 {
-    ROS_INFO_STREAM(input.size() << " planes to colorize");
+    ROS_DEBUG_STREAM(input.size() << " planes to colorize");
     pc_t cloud;
     pc_t plane;
     int current_index;
@@ -95,7 +94,7 @@ void colorize(vector<pcPtr> input, pcl::CorrespondencesPtr matches, bool match, 
 */
 void colorize(calib::Planes input1, calib::Planes input2, pcl::CorrespondencesPtr matches, pcPtr output)
 {
-    ROS_INFO_STREAM(matches->size() << " correspondances to colorize");
+    ROS_DEBUG_STREAM(matches->size() << " correspondances to colorize");
     vector<pcPtr> planes1;
     for (int i = 0; i < input1.clouds.size(); i++)
     {
@@ -428,7 +427,7 @@ pcl::CorrespondencesPtr Matching::get_corr()
         }
         if (best != -1)
         {
-            ROS_INFO_STREAM("Matching plane: " << i+1 << " -> " << best+1);
+            ROS_INFO_STREAM("Matching planes: " << i+1 << " -> " << best+1);
             c.index_match = best;
             corr->push_back(c);
         }
@@ -476,7 +475,6 @@ pcl::CorrespondencesPtr Matching::compute_kp_corr(kp_featPtr feat1, kp_featPtr f
             corr->push_back(c);
         }
     }
-    std::cout << "Correspondences found: " << corr->size () << std::endl;
 
     if (this->kp_dupl_rej)
     {
@@ -491,6 +489,7 @@ pcl::CorrespondencesPtr Matching::compute_kp_corr(kp_featPtr feat1, kp_featPtr f
         ROS_DEBUG_STREAM("\tKeypoint" << (*corr)[i].index_query+1 << " -> Keypoint" << (*corr)[i].index_match+1 << " (" << (*corr)[i].distance << ")");
     }
 
+    ROS_INFO_STREAM(corr->size() << " keypoints matches.");
     return corr;
 }
 

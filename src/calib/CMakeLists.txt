@@ -172,6 +172,7 @@ target_link_libraries(merging_node
   ${catkin_LIBRARIES}
   Cloud
   ${PCL_LIBRARIES}
+  -lyaml-cpp
 )
 add_dependencies(merging_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 

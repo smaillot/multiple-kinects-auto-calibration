@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include <ros/console.h>
 #include "Cloud.h"
+#include "tf_node.h"
 #include "Preprocessing.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -11,10 +12,5 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <calib/MergingConfig.h>
-
-#include <fstream>
-#include "yaml-cpp/yaml.h"
-#include <ros/ros.h>
-#include <ros/package.h>
 
 void cut(pc_t& input, float ymin, float ymax);

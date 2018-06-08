@@ -228,16 +228,16 @@ Eigen::Affine3d TransformEstimator::getTransform(bool transl, bool rot)
         this->addPoints(zero, false);
     }
 
-    ROS_INFO_STREAM("Compute transform with:");
-    ROS_INFO_STREAM("\t" << points_source.size() << " points:");
+    ROS_DEBUG_STREAM("Compute transform with:");
+    ROS_DEBUG_STREAM("\t" << points_source.size() << " points:");
     for (int i = 0; i < this->points_source.size(); i++)
     {
-        ROS_INFO_STREAM("\t\t" << this->points_source[i].transpose() << " -> " << this->points_target[i].transpose());
+        ROS_DEBUG_STREAM("\t\t" << this->points_source[i].transpose() << " -> " << this->points_target[i].transpose());
     }
-    ROS_INFO_STREAM("\t" << planes_source.size() << " planes:");
+    ROS_DEBUG_STREAM("\t" << planes_source.size() << " planes:");
     for (int i = 0; i < this->planes_source.size(); i++)
     {
-        ROS_INFO_STREAM("\t\t" << this->planes_source[i].transpose() << " -> " << this->planes_target[i].transpose());
+        ROS_DEBUG_STREAM("\t\t" << this->planes_source[i].transpose() << " -> " << this->planes_target[i].transpose());
     }
     Eigen::Matrix4f H = Eigen::Matrix4f::Identity();
     Eigen::Matrix3f R = Eigen::Matrix3f::Identity();
@@ -250,10 +250,11 @@ Eigen::Affine3d TransformEstimator::getTransform(bool transl, bool rot)
     {
         H.topRightCorner(3, 1) = this->getTranslation(R);
     }
-    ROS_INFO_STREAM("transform =" << endl << H);
+    ROS_DEBUG_STREAM("transform =" << endl << H);
     Eigen::Affine3d T;
     T.matrix() = H.cast<double>();
-    ROS_DEBUG_STREAM("H =" << endl << H);    
+    ROS_DEBUG_STREAM("H =" << endl << H);   
+    ROS_INFO_STREAM("Compute transform with " << points_source.size() << " points and " << planes_source.size() << " planes."); 
     return T;
 }
 
