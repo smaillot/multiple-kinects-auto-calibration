@@ -1,0 +1,35 @@
+calib:
+  cam1:
+    preproc:
+      equal: true
+      x: 25.0
+      frame: world
+      enable: true
+      equal: true
+      y_enable: false
+      y_min: 1000.0
+      y_max: 2700.0
+      z_enable: false
+      z_min: 770.0
+      z_max: 1600.0
+  cam2:
+    preproc:
+      equal: true
+      x: 25.0
+      frame: world
+      enable: true
+      equal: true
+      y_enable: false
+      y_min: 0.0
+      y_max: 1700.0
+      z_enable: false
+      z_min: 770.0
+      z_max: 1600.0
+  scene:
+    preproc:
+      y_enable: true
+      y_min: -100.0
+      y_max: 2800.0
+      z_enable: true
+      z_min: 720.0
+      z_max: 2000.0

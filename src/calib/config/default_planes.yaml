@@ -1,0 +1,17 @@
+calib:
+  cam1:
+    planes:
+      frame: cam_center
+      subsize: 50.0
+      method: 0
+      n_planes: 2
+      th_dist: 10.0
+      max_it: 2000
+  cam2:
+    planes:
+      frame: cam_center
+      subsize: 50.0
+      method: 0
+      n_planes: 2
+      th_dist: 10.0
+      max_it: 2000

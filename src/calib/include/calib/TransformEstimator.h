@@ -7,6 +7,8 @@
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <ros/console.h>
+#include <tf_conversions/tf_eigen.h>
+#include <calib/TransformEstimationConfig.h>
 
 
 class TransformEstimator
@@ -26,8 +28,19 @@ class TransformEstimator
 
     public:
 
+        float weight;
+        bool inverse;
+        std::string frame;
+        bool use_points;
+        bool use_planes;
+        bool compute_rotation;
+        bool compute_translation;
+        bool project_points;
+
+        void conf_callback(calib::TransformEstimationConfig &config, uint32_t level);
         bool isValid();
         void addPoints(std::vector<Eigen::Vector3f> points, bool source);
+        Eigen::Vector3f project(Eigen::Vector3f point, bool source);
         void addPlanes(std::vector<Eigen::Vector4f> planes, bool source);
         void addPlanes(std::vector<Eigen::Vector4f> planes, bool source, float w);
         void reset();

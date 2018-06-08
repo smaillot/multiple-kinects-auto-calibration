@@ -1,0 +1,10 @@
+<launch>
+    <node name="plot_hist_t" pkg="calib" type="plot_node.py" args="cam1_cam2 0 1" />
+    <node name="plot_hist_r" pkg="calib" type="plot_node.py" args="cam1_cam2 3 1" />
+    <node name="plot_time_tx" pkg="calib" type="plot_node.py" args="cam1_cam2 0 0" />
+    <node name="plot_time_ty" pkg="calib" type="plot_node.py" args="cam1_cam2 1 0" />
+    <node name="plot_time_tz" pkg="calib" type="plot_node.py" args="cam1_cam2 2 0" />
+    <node name="plot_time_rx" pkg="calib" type="plot_node.py" args="cam1_cam2 3 0" />
+    <node name="plot_time_ry" pkg="calib" type="plot_node.py" args="cam1_cam2 4 0" />
+    <node name="plot_time_rz" pkg="calib" type="plot_node.py" args="cam1_cam2 5 0" />
+</launch>
