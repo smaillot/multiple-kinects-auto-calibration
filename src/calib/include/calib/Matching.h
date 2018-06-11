@@ -30,6 +30,7 @@
 
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_one_to_one.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/keypoints/iss_3d.h>
 
 #include <message_filters/subscriber.h>
@@ -102,7 +103,7 @@ class Matching
         pcl::VFHEstimation<Point, pcl::Normal, global_desc_t> global_est;
         /**/kp_est_t kp_feat_est;/**/
         pcl::registration::CorrespondenceEstimation<global_desc_t, global_desc_t> corr_est;
-        pcl::registration::CorrespondenceRejectorOneToOne corr_rej;
+        pcl::registration::CorrespondenceRejectorSampleConsensus<Point> corr_rej;
 		pcl::ISSKeypoint3D<Point, Point> iss;
         pcl::PassThrough<Point> filter_cut;
         

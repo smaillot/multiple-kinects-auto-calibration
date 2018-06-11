@@ -3,20 +3,20 @@ calib:
     cloud:
       frame: cam_center
       frame_pub: world
-      tx: -12.0zzz
-      ty: 30.0
-      tz: -40.0
-      rx: 3.0
-      ry: -1.9
-      rz: 0.0
+      tx: 1000
+      ty: 820
+      tz: 1400
+      rx: 0
+      ry: 32.7
+      rz: 90
   cam2:
     cloud:
-      tx: 0.0
-      ty: 0.0
-      tz: -10.0
-      rx: -0.3
-      ry: -1.0
-      rz: 0.0
+      tx: 1000
+      ty: -800
+      tz: 1400
+      rx: 0
+      ry: 32.7
+      rz: 90
   scene:
     cloud:
       tx: 0.0

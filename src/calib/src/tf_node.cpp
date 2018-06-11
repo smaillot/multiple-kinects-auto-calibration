@@ -175,6 +175,7 @@ int main(int argc, char *argv[])
         tf::StampedTransform transform;
         try
         {
+            listener.waitForTransform(ref, frame, ros::Time(0), ros::Duration(5.0));
             listener.lookupTransform(ref, frame, ros::Time(0), transform);
         }
         catch (tf::TransformException ex)

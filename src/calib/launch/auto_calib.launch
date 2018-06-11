@@ -1,9 +1,11 @@
 <launch>
 
-    <rosparam command="load" file="$(find calib)/config/default_transform.yaml" />
+    <!--<rosparam command="load" file="$(find calib)/config/default_transform.yaml" />
     <rosparam command="load" file="$(find calib)/config/default_preproc.yaml" />
     <rosparam command="load" file="$(find calib)/config/default_planes.yaml" />
-    <rosparam command="load" file="$(find calib)/config/default_match.yaml" />
+    <rosparam command="load" file="$(find calib)/config/default_match.yaml" />-->
+
+    <!--<include file="$(find calib)/launch/tf.launch" />-->
 
     <arg name="cam_source" default="cam1" />
     <arg name="cam_target" default="cam2" />

@@ -479,6 +479,8 @@ pcl::CorrespondencesPtr Matching::compute_kp_corr(kp_featPtr feat1, kp_featPtr f
     if (this->kp_dupl_rej)
     {
         pcl::CorrespondencesPtr corr_dupl_rej(new pcl::Correspondences());
+        this->corr_rej.setInputSource(this->cloud1);
+        this->corr_rej.setInputTarget(this->cloud2);
         this->corr_rej.setInputCorrespondences(corr);
         this->corr_rej.getCorrespondences(*corr);
     }
