@@ -19,7 +19,11 @@ find_package(catkin REQUIRED COMPONENTS
     pcl_ros
     tf_conversions
     message_generation
+    cv_bridge
+    image_transport
 )
+
+find_package(OpenCV)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -52,6 +56,8 @@ generate_dynamic_reconfigure_options(
   config/Merging.cfg
   config/TransformEstimation.cfg
   config/TF.cfg
+  config/ICP.cfg
+  config/Stitch.cfg
 )
 
 ###################################
@@ -76,7 +82,9 @@ include_directories(
   include/calib
   ${PCL_INCLUDE_DIRS}
   /usr/local/cuda/include
+  ${OpenCV_INCLUDE_DIRS}
 )
+
 
 # PCL
 link_directories(${PCL_LIBRARY_DIRS})
@@ -236,4 +244,32 @@ add_dependencies(tf_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 target_link_libraries(tf_publisher_node
   ${catkin_LIBRARIES}
   -lyaml-cpp
+)
+
+add_executable(icp_node
+  src/icp_node.cpp
+)
+add_dependencies(
+  icp_node 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+target_link_libraries(icp_node
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  Cloud
+)
+
+add_executable(stitching_node
+  src/stitching_node.cpp
+)
+add_dependencies(stitching_node 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+target_link_libraries(stitching_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )

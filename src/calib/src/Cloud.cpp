@@ -70,9 +70,10 @@ void colorize(pcPtr input, float ratio)
 Cloud::Cloud()
 {}
 
-Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name)
+Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name, bool icp)
 {
     this->name = pub_name;
+    this->icp = icp;
     string topic = "/calib/clouds/" + pub_name;
     ROS_DEBUG_STREAM("Init Cloud instance " << pub_name << ": " << sub_name);
     ROS_DEBUG_STREAM("\tpublish topic: " << topic);
@@ -153,6 +154,16 @@ void Cloud::update(const pcConstPtr& input)
     ROS_DEBUG_STREAM("Receiving " << input->points.size() << " points for " << this->name << "(" << this->frame << ").");
     pc_t* cloud(new pc_t(*input));
     pcPtr cloudPtr(cloud); 
+
+    if (this->icp)
+    {
+        tf::StampedTransform icp_tf;
+        tf_listener->waitForTransform("world", this->name + "_icp", ros::Time(0), ros::Duration(5.0));
+        pcl_ros::transformPointCloud("world", *cloud, *cloud, *this->tf_listener); 
+        tf_listener->lookupTransform("world", this->name + "_icp", ros::Time(0), icp_tf);
+        pcl_ros::transformPointCloud(*cloud, *cloud, icp_tf);
+    }
+
     pcl_ros::transformPointCloud(this->frame, *cloud, *cloud, *this->tf_listener);  
     pcl_ros::transformPointCloud(*cloud, *cloud, this->get_transform(this->param_transform, true, true));  
     if (this->pub_raw.getTopic() != this->sub.getTopic())     

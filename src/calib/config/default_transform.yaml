@@ -3,7 +3,7 @@ calib:
     cloud:
       frame: cam_center
       frame_pub: world
-      tx: -12.0zzz
+      tx: -12.0
       ty: 30.0
       tz: -40.0
       rx: 3.0

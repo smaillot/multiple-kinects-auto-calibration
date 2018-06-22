@@ -617,41 +617,74 @@ pcPtr Matching::cut_plane(pcPtr input, calib::Planes planes)
         shape_msgs::Plane plane = planes.planes[i];
         ROS_DEBUG_STREAM("Cutting in normal direction: " << plane.coef[0] << ", " << plane.coef[1] << ", " << plane.coef[2] << ", " << plane.coef[3]);
         // build a tf which z axis is the plane normal
-            tf::Vector3 normal;                   
-            tf::Vector3 point;
-            tf::Vector3 z(0,0,1);
-            tf::Vector3 axis;
-            tf::Transform transform;
-            normal = tf::Vector3(plane.coef[0], plane.coef[1], plane.coef[2]).normalized();
-            point = - normal * std::abs(plane.coef[3]) / normal.length();
-            ROS_DEBUG_STREAM("from: " << point.getX() << ", " << point.getY() << ", " << point.getZ());
-            transform.setOrigin(point);
-            axis = z.cross(normal);
-            float w = sqrt(((pow(z.length(), 2)) * (pow(normal.length(), 2))) + z.dot(normal));
-            transform.setRotation(tf::Quaternion(axis.getX(), axis.getY(), axis.getZ(), w));
-            transform = transform.inverse();
-            if (this->cut_reverse)
+        //     tf::Vector3 normal;                   
+        //     tf::Vector3 point;
+        //     tf::Vector3 z(0,0,1);
+        //     tf::Vector3 axis;
+        //     tf::Transform transform;
+        //     normal = tf::Vector3(plane.coef[0], plane.coef[1], plane.coef[2]).normalized();
+        //     point = - normal * std::abs(plane.coef[3]) / normal.length();
+        //     ROS_DEBUG_STREAM("from: " << point.getX() << ", " << point.getY() << ", " << point.getZ());
+        //     transform.setOrigin(point);
+        //     axis = z.cross(normal);
+
+        //     // tf::Vector3 a, b(1,1,-(normal.getX() + normal.getY())/normal.getZ());
+        //     // b.normalize();
+        //     // a = b.cross(normal);
+        //     // tf::Matrix3x3 mat(a.getX(), b.getX(), normal.getX(), a.getY(), b.getY(), normal.getY(), a.getZ(), b.getZ(), normal.getZ());
+        //     // double r, p, y;
+        //     // mat.getRPY(r, p, y);
+        //     // transform.setRotation(tf::Quaternion(r, p, y));
+
+        //     float w = sqrt(((pow(z.length(), 2)) * (pow(normal.length(), 2))) + z.dot(normal));
+        //     transform.setRotation(tf::Quaternion(axis.getX(), axis.getY(), axis.getZ(), w));
+        //     transform = transform.inverse();
+        //     if (this->cut_reverse)
+        //     {
+        //         transform = transform.inverse();
+        //     }
+
+        // // transform point cloud and cut in the z direction
+        //     pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform);  
+
+        //     param_cut_t params;
+        //     params.x.enable = false;
+        //     params.x.bounds[0] = 0;
+        //     params.x.bounds[1] = 0;
+        //     params.y.enable = false;
+        //     params.y.bounds[0] = 0;
+        //     params.y.bounds[1] = 0;
+        //     params.z.enable = true;
+        //     params.z.bounds[0] = this->cut_th;
+        //     params.z.bounds[1] = 5;
+        //     cloudPtr = this->cut(cloudPtr, params);
+
+        // // get back to the initial frame
+        //     pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform.inverse());  
+
+
+        pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+
+        for (int i = 0; i < cloudPtr->points.size(); i++)
+        {
+            tf::Vector3 point(cloudPtr->points[i].x, cloudPtr->points[i].y, cloudPtr->points[i].z);
+            if (i % 1000 == 0)
             {
-                transform = transform.inverse();
+                ROS_DEBUG_STREAM("Point " << point.getX() << ", " << point.getY() << ", " << point.getZ() << " with value: " << (point.getX() * plane.coef[0] + point.getY() * plane.coef[1] + point.getZ() * plane.coef[2] + plane.coef[3]));
             }
-
-        // transform point cloud and cut in the z direction
-            pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform);  
-
-            param_cut_t params;
-            params.x.enable = false;
-            params.x.bounds[0] = 0;
-            params.x.bounds[1] = 0;
-            params.y.enable = false;
-            params.y.bounds[0] = 0;
-            params.y.bounds[1] = 0;
-            params.z.enable = true;
-            params.z.bounds[0] = this->cut_th;
-            params.z.bounds[1] = 5;
-            cloudPtr = this->cut(cloudPtr, params);
-
-        // get back to the initial frame
-            pcl_ros::transformPointCloud(*cloudPtr, *cloudPtr, transform.inverse());  
+            bool side = (point.getX() * plane.coef[0] + point.getY() * plane.coef[1] + point.getZ() * plane.coef[2] + plane.coef[3] > this->cut_th);
+            if ((side && !this->cut_reverse) || (!side && this->cut_reverse))
+            {
+                inliers->indices.push_back(i);
+            }
+        }
+        ROS_DEBUG_STREAM("Extracted points: " << inliers->indices.size());
+        pcl::ExtractIndices<Point> extract;
+        extract.setInputCloud(cloudPtr);
+        extract.setIndices(inliers);
+        extract.setNegative(false);
+        extract.filter(*cloudPtr);
+        ROS_DEBUG_STREAM(cloudPtr->points.size() << " points remaining in point cloud.");
     }
 
     return cloudPtr;

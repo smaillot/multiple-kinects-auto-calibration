@@ -26,7 +26,11 @@
 #include <pcl/features/shot.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
+#include <pcl/features/shot.h>
 #include <pcl/features/shot_omp.h>
+
+#include <pcl/PointIndices.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_one_to_one.h>
@@ -47,8 +51,8 @@ typedef plane_feat_t::Ptr pc_featPtr;
     typedef pcl::FPFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
 /*/ typedef pcl::VFHSignature308 kp_t;
     typedef pcl::VFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
-/**/ typedef pcl::SHOT352 kp_t;
-typedef pcl::SHOTEstimationOMP<Point, pcl::Normal, kp_t> kp_est_t; /**/
+/**/ typedef pcl::SHOT1344 kp_t; //352
+typedef pcl::SHOTColorEstimationOMP<Point, pcl::Normal, kp_t> kp_est_t; /**/
 
 typedef pcl::PointCloud<kp_t> kp_feat_t;
 typedef kp_feat_t::Ptr kp_featPtr;
