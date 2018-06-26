@@ -225,7 +225,7 @@ void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
 {
     // transform
     this->radius = config.normal_radius / 1000;
-    this->kp_dupl_rej = config.kp_dupl_rej;
+    this->kp_dupl_rej = config.kp_corr_rej;
     this->kp_est_radius = config.kp_est_radius / 1000;
     this->iss_support_radius = config.iss_support_radius / 1000;
     this->iss_nms_radius = config.iss_nms_radius / 1000;
@@ -234,6 +234,12 @@ void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
 
     this->cut_reverse = config.cut_reverse;
     this->cut_th = config.cut_th / 1000;
+
+    this->kp_type = config.kp_type;
+    this->min_scale = config.sift_min_scale;
+    this->nr_octaves = config.sift_nr_octaves;
+    this->nr_scales_per_octave = config.sift_nr_scales_per_octave;
+    this->min_contrast = config.sift_min_contrast;
 }
 
 void Matching::callback_sync()
@@ -536,14 +542,13 @@ pcl::CorrespondencesPtr Matching::get_kp_corr()
 pcPtr Matching::extract_kp(pcPtr cloudPtr, calib::Planes planes, ros::Publisher pub)
 {
     pcPtr cutted(new pc_t);
-    pcPtr sampled(new pc_t);
     pcPtr kp(new pc_t);
 
     cutted = this->cut_plane(cloudPtr, planes);
     pub.publish(*cutted);
     // cutted = this->cut(cloudPtr, this->param_cut);
 
-    if (this->iss_support_radius * this->iss_nms_radius != 0)
+    if (this->kp_type == 1 && this->iss_support_radius * this->iss_nms_radius != 0)
     {
         this->iss.setSalientRadius(this->iss_support_radius);
         this->iss.setNonMaxRadius(this->iss_nms_radius);
@@ -551,10 +556,25 @@ pcPtr Matching::extract_kp(pcPtr cloudPtr, calib::Planes planes, ros::Publisher 
         this->iss.compute(*kp);
         ROS_DEBUG_STREAM(kp->points.size() << " remaining points after cutting to extract keypoints");
     }
+    else if(this->kp_type == 2)
+    {
+        pcl::SIFTKeypoint<Point, pcl::PointWithScale> sift_detect;
+        pcl::PointCloud<pcl::PointWithScale> result;
+
+        sift_detect.setSearchMethod(pcl::search::KdTree<Point>::Ptr (new pcl::search::KdTree<Point>));
+        sift_detect.setScales(this->min_scale, this->nr_octaves, this->nr_scales_per_octave);
+        sift_detect.setMinimumContrast(this->min_contrast);
+        sift_detect.setInputCloud(cutted);
+        sift_detect.compute(result);
+        pcl::copyPointCloud(result, *kp);
+        kp->header.frame_id = cloudPtr->header.frame_id;
+    }
     else
     {
         kp = cutted;
     }
+
+
     return kp;
 }
 

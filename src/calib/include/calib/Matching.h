@@ -28,6 +28,7 @@
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
 #include <pcl/features/shot.h>
 #include <pcl/features/shot_omp.h>
+#include <pcl/keypoints/sift_keypoint.h>
 
 #include <pcl/PointIndices.h>
 #include <pcl/filters/extract_indices.h>
@@ -100,6 +101,12 @@ class Matching
 	    float cut_th;
 	    float match_th;
         float match_th_dist;
+
+        int kp_type;
+        float min_scale;
+        int nr_octaves;
+        int nr_scales_per_octave;
+        float min_contrast;
 
         pcl::search::KdTree<Point>::Ptr kdtree;
         pcl::KdTreeFLANN<kp_t> match_search;

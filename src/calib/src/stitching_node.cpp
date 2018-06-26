@@ -158,10 +158,10 @@ void callback(const ImConstPtr& im1, const ImConstPtr& im2)
 //     matcher->collectGarbage();
 
     Ptr<Stitcher> stitcher = Stitcher::create(mode, try_use_gpu);
-    stitcher->setRegistrationResol(-1); /// 0.6
-    stitcher->setSeamEstimationResol(-1);   /// 0.1
-    stitcher->setCompositingResol(-1);   //1
-    stitcher->setPanoConfidenceThresh(-1);   //1
+    stitcher->setRegistrationResol(-1);     // 0.6
+    stitcher->setSeamEstimationResol(-1);   // 0.1
+    stitcher->setCompositingResol(-1);      //1
+    stitcher->setPanoConfidenceThresh(-1);  //1
     stitcher->setWaveCorrection(true);
     stitcher->setWaveCorrectKind(detail::WAVE_CORRECT_HORIZ);
     Stitcher::Status status = stitcher->stitch(imgs, pano);

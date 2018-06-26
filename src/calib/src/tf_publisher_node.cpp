@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
         float tx = config[frame]["tx"].as<float>();
         float ty = config[frame]["ty"].as<float>();
         float tz = config[frame]["tz"].as<float>();
-        float rx = config[frame]["rx"].as<float>();
-        float ry = config[frame]["ry"].as<float>();
+        float rx = config[frame]["ry"].as<float>();
+        float ry = config[frame]["rx"].as<float>();
         float rz = config[frame]["rz"].as<float>();
         transform.setOrigin(tf::Vector3(tx, ty, tz));
         transform.setRotation(tf::Quaternion(rx, ry, rz));
