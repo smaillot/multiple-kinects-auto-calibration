@@ -422,7 +422,7 @@ pcl::CorrespondencesPtr Matching::get_corr()
         for (int j = 0; j < this->planes2.planes.size(); j++)
         {
             shape_msgs::Plane p2 = this->planes2.planes[j];
-            float score = p1.coef[0] * p2.coef[0] + p1.coef[1] * p2.coef[1] + p1.coef[2] * p2.coef[2] - abs(p1.coef[3] - p2.coef[3]);
+            float score = p1.coef[0] * p2.coef[0] + p1.coef[1] * p2.coef[1] + p1.coef[2] * p2.coef[2] - 0.1 * abs(p1.coef[3] - p2.coef[3]);
             ROS_DEBUG_STREAM("Match plane " << i+1 << ":" << p1.coef[0] << ", " << p1.coef[1] << ", " << p1.coef[2] << " with plane " << j+1 << ": " << p2.coef[0] << ", " << p2.coef[1] << ", " << p2.coef[2] << "\n\tcost = " << score);
             if (score > best_score && score > -99)
             {
