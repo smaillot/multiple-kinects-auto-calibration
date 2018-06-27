@@ -21,6 +21,7 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
     string frame = inputs[0] + "_" + inputs[1] + "_filtered";
     string pub_frame;
     tf::StampedTransform transform;
+    tf::StampedTransform transform2;
     tf::TransformListener tf_listener;
 
     pc_t input1 = *pc1;
@@ -39,6 +40,9 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
 
         tf_listener.waitForTransform(frame, frame_proc, ros::Time(0), ros::Duration(5.0));
         tf_listener.lookupTransform(frame, frame_proc, ros::Time(0), transform);
+        // transform2.setRotation(transform.getRotation());
+        // tf_listener.lookupTransform(frame_proc, frame, ros::Time(0), transform);
+        // transform2.setOrigin(transform.getOrigin());
         pcl_ros::transformPointCloud(input1, input1, transform);
 
         if (enable_cutting)

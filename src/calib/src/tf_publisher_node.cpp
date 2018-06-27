@@ -30,6 +30,12 @@ int main(int argc, char *argv[])
         string target = argv[2];
         string ref = argv[3];
         string frame = source + "_" + target;
+        string frame_yaml = frame;
+        if (argc > 6)
+        {
+            frame_yaml = argv[4];
+            ROS_INFO_STREAM("tf name in YAML file changes to " << frame_yaml);
+        }
         string node_name = "publish_" + frame;
 
     // Initialize ROS
@@ -45,14 +51,14 @@ int main(int argc, char *argv[])
     while (ros::ok())
     {
         tf::Transform transform;
-        float tx = config[frame]["tx"].as<float>();
-        float ty = config[frame]["ty"].as<float>();
-        float tz = config[frame]["tz"].as<float>();
-        float rx = config[frame]["rx"].as<float>();
-        float ry = config[frame]["ry"].as<float>();
-        float rz = config[frame]["rz"].as<float>();
+        float tx = config[frame_yaml]["tx"].as<float>();
+        float ty = config[frame_yaml]["ty"].as<float>();
+        float tz = config[frame_yaml]["tz"].as<float>();
+        float rx = config[frame_yaml]["rx"].as<float>();
+        float ry = config[frame_yaml]["ry"].as<float>();
+        float rz = config[frame_yaml]["rz"].as<float>();
         transform.setOrigin(tf::Vector3(tx, ty, tz));
-        transform.setRotation(tf::Quaternion(rx, ry, rz));
+        transform.setRotation(tf::createQuaternionFromRPY(rx, ry, rz));
 
         br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), ref, frame + "_filtered"));
 

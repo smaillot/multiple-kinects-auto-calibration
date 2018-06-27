@@ -42,6 +42,12 @@ int main(int argc, char *argv[])
     string topic = argv[1];
     string name = argv[2];
 
+	bool icp = false;
+	if (argc > 2 && argv[3] == "icp")
+	{
+		icp = true;
+	}
+
     string node_name = (string) "cloud_" + name;
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh("/calib/" + name);
@@ -56,7 +62,7 @@ int main(int argc, char *argv[])
 ///////////
 // main code
 
-	Cloud cloud(&node_cloud, topic, name);
+	Cloud cloud(&node_cloud, topic, name, icp);
 	dynamic_reconfigure::Server<calib::CloudConfig> server_cloud(node_cloud);
 	dynamic_reconfigure::Server<calib::CloudConfig>::CallbackType f_cloud;
 	f_cloud = boost::bind(&Cloud::conf_callback, &cloud, _1, _2);

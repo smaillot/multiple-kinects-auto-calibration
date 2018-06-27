@@ -59,6 +59,7 @@ private:
 	string frame;
 	string frame_pub;
 	string name;
+	bool icp;
 
 	ros::Subscriber sub;
 	ros::Publisher pub_raw;
@@ -67,7 +68,7 @@ private:
 
 public:
 	Cloud();
-	Cloud(ros::NodeHandle* node, string sub_name, string pub_name);
+	Cloud(ros::NodeHandle* node, string sub_name, string pub_name, bool icp);
 
 	void conf_callback(calib::CloudConfig &config, uint32_t level);
 	void update(const pcConstPtr& input);

@@ -26,10 +26,16 @@
 #include <pcl/features/shot.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
+#include <pcl/features/shot.h>
 #include <pcl/features/shot_omp.h>
+#include <pcl/keypoints/sift_keypoint.h>
+
+#include <pcl/PointIndices.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_one_to_one.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/keypoints/iss_3d.h>
 
 #include <message_filters/subscriber.h>
@@ -46,8 +52,8 @@ typedef plane_feat_t::Ptr pc_featPtr;
     typedef pcl::FPFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
 /*/ typedef pcl::VFHSignature308 kp_t;
     typedef pcl::VFHEstimation<Point, pcl::Normal, kp_t> kp_est_t; /**/
-/**/ typedef pcl::SHOT352 kp_t;
-typedef pcl::SHOTEstimationOMP<Point, pcl::Normal, kp_t> kp_est_t; /**/
+/**/ typedef pcl::SHOT1344 kp_t; //352
+typedef pcl::SHOTColorEstimationOMP<Point, pcl::Normal, kp_t> kp_est_t; /**/
 
 typedef pcl::PointCloud<kp_t> kp_feat_t;
 typedef kp_feat_t::Ptr kp_featPtr;
@@ -96,13 +102,19 @@ class Matching
 	    float match_th;
         float match_th_dist;
 
+        int kp_type;
+        float min_scale;
+        int nr_octaves;
+        int nr_scales_per_octave;
+        float min_contrast;
+
         pcl::search::KdTree<Point>::Ptr kdtree;
         pcl::KdTreeFLANN<kp_t> match_search;
         pcl::NormalEstimation<Point, pcl::Normal> norm;
         pcl::VFHEstimation<Point, pcl::Normal, global_desc_t> global_est;
         /**/kp_est_t kp_feat_est;/**/
         pcl::registration::CorrespondenceEstimation<global_desc_t, global_desc_t> corr_est;
-        pcl::registration::CorrespondenceRejectorOneToOne corr_rej;
+        pcl::registration::CorrespondenceRejectorSampleConsensus<Point> corr_rej;
 		pcl::ISSKeypoint3D<Point, Point> iss;
         pcl::PassThrough<Point> filter_cut;
         

@@ -1,0 +1,27 @@
+calib:
+  cam1:
+    cloud:
+      frame: cam_center
+      frame_pub: world
+      tx: 1000
+      ty: 820
+      tz: 1400
+      rx: 0
+      ry: 32.7
+      rz: 90
+  cam2:
+    cloud:
+      tx: 1000
+      ty: -800
+      tz: 1400
+      rx: 0
+      ry: 32.7
+      rz: 90
+  scene:
+    cloud:
+      tx: 0.0
+      ty: 0.0
+      tz: 0.0
+      rx: 0.0
+      ry: 0.0
+      rz: 0.0
