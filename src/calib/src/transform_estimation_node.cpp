@@ -33,6 +33,11 @@ void callback(const calib::MatchesConstPtr& matches)
       convert(matches->points1, keypoints1);
       pcPtr keypoints2(new pc_t);
       convert(matches->points2, keypoints2);
+      
+      if (keypoints1->points.size() < 2)
+      {
+        return;
+      }
 
       for (int i = 0; i < keypoints1->points.size(); i++)
       {
