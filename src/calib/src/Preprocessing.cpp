@@ -25,18 +25,9 @@ void Preprocessing::conf_callback(calib::PreprocessingConfig &config, uint32_t l
     this->frame = config.frame;
     // subsampling
     this->param_voxel.enable = config.enable;
-	if (config.equal)
-    {
-        this->param_voxel.x = config.x / 1000;
-        this->param_voxel.y = config.x / 1000;
-        this->param_voxel.z = config.x / 1000;
-    }
-    else
-    {
-        this->param_voxel.x = config.x / 1000;
-        this->param_voxel.y = config.y / 1000;
-        this->param_voxel.z = config.z / 1000;
-    }
+    this->param_voxel.x = config.size / 1000;
+    this->param_voxel.y = config.size / 1000;
+    this->param_voxel.z = config.size / 1000;
     // cutting
     this->param_cut.x.enable = config.x_enable;
     this->param_cut.x.bounds[0] = config.x_min / 1000;

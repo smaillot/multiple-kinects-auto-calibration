@@ -10,17 +10,25 @@ PlaneDetector::PlaneDetector(ros::NodeHandle* node, string name, string topic_in
     this->pub_planes_col = this->node->advertise<pc_msg_t>(topic_out + "/color", 1);
     this->pub_planes = this->node->advertise<calib::Planes>(topic_out + "/planes", 1);
 
+    this->param_plane.max_it = 1000;
+    this->frame = "cam_center";
+
     this->seg.setOptimizeCoefficients(true);
     this->seg.setModelType(pcl::SACMODEL_PLANE);
 }
  
 void PlaneDetector::conf_callback(calib::PlaneConfig &config, uint32_t level)
 {
-    this->frame = config.frame;
-    this->param_plane.method = config.method;
+    if (config.enable)
+    {
+        this->param_plane.method = 0;
+    }
+    else
+    {
+        this->param_plane.method = -1;
+    }
     this->param_plane.n_planes = config.n_planes;
     this->param_plane.th_dist = config.th_dist / 1000;
-    this->param_plane.max_it = config.max_it;
     this->subsize = config.subsize / 1000;
 }
 

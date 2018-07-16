@@ -80,6 +80,7 @@ Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name, bool icp)
     this->node = node;
 	this->tf_listener = new tf::TransformListener; 
     this->frame = "world";
+    this->frame_pub = "cam_center";
 
     this->sub = this->node->subscribe(sub_name, 1, &Cloud::update, this);
     this->pub_raw = this->node->advertise<pc_t>(topic, 1);
@@ -91,8 +92,6 @@ Cloud::Cloud(ros::NodeHandle* node, string sub_name, string pub_name, bool icp)
 void Cloud::conf_callback(calib::CloudConfig &config, uint32_t level)
 {
     ROS_DEBUG_STREAM_ONCE("Init " << this->name << " Cloud parameters");
-    this->frame = config.frame;
-    this->frame_pub = config.frame_pub;
 
     // transform
     this->param_transform.tx = config.tx / 1000;

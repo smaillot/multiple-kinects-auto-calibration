@@ -4,14 +4,14 @@ using namespace std;
 
 string ref;
 string frame;
-float freq;
+float freq = 0;
 int transl_filter_type;
 float transl_filter_weight;
 int rot_filter_type;
 float rot_filter_weight;
 bool rejection;
-float max_translation;
-float max_rotation;
+float max_translation = 0.15;
+float max_rotation = 15 * 3.14159 / 180;
 
 int prev_transl_method = 0;
 int prev_rot_method = 0;
@@ -35,22 +35,28 @@ string file;
 void conf_callback(calib::TFConfig &config, uint32_t level)
 {
     ROS_DEBUG("reconfigure");
-    freq = config.freq;
 
-    transl_filter_type = config.transl_filter_type;
-    transl_filter_weight = config.transl_filter_weight;
+    if (config.average == true)
+    {
+        transl_filter_type = 2;
+        rot_filter_type = 2;
+    }
+    else
+    {
+        transl_filter_type = 1;
+        rot_filter_type = 1;
+    }
+    
+    transl_filter_weight = config.filter_weight;
     transl_filter_weight = pow(10, -transl_filter_weight);
 
-    rot_filter_type = config.rot_filter_type;
-    rot_filter_weight = config.rot_filter_weight;
+    rot_filter_weight = config.filter_weight;
     rot_filter_weight = pow(10, -rot_filter_weight);
 
     prev_transl_method = transl_filter_type;
     prev_transl_method = rot_filter_type;
 
     rejection = config.rejection;
-    max_translation = config.max_translation / 1000;
-    max_rotation = config.max_rotation * 3.14159 / 180;
 
     if (prev_transl_method != 2 && transl_filter_type == 2)
     {
@@ -128,6 +134,14 @@ bool no_nans(tf::Transform transform)
     return !isnan(ty);
 }
 
+bool no_null(tf::Transform transform)
+{
+    double rx, ry, rz;
+    tf::Matrix3x3 mat(transform.getRotation());
+    mat.getEulerYPR(rz, ry, rx);
+    return (abs(transform.getOrigin().getX()) > 0.0001 && abs(transform.getOrigin().getY()) > 0.0001 && abs(transform.getOrigin().getZ()) > 0.0001 && abs(rx) > 0.0001 && abs(ry) > 0.0001 && abs(rz) > 0.0001);
+}
+
 int main(int argc, char *argv[])
 {
         ref = argv[1];
@@ -139,7 +153,7 @@ int main(int argc, char *argv[])
     // Initialize ROS
         ros::init(argc, argv, node_name);
         ros::NodeHandle nh;
-        ros::NodeHandle node_tf("/calib/tf/" + frame);
+        ros::NodeHandle node_tf("/calib/" + frame + "/tf_filtering");
 
         // ros::param::get("/calib/" + cam1 + "/cloud/tx", init_tx);
         // ros::param::get("/calib/" + cam1 + "/cloud/ty", init_ty);
@@ -221,7 +235,7 @@ int main(int argc, char *argv[])
         ROS_DEBUG_STREAM("Ratio at it (" << it_transl << " - " << it_rot << ") : " << ratio_transl << ", " << ratio_rot);
         
         tf::Transform new_tf = filter_tf(mem, transform, ratio_transl, ratio_rot);
-        if (no_nans(new_tf))
+        if (no_nans(new_tf) && no_null(new_tf))
         {
             if (valid(mem, new_tf) || !rejection)
             {
@@ -233,10 +247,6 @@ int main(int argc, char *argv[])
             {
                 ROS_ERROR("Outlying transform rejected !");
             }
-        }
-        else
-        {
-            ROS_ERROR("NaN value detected in tf");
         }
 
         calib::TF msg;

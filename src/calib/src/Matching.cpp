@@ -209,6 +209,13 @@ Matching::Matching(ros::NodeHandle* node, std::string name1, std::string name2)
 
 	pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
     this->kdtree = tree;
+
+    this->kp_type = 1;
+    this->cut_reverse = false;
+    this->cut_th = 0.1;
+    this->match_th = 1.0;
+    this->kp_est_radius = 0.5;
+    this->radius = 0.05;
 }
 
 void Matching::update(const calib::PlanesConstPtr& planes1, const calib::PlanesConstPtr& planes2)
@@ -224,22 +231,8 @@ void Matching::update(const calib::PlanesConstPtr& planes1, const calib::PlanesC
 void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
 {
     // transform
-    this->radius = config.normal_radius / 1000;
     this->kp_dupl_rej = config.kp_corr_rej;
-    this->kp_est_radius = config.kp_est_radius / 1000;
-    this->iss_support_radius = config.iss_support_radius / 1000;
-    this->iss_nms_radius = config.iss_nms_radius / 1000;
-    this->match_th = config.match_th;
     this->match_th_dist = config.match_th_dist / 1000;
-
-    this->cut_reverse = config.cut_reverse;
-    this->cut_th = config.cut_th / 1000;
-
-    this->kp_type = config.kp_type;
-    this->min_scale = config.sift_min_scale;
-    this->nr_octaves = config.sift_nr_octaves;
-    this->nr_scales_per_octave = config.sift_nr_scales_per_octave;
-    this->min_contrast = config.sift_min_contrast;
 }
 
 void Matching::callback_sync()
@@ -547,6 +540,15 @@ pcPtr Matching::extract_kp(pcPtr cloudPtr, calib::Planes planes, ros::Publisher 
     cutted = this->cut_plane(cloudPtr, planes);
     pub.publish(*cutted);
     // cutted = this->cut(cloudPtr, this->param_cut);
+
+    double res1;
+    double res2;
+    this->node->param<double>("/calib/" + name1 + "/preproc/size", res1, 20);    
+    this->node->param<double>("/calib/" + name2 + "/preproc/size", res2, 20);        
+    double resolution = min(res1, res2) / 1000;
+    this->iss_support_radius = resolution;
+    this->iss_nms_radius = resolution; 
+    ROS_DEBUG_STREAM("iss kp size = " << resolution);
 
     if (this->kp_type == 1 && this->iss_support_radius * this->iss_nms_radius != 0)
     {

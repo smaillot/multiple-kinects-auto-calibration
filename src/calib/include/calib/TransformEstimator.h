@@ -29,8 +29,8 @@ class TransformEstimator
     public:
 
         float weight;
-        bool inverse;
-        std::string frame;
+        bool inverse = false;
+        std::string frame = "cam_center";
         bool use_points;
         bool use_planes;
         bool compute_rotation;

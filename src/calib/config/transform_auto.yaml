@@ -1,0 +1,33 @@
+calib:
+  cam1:
+    init:
+      tx: 0.0
+      ty: 0.0
+      tz: 0.0
+      rx: 0.0
+      ry: 0.0
+      rz: 0.0
+  cam2:
+    init:
+      tx: 0.0
+      ty: 0.0
+      tz: 0.0
+      rx: 0.0
+      ry: 0.0
+      rz: 0.0
+  scene:
+    init:
+      tx: 0.0
+      ty: 0.0
+      tz: 0.0
+      rx: 0.0
+      ry: 0.0
+      rz: 0.0
+  final:
+    init:
+      tx: 0.0
+      ty: 0.0
+      tz: 0.0
+      rx: 0.0
+      ry: 0.0
+      rz: 0.0

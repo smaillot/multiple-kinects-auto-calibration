@@ -8,10 +8,11 @@ string name;
 ros::Publisher pub_pc;
 string output;
 pcl::PassThrough<Point> filter_cut;
-string frame_proc;
+string frame_proc = "cam_center";
 bool enable_cutting;
 float y_pose;
 float width;
+bool icp = false;
 
 /**
  * @brief Callback from kinects synchronization.
@@ -28,7 +29,14 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
     pc_t input2 = *pc2;
     ROS_DEBUG_STREAM("Receiving pc1 in " << input1.header.frame_id);
     ROS_DEBUG_STREAM("Receiving pc2 in " << input2.header.frame_id);
-    ros::param::param<string>("/calib/" + inputs[1] + "/cloud/frame_pub", pub_frame, "world");
+    if (icp)
+    {
+        pub_frame = name + "_filtered";
+    }
+    else
+    {
+        ros::param::param<string>("/calib/" + inputs[1] + "/cloud/frame_pub", pub_frame, "world");
+    }
     // ros::param::param<string>("/calib/" + inputs[0] + "_" + inputs[1] + "/transform_estimation/frame", frame_proc, "cam_center");
 
     try
@@ -64,14 +72,21 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
     }
 
     ROS_DEBUG("Merging.");
-    pc_t merged = input1 + input2;
+    pc_t merged;
+    if (icp)
+    {
+        merged = input1;
+    }
+    else
+    {
+        merged = input1 + input2;
+    }
     ROS_DEBUG_STREAM("merged pc in " << merged.header.frame_id);
     pub_pc.publish(merged);
 }
 
 void conf_callback(calib::MergingConfig &config, uint32_t level)
 {
-    frame_proc = config.frame;
     enable_cutting = config.enable_cutting;
     y_pose = config.y_pose / 1000;
     width = config.width / 1000;
@@ -96,8 +111,17 @@ int main(int argc, char *argv[])
 		inputs.clear();
 
         inputs.push_back(argv[1]);
-        inputs.push_back(argv[2]);
-        name = inputs[0] + "_" + inputs[1];
+        if (argv[2] == "icp")
+        {
+            inputs.push_back(inputs[0]);
+            icp = true;
+            name = inputs[0] + "_icp";
+        }
+        else
+        {
+            inputs.push_back(argv[2]);
+            name = inputs[0] + "_" + inputs[1];
+        }
         output = argv[3];
         string node_name = "merging_" + output;
 

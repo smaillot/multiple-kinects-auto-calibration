@@ -51,13 +51,8 @@ int main(int argc, char *argv[])
     string node_name = (string) "cloud_" + name;
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh("/calib/" + name);
-    ros::NodeHandle node_cloud("/calib/" + name + "/cloud");
+    ros::NodeHandle node_cloud("/calib/" + name + "/init");
     ros::NodeHandle node_preproc("/calib/" + name + "/preproc");
-
-    dynamic_reconfigure::Server<calib::NodeConfig> server(nh);
-	dynamic_reconfigure::Server<calib::NodeConfig>::CallbackType f;
-	f = boost::bind(&conf_callback, _1, _2);
-	server.setCallback(f);
 
 ///////////
 // main code

@@ -5,8 +5,6 @@ using namespace std;
 void TransformEstimator::conf_callback(calib::TransformEstimationConfig &config, uint32_t level)
 {
     this->weight = config.planes_weight;
-    this->inverse = config.inverse;
-    this->frame = config.frame;
 
     this->use_points = config.use_points;
     this->use_planes = config.use_planes;

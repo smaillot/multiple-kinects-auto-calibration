@@ -68,10 +68,10 @@ int main(int argc, char *argv[])
     Synchronizer<KinectSync> sync(KinectSync(10), cam1_sub, cam2_sub);
     sync.registerCallback(boost::bind(&planes_callback, _1, _2));
 
-    dynamic_reconfigure::Server<calib::NodeConfig> server(nh);
-    dynamic_reconfigure::Server<calib::NodeConfig>::CallbackType f;
-    f = boost::bind(&conf_callback, _1, _2);
-    server.setCallback(f);
+    // dynamic_reconfigure::Server<calib::NodeConfig> server(nh);
+    // dynamic_reconfigure::Server<calib::NodeConfig>::CallbackType f;
+    // f = boost::bind(&conf_callback, _1, _2);
+    // server.setCallback(f);
 
   ///////////
 // main code
