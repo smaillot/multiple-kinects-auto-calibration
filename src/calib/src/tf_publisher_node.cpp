@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
         transform.setRotation(tf::createQuaternionFromRPY(rx, ry, rz));
 
         br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), ref, frame + "_filtered"));
+        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), ref, frame));
 
         ros::Rate loop_rate(freq);
         loop_rate.sleep();

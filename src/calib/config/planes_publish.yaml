@@ -1,0 +1,7 @@
+calib:
+  final:
+    planes:
+      enable: true
+      subsize: 40.0
+      n_planes: 2
+      th_dist: 50.0

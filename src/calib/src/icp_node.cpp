@@ -4,6 +4,7 @@ using namespace std;
 using namespace message_filters; 
  
 string name; 
+string tf_name;
 string target_topic;
 string output_name;  
 float frequency = 0; 
@@ -24,7 +25,7 @@ void conf_callback(calib::ICPConfig &config, uint32_t level)
 {
     enable = config.enable;
     autom = config.autom;
-    reciproc = config.reciproc;
+    reciproc = false; //config.reciproc;
     max_dist = config.max_dist / 1000;
     max_it = config.max_it;
     eps = pow(10, -config.epsilon);
@@ -92,7 +93,7 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
         Eigen::Affine3d T;
         T.matrix() = mat.cast<double>();
         tf::transformEigenToTF(T, transform);
-        br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name + "_icp"));
+        br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", tf_name));
 
         pcl_ros::transformPointCloud(*pc1, registered, transform);
         listener->waitForTransform(registered.header.frame_id, "world", ros::Time(0), ros::Duration(5.0));
@@ -102,7 +103,7 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
         registered = *pc1;
         tf::Transform transform;
         transform.setIdentity();
-        br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name + "_icp"));
+        br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", tf_name));
     }
  
     pub_pc.publish(registered); 
@@ -116,6 +117,7 @@ int main(int argc, char *argv[])
         name = argv[1]; 
         node_name = "icp_" + name; 
         target_topic = argv[2]; 
+        tf_name = argv[3]; 
         
         // Initialize ROS 
         ros::init(argc, argv, node_name); 

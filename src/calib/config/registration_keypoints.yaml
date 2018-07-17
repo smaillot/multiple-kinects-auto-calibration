@@ -6,11 +6,10 @@ calib:
       kp_corr_rej: true
     transform_estimation:
       use_points: true
-      use_planes: true
+      use_planes: false
       compute_rotation: true
       compute_translation: true
-      project_points: true
-      planes_weight: 10.0
+      project_points: false
     merging:
       enable_cutting: true
       y_pose: 40.0
@@ -27,3 +26,11 @@ calib:
         rejection: false
         average: true
         filter_weight: 3.0
+  scene:
+    icp:
+      enable: true
+      subsize: 40
+      autom: false
+      max_dist: 500
+      max_it: 1000
+      epsilon: 6

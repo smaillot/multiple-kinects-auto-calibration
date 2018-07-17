@@ -212,7 +212,6 @@ Matching::Matching(ros::NodeHandle* node, std::string name1, std::string name2)
 
     this->kp_type = 1;
     this->cut_reverse = false;
-    this->cut_th = 0.1;
     this->match_th = 1.0;
     this->kp_est_radius = 0.5;
     this->radius = 0.05;
@@ -233,6 +232,14 @@ void Matching::conf_callback(calib::MatchingConfig &config, uint32_t level)
     // transform
     this->kp_dupl_rej = config.kp_corr_rej;
     this->match_th_dist = config.match_th_dist / 1000;
+    if (config.extract_objects)
+    {
+        this->cut_th = 0.1;
+    }
+    else
+    {
+        this->cut_th = -0.1;
+    }
 }
 
 void Matching::callback_sync()

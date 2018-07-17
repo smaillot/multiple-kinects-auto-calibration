@@ -1,0 +1,29 @@
+calib:
+  cam1_cam2:
+    matching:
+      match_th_dist: 500.0
+      normal_radius: 50.0
+      kp_corr_rej: true
+    transform_estimation:
+      use_points: true
+      use_planes: true
+      compute_rotation: true
+      compute_translation: true
+      project_points: true
+      planes_weight: 100.0
+    merging:
+      enable_cutting: true
+      y_pose: 40.0
+      width: 500.0
+    tf_filtering:
+      cam1_cam2:
+        freq: 10
+        rot_filter_type: 2
+        rot_filter_weight: 2.0
+        transl_filter_type: 2
+        transl_filter_weight: 2.0
+    scene_icp:
+      tf_filtering:
+        rejection: false
+        average: true
+        filter_weight: 3.0

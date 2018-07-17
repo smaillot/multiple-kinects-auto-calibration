@@ -3,36 +3,41 @@
     <!--loading config-->
         <!--<rosparam command="load" file="$(find calib)/config/transform_calib.yaml" />-->
         <rosparam command="load" file="$(find calib)/config/preproc_calib.yaml" />
-        <rosparam command="load" file="$(find calib)/config/planes_publish.yaml" />
-        <rosparam command="load" file="$(find calib)/config/registration_publish.yaml" />
+        <rosparam command="load" file="$(find calib)/config/planes_calib.yaml" />
+        <rosparam command="load" file="$(find calib)/config/registration_keypoints.yaml" />
 
     <!--arguments-->
         <arg name="cam_source" default="cam1" />
         <arg name="cam_target" default="cam2" />
         <arg name="merged_name" default="scene" />
 
-    <!--publish saved tf-->
-        <node pkg="calib" name="$(arg cam_source)_$(arg cam_target)_publisher" type="tf_publisher_node" respawn="true" output="screen" args="$(arg cam_source) $(arg cam_target) cam_center" />
-        <node pkg="calib" name="$(arg merged_name)_icp_publisher" type="tf_publisher_node" respawn="true" output="screen" args="$(arg merged_name) icp cam_center" />
-            
     <!--preprocessing-->
         <node pkg="calib" name="preproc_$(arg cam_source)" type="preprocessing_node" respawn="true" output="screen" args="/$(arg cam_source)/qhd/points $(arg cam_source)" />
         <node pkg="calib" name="preproc_$(arg cam_target)" type="preprocessing_node" respawn="true" output="screen" args="/$(arg cam_target)/qhd/points $(arg cam_target)" />
-        
+
+    <!--plane detection-->
+        <node pkg="calib" name="plane_detection_$(arg cam_source)" type="plane_detection_node" respawn="true" output="screen" args="$(arg cam_source)" />
+        <node pkg="calib" name="plane_detection_$(arg cam_target)" type="plane_detection_node" respawn="true" output="screen" args="$(arg cam_target)" />
+    
+    <!--registration-->
+        <node pkg="calib" name="matching_$(arg cam_source)_$(arg cam_target)" type="matching_node" respawn="true" output="screen" args="$(arg cam_source) $(arg cam_target)" />
+        <node pkg="calib" name="transform_estimation_$(arg cam_source)_$(arg cam_target)" type="transform_estimation_node" respawn="true" output="screen" args="$(arg cam_source) $(arg cam_target)" />
+    
     <!--merging-->
+        <node pkg="calib" name="tf_filter_$(arg cam_source)_$(arg cam_target)" type="tf_node" respawn="true" output="screen" args="cam_center $(arg cam_source) $(arg cam_target)" />
         <node pkg="calib" name="merging_$(arg cam_source)_$(arg cam_target)" type="merging_node" respawn="true" output="screen" args="$(arg cam_source) $(arg cam_target) $(arg merged_name)" />
         <node pkg="calib" name="preproc_$(arg merged_name)" type="preprocessing_node" respawn="true" output="screen" args="/calib/clouds/$(arg merged_name) $(arg merged_name)" />
-            
+    
     <!--ground truth ICP-->
         <node pkg="pcl_ros" name="target_model_publisher" type="pcd_to_pointcloud" respawn="true" output="screen" args="$(find calib)/models/sim_pc.pcd 0.5 _frame_id:=world" />
-        <node pkg="calib" name="icp_$(arg merged_name)" type="icp_node" respawn="true" output="screen" args="$(arg merged_name) cloud_pcd $(arg merged_name)" />
+        <node pkg="calib" name="icp_$(arg merged_name)" type="icp_node" respawn="true" output="screen" args="$(arg merged_name) cloud_pcd $(arg merged_name)_icp" />
         <node pkg="calib" name="tf_filter_$(arg merged_name)" type="tf_node" respawn="true" output="screen" args="cam_center $(arg merged_name) icp" />
-
-    <!--preprocessing and plane detection on final cloud-->
+    
+    <!--preproc and plane detection on final cloud-->
         <node pkg="calib" name="preproc_$(arg merged_name)_icp" type="preprocessing_node" respawn="true" output="screen" args="/calib/clouds/$(arg merged_name)/icp final" />
         <node pkg="calib" name="plane_detection_final" type="plane_detection_node" respawn="true" output="screen" args="final" />
 
     <!--visualization-->
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find calib)/rviz/result.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find calib)/rviz/calib.rviz" />
 
 </launch>

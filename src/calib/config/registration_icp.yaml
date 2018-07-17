@@ -1,0 +1,17 @@
+calib:
+  cam1:
+    icp:
+      enable: true
+      subsize: 40
+      autom: false
+      max_dist: 500
+      max_it: 500
+      epsilon: 3.5
+  cam2:
+    icp:
+      enable: true
+      subsize: 40
+      autom: false
+      max_dist: 500
+      max_it: 500
+      epsilon: 3.5
