@@ -1,0 +1,19 @@
+calib:
+  final:
+    planes:
+      enable: true
+      subsize: 40.0
+      n_planes: 3
+      th_dist: 50.0
+  cam1:
+    planes:
+      enable: true
+      subsize: 40.0
+      n_planes: 3
+      th_dist: 50.0
+  cam2:
+    planes:
+      enable: true
+      subsize: 40.0
+      n_planes: 3
+      th_dist: 50.0

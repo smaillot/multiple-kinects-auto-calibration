@@ -11,6 +11,7 @@ float frequency = 0;
 tf::TransformListener *listener; 
 tf::TransformBroadcaster *br;
 ros::Publisher pub_pc;
+ros::Publisher pub;
 float subsize = 50;
 
 bool enable;
@@ -95,6 +96,20 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
         tf::transformEigenToTF(T, transform);
         br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", tf_name));
 
+        calib::TF msg;
+        double rx, ry, rz;
+        msg.tx = transform.getOrigin().getX();
+        msg.ty = transform.getOrigin().getY();
+        msg.tz = transform.getOrigin().getZ();
+        msg.it_transl = 0;
+        tf::Matrix3x3 mat2(transform.getRotation());
+        mat2.getEulerYPR(rx, ry, rz);
+        msg.rx = (float) 180 / 3.14159 * rx;
+        msg.ry = (float) 180 / 3.14159 * ry;
+        msg.rz = (float) 180 / 3.14159 * rz;
+        msg.it_rot = 0;
+        pub.publish(msg);
+
         pcl_ros::transformPointCloud(*pc1, registered, transform);
         listener->waitForTransform(registered.header.frame_id, "world", ros::Time(0), ros::Duration(5.0));
     }
@@ -104,6 +119,20 @@ void pc_callback(const pcConstPtr& pc1, const pcConstPtr& pc2)
         tf::Transform transform;
         transform.setIdentity();
         br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", tf_name));
+
+        calib::TF msg;
+        double rx, ry, rz;
+        msg.tx = transform.getOrigin().getX();
+        msg.ty = transform.getOrigin().getY();
+        msg.tz = transform.getOrigin().getZ();
+        msg.it_transl = 0;
+        tf::Matrix3x3 mat2(transform.getRotation());
+        mat2.getEulerYPR(rx, ry, rz);
+        msg.rx = (float) 180 / 3.14159 * rx;
+        msg.ry = (float) 180 / 3.14159 * ry;
+        msg.rz = (float) 180 / 3.14159 * rz;
+        msg.it_rot = 0;
+        pub.publish(msg);
     }
  
     pub_pc.publish(registered); 
@@ -119,13 +148,14 @@ int main(int argc, char *argv[])
         target_topic = argv[2]; 
         tf_name = argv[3]; 
         
-        // Initialize ROS 
+    // Initialize ROS 
         ros::init(argc, argv, node_name); 
         ros::NodeHandle nh; 
         ros::NodeHandle node_icp("/calib/" + name + "/icp");
 
         listener = new tf::TransformListener;
         br = new tf::TransformBroadcaster;
+        pub = nh.advertise<calib::TF>("/calib/tf/" + tf_name, 1);
  
     // Synchronize both kinects messages 
         message_filters::Subscriber<pc_t> cam1(nh, "/calib/clouds/" + name, 1); 

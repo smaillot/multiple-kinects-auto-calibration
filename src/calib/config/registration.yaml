@@ -3,6 +3,7 @@ calib:
     matching:
       match_th_dist: 500.0
       normal_radius: 50.0
+      extract_objets: true
       kp_corr_rej: true
     transform_estimation:
       use_points: true
@@ -17,13 +18,19 @@ calib:
       width: 500.0
     tf_filtering:
       cam1_cam2:
-        freq: 10
-        rot_filter_type: 2
-        rot_filter_weight: 2.0
-        transl_filter_type: 2
-        transl_filter_weight: 2.0
-    scene_icp:
-      tf_filtering:
         rejection: false
         average: true
-        filter_weight: 3.0
+        filter_weight: 2.0
+  scene_icp:
+    tf_filtering:
+      rejection: false
+      average: true
+      filter_weight: 2.0
+  scene:
+    icp:
+      enable: true
+      subsize: 40.0
+      autom: false
+      max_dist: 500.0
+      max_it: 500
+      epsilon: 5.0

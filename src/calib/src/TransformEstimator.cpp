@@ -165,7 +165,7 @@ Eigen::Vector3f TransformEstimator::getTranslation(Eigen::Matrix3f R)
         {
             A1 = Eigen::Matrix3f::Identity(3, 3);
             A1 *= M;
-            b1 = this->computeCentroid(this->points_source) - R * this->computeCentroid(this->points_target);
+            b1 = this->computeCentroid(this->points_target) - R * this->computeCentroid(this->points_source);
             b1 *= M;
         }
         if (N > 0) // if there is plane matches
@@ -176,7 +176,7 @@ Eigen::Vector3f TransformEstimator::getTranslation(Eigen::Matrix3f R)
                 {
                     A2(i, j) = planes_weights[i] * this->planes_target[i](j);
                 }
-                b2(i) = planes_weights[i] * (this->planes_target[i](3) - this->planes_source[i](3));
+                b2(i) = planes_weights[i] * (this->planes_source[i](3) - this->planes_target[i](3));
             }
         }
 
@@ -298,7 +298,7 @@ Eigen::Matrix3f TransformEstimator::computeRotCorr()
         {
             for (int i = 0; i < this->points_source.size(); i++)
             {
-                K += (this->points_source[i] - ps) * (this->points_target[i] - pt).transpose();
+                K += (this->points_target[i] - pt) * (this->points_ssource[i] - ps).transpose();
             }
         }
         if (this->planes_source.size() > 0)
@@ -309,7 +309,7 @@ Eigen::Matrix3f TransformEstimator::computeRotCorr()
             {
                 Ns = this->planes_source[i].block(0, 0, 3, 1);
                 Nt = this->planes_target[i].block(0, 0, 3, 1);
-                K += (Ns * Nt.transpose()) * this->planes_weights[i];
+                K += (Nt * Ns.transpose()) * this->planes_weights[i];
             }
         }
     }

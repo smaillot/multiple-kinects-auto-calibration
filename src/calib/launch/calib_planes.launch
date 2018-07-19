@@ -3,8 +3,8 @@
     <!--loading config-->
         <!--<rosparam command="load" file="$(find calib)/config/transform_calib.yaml" />-->
         <rosparam command="load" file="$(find calib)/config/preproc_calib.yaml" />
-        <rosparam command="load" file="$(find calib)/config/planes_calib.yaml" />
-        <rosparam command="load" file="$(find calib)/config/registration_keypoints.yaml" />
+        <rosparam command="load" file="$(find calib)/config/planes_planes.yaml" />
+        <rosparam command="load" file="$(find calib)/config/registration_planes.yaml" />
 
     <!--arguments-->
         <arg name="cam_source" default="cam1" />

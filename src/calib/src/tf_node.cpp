@@ -4,7 +4,7 @@ using namespace std;
 
 string ref;
 string frame;
-float freq = 0;
+float freq = 5;
 int transl_filter_type;
 float transl_filter_weight;
 int rot_filter_type;

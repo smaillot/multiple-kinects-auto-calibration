@@ -4,14 +4,32 @@ calib:
       enable: true
       subsize: 40
       autom: false
-      max_dist: 500
+      max_dist: 300
       max_it: 500
-      epsilon: 3.5
+      epsilon: 5
   cam2:
     icp:
       enable: true
       subsize: 40
       autom: false
-      max_dist: 500
+      max_dist: 300
       max_it: 500
-      epsilon: 3.5
+      epsilon: 5
+  scene:
+    icp:
+      enable: true
+      subsize: 40
+      autom: false
+      max_dist: 50
+      max_it: 1000
+      epsilon: 5.0
+  cam1_icp:
+    tf_filtering:
+      rejection: false
+      average: true
+      filter_weight: 2.0
+  cam2_icp:
+    tf_filtering:
+      rejection: false
+      average: true
+      filter_weight: 2.0

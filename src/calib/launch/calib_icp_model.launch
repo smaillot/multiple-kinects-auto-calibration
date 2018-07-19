@@ -10,9 +10,11 @@
     <node pkg="calib" name="preproc_$(arg cam_target)" type="preprocessing_node" respawn="true" output="screen" args="/$(arg cam_target)/qhd/points $(arg cam_target)" />
 
     <node pkg="pcl_ros" name="target_model_publisher" type="pcd_to_pointcloud" respawn="true" output="screen" args="$(find calib)/models/sim_pc.pcd 0.5 _frame_id:=world" />
-    <node pkg="calib" name="icp_$(arg cam_source)" type="icp_node" respawn="true" output="screen" args="$(arg cam_source) /calib/clouds/cam2/preproc cam1_icp" />
+    <node pkg="calib" name="icp_$(arg cam_source)" type="icp_node" respawn="true" output="screen" args="$(arg cam_source) cloud_pcd cam1_icp" />
+    <node pkg="calib" name="icp_$(arg cam_target)" type="icp_node" respawn="true" output="screen" args="$(arg cam_target) cloud_pcd cam2_icp" />
 
     <node pkg="calib" name="tf_filter_$(arg cam_source)" type="tf_node" respawn="true" output="screen" args="cam_center $(arg cam_source) icp" />
+    <node pkg="calib" name="tf_filter_$(arg cam_target)" type="tf_node" respawn="true" output="screen" args="cam_center $(arg cam_target) icp" />
 
     <!--visualization-->
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find calib)/rviz/icp.rviz" />

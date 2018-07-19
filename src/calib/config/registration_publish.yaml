@@ -2,8 +2,9 @@ calib:
   cam1_cam2:
     merging:
       enable_cutting: false
-    scene_icp:
-      tf_filtering:
+  scene_icp:
+    tf_filtering:
+      cam1_cam2:
         rejection: false
-        average: true
+        average: false
         filter_weight: 3.0

@@ -3,11 +3,11 @@ calib:
     matching:
       match_th_dist: 500.0
       normal_radius: 50.0
-      extract_objects: false
-      kp_corr_rej: false
+      extract_objets: false
+      kp_corr_rej: true
     transform_estimation:
-      use_points: true
-      use_planes: false
+      use_points: false
+      use_planes: true
       compute_rotation: true
       compute_translation: true
       project_points: false
