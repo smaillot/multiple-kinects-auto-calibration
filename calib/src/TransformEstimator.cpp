@@ -298,7 +298,7 @@ Eigen::Matrix3f TransformEstimator::computeRotCorr()
         {
             for (int i = 0; i < this->points_source.size(); i++)
             {
-                K += (this->points_target[i] - pt) * (this->points_ssource[i] - ps).transpose();
+                K += (this->points_target[i] - pt) * (this->points_source[i] - ps).transpose();
             }
         }
         if (this->planes_source.size() > 0)
