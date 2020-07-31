@@ -150,11 +150,11 @@ Eigen::Matrix3f TransformEstimator::getRotation()
 */
 Eigen::Vector3f TransformEstimator::getTranslation(Eigen::Matrix3f R)
 {
+    Eigen::Vector3f t;
     if (this->isValid())
     {
         int M = this->points_source.size();
         int N = this->planes_source.size();
-        Eigen::Vector3f t;
         
         Eigen::Matrix3f A1;
         Eigen::Vector3f b1;
@@ -209,8 +209,8 @@ Eigen::Vector3f TransformEstimator::getTranslation(Eigen::Matrix3f R)
         }
 
         ROS_DEBUG_STREAM("t =" << endl << t);
-        return t;
     }
+    return t;
 }
 
 /*

@@ -2,7 +2,6 @@
 
 using namespace std;
 
-string ref;
 string frame;
 float freq = 5;
 int transl_filter_type;
@@ -144,6 +143,7 @@ bool no_null(tf::Transform transform)
 
 int main(int argc, char *argv[])
 {
+        string ref;
         ref = argv[1];
         string cam1 = argv[2];
         string cam2 = argv[3];
